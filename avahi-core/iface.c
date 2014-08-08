@@ -73,7 +73,7 @@ void avahi_interface_address_update_rrs(AvahiInterfaceAddress *a, int remove_rrs
             avahi_address_snprint(t, sizeof(t), &a->address);
             avahi_log_info("Registering new address record for %s on %s.%s.", t, a->interface->hardware->name, p == AVAHI_PROTO_UNSPEC ? "*" : avahi_proto_to_string(p));
 
-            if (avahi_server_add_address(m->server, a->entry_group, a->interface->hardware->index, p, AVAHI_PUBLISH_NO_REVERSE, NULL, &a->address) < 0) {
+            if (avahi_server_add_address(m->server, a->entry_group, a->interface->hardware->index, p, m->server->config.publish_no_reverse ? AVAHI_PUBLISH_NO_REVERSE : 0, NULL, &a->address) < 0) {
                 avahi_log_warn(__FILE__": avahi_server_add_address() failed: %s", avahi_strerror(m->server->error));
                 avahi_s_entry_group_free(a->entry_group);
                 a->entry_group = NULL;

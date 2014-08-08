@@ -50,6 +50,7 @@ typedef struct AvahiServerConfig {
     AvahiStringList *deny_interfaces; /**< Deny specific interfaces to be used for Avahi */
     int publish_hinfo;                /**< Register a HINFO record for the host containing the local OS and CPU type */
     int publish_addresses;            /**< Register A, AAAA and PTR records for all local IP addresses */
+    int publish_no_reverse;           /**< Do not register PTR records */
     int publish_workstation;          /**< Register a _workstation._tcp service */
     int publish_domain;               /**< Announce the local domain for browsing */
     int check_response_ttl;           /**< If enabled the server ignores all incoming responses with IP TTL != 255. Newer versions of the RFC do no longer contain this check, so it is disabled by default. */

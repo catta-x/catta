@@ -1584,6 +1584,7 @@ AvahiServerConfig* avahi_server_config_init(AvahiServerConfig *c) {
     c->check_response_ttl = 0;
     c->publish_hinfo = 0;
     c->publish_addresses = 1;
+    c->publish_no_reverse = 0;
     c->publish_workstation = 0;
     c->publish_domain = 1;
     c->use_iff_running = 0;
