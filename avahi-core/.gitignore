@@ -15,3 +15,6 @@ prioq-test
 querier-test
 timeeventq-test
 update-test
+*-test.log
+*-test.trs
+test-suite.log
