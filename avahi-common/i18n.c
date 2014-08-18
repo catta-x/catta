@@ -24,9 +24,11 @@
 #include "i18n.h"
 
 void avahi_init_i18n(void) {
+#ifdef ENABLE_NLS
 
     /* Not really thread safe, but this doesn't matter much since
      * bindtextdomain is supposed to be idempotent anyway. */
+    /* FIXME: but is bindtextdomain reentrant!? */
 
     static int done = 0;
 
@@ -35,4 +37,6 @@ void avahi_init_i18n(void) {
         bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
         done = 1;
     }
+
+#endif /* ENABLE_NLS */
 }
