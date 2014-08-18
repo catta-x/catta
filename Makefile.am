@@ -38,8 +38,7 @@ EXTRA_DIST = \
 	docs/server-states.dia \
 	docs/avahi-poll.dia \
 	avahi-core.pc.in \
-	doxygen_to_devhelp.xsl \
-        common/introspection.m4
+	doxygen_to_devhelp.xsl
 
 SUBDIRS = \
 	common \
@@ -76,7 +75,6 @@ pkgconfigdir = $(libdir)/pkgconfig
 %.pc: %.pc.in
 	$(AM_V_GEN)sed -e 's,@prefix\@,$(prefix),g' \
 	    -e 's,@libdir\@,$(libdir),g' \
-	    -e 's,@HOWL_COMPAT_VERSION\@,$(HOWL_COMPAT_VERSION),g' \
 	    -e 's,@PACKAGE_VERSION\@,$(PACKAGE_VERSION),g' $< > $@
 
 pkgconfig_DATA = avahi-core.pc
@@ -87,8 +85,3 @@ avahi.devhelp: doxygen-run
 	xsltproc -o $@ doxygen_to_devhelp.xsl doxygen/xml/index.xml
 
 MOSTLYCLEANFILES = $(DX_CLEANFILES)
-
-DISTCHECK_CONFIGURE_FLAGS = \
-	--disable-monodoc \
-	--enable-introspection \
-	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)
