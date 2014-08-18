@@ -20,11 +20,11 @@
   USA.
 ***/
 
+#ifdef ENABLE_NLS
+
 #if !defined(GETTEXT_PACKAGE)
 #error "Something is very wrong here, config.h needs to be included first"
 #endif
-
-#ifdef ENABLE_NLS
 
 #include <libintl.h>
 
