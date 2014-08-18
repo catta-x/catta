@@ -45,8 +45,7 @@ SUBDIRS = \
 	common \
 	avahi-common \
 	avahi-core \
-	examples \
-	po
+	examples
 
 DX_INPUT = \
 	$(srcdir)/avahi-common/address.h \
@@ -93,6 +92,3 @@ DISTCHECK_CONFIGURE_FLAGS = \
 	--disable-monodoc \
 	--enable-introspection \
 	--with-systemdsystemunitdir=$$dc_install_base/$(systemdsystemunitdir)
-
-DISTCLEANFILES = \
-	po/.intltool-merge-cache

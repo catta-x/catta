@@ -50,14 +50,6 @@ else
     rm -rf autom4te.cache
     rm -f config.cache
 
-    rm -f Makefile.am~ configure.ac~
-    # Evil, evil, evil, evil hack
-    sed 's/read dummy/\#/' `which gettextize` | sh -s -- --copy --force
-    test -f Makefile.am~ && mv Makefile.am~ Makefile.am
-    test -f configure.ac~ && mv configure.ac~ configure.ac
-
-    intltoolize --copy --force --automake
-
     test "x$LIBTOOLIZE" = "x" && LIBTOOLIZE=libtoolize
     "$LIBTOOLIZE" -c --force
 

@@ -308,15 +308,6 @@ AC_CHECK_DECLS(environ)
 # check if gcc's -fvisibility is supported
 CHECK_VISIBILITY_HIDDEN
 
-IT_PROG_INTLTOOL([0.35.0])
-GETTEXT_PACKAGE=avahi
-AC_SUBST([GETTEXT_PACKAGE])
-AC_DEFINE_UNQUOTED([GETTEXT_PACKAGE],["$GETTEXT_PACKAGE"],[Gettext package])
-AM_GLIB_GNU_GETTEXT
-
-avahilocaledir='${prefix}/${DATADIRNAME}/locale'
-AC_SUBST(avahilocaledir)
-
 # Check for pkg-config manually first, as if its not installed the
 # PKG_PROG_PKG_CONFIG macro won't be defined.
 AC_CHECK_PROG(have_pkg_config, pkg-config, yes, no)
@@ -371,7 +362,6 @@ avahi-common/Makefile
 avahi-core/Makefile
 examples/Makefile
 common/Makefile
-po/Makefile.in
 ])
 AC_OUTPUT
 
