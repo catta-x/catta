@@ -30,34 +30,3 @@ core_publish_service_LDADD = $(AM_LDADD) ../avahi-core/libavahi-core.la ../avahi
 core_browse_services_SOURCES = core-browse-services.c
 core_browse_services_CFLAGS = $(AM_CFLAGS)
 core_browse_services_LDADD = $(AM_LDADD) ../avahi-core/libavahi-core.la ../avahi-common/libavahi-common.la
-
-if HAVE_DBUS
-if ENABLE_TESTS
-
-noinst_PROGRAMS += \
-	client-publish-service \
-	client-browse-services
-endif
-
-client_publish_service_SOURCES = client-publish-service.c
-client_publish_service_CFLAGS = $(AM_CFLAGS)
-client_publish_service_LDADD = $(AM_LDADD) ../avahi-client/libavahi-client.la ../avahi-common/libavahi-common.la
-
-client_browse_services_SOURCES = client-browse-services.c
-client_browse_services_CFLAGS = $(AM_CFLAGS)
-client_browse_services_LDADD = $(AM_LDADD) ../avahi-client/libavahi-client.la ../avahi-common/libavahi-common.la
-
-if HAVE_GLIB
-
-if ENABLE_TESTS
-noinst_PROGRAMS += \
-	glib-integration
-endif
-
-glib_integration_SOURCES = glib-integration.c
-glib_integration_CFLAGS = $(AM_CFLAGS) $(GLIB20_CFLAGS)
-glib_integration_LDADD = $(AM_LDADD) $(GLIB20_LIBS) ../avahi-client/libavahi-client.la ../avahi-common/libavahi-common.la ../avahi-glib/libavahi-glib.la
-
-endif
-
-endif

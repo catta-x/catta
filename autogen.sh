@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # This file is part of avahi.
 #
@@ -42,13 +42,8 @@ run_versioned() {
 
 set -ex
 
-if [ -f .git/hooks/pre-commit.sample -a ! -f .git/hooks/pre-commit ] ; then
-    cp -p .git/hooks/pre-commit.sample .git/hooks/pre-commit && \
-    chmod +x .git/hooks/pre-commit && \
-    echo "Activated pre-commit hook."
-fi
-
 if [ "x$1" = "xam" ] ; then
+    # re-run only automake (after changes to Makefile.am)
     run_versioned automake "$AM_VERSION" -a -c --foreign
     ./config.status
 else 
@@ -61,10 +56,11 @@ else
     test -f Makefile.am~ && mv Makefile.am~ Makefile.am
     test -f configure.ac~ && mv configure.ac~ configure.ac
 
-    test "x$LIBTOOLIZE" = "x" && LIBTOOLIZE=libtoolize
-
     intltoolize --copy --force --automake
+
+    test "x$LIBTOOLIZE" = "x" && LIBTOOLIZE=libtoolize
     "$LIBTOOLIZE" -c --force
+
     run_versioned aclocal "$AM_VERSION" -I common
     run_versioned autoconf "$AC_VERSION" -Wall
     run_versioned autoheader "$AC_VERSION"

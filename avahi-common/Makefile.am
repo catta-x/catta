@@ -119,11 +119,3 @@ utf8_test_SOURCES = \
 	utf8.c utf8.h
 utf8_test_CFLAGS = $(AM_CFLAGS)
 utf8_test_LDADD = $(AM_LDADD)
-
-if HAVE_DBUS
-
-noinst_HEADERS = \
-	dbus.h \
-	dbus-watch-glue.h
-
-endif
