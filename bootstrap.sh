@@ -17,9 +17,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
-FLAGS="--sysconfdir=/etc --localstatedir=/var --enable-tests --enable-compat-howl --enable-compat-libdns_sd"
-
-# Feel free to add your own custom flags in here -Lathiat
+FLAGS="--sysconfdir=/etc --localstatedir=/var --enable-tests"
 
 case `uname -s` in
     Darwin)
@@ -27,7 +25,7 @@ case `uname -s` in
     export CFLAGS="-I/opt/local/include"
     export LDFLAGS="-L/opt/local/lib"
     export PKG_CONFIG_PATH="/opt/local/lib/pkgconfig"
-    FLAGS="$FLAGS --prefix=/opt/local --disable-pygtk"
+    FLAGS="$FLAGS --prefix=/opt/local"
     ;;
     FreeBSD)
     cp /usr/local/share/aclocal/libtool15.m4 common
@@ -36,26 +34,17 @@ case `uname -s` in
     export CFLAGS="-I/usr/local/include"
     export LDFLAGS="-L/usr/local/lib"
     export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-    FLAGS="$FLAGS --prefix=/opt/ --with-distro=none --disable-python --disable-dbus --disable-glib --disable-gtk"
+    FLAGS="$FLAGS --prefix=/opt"
     ;;
     NetBSD)
     export LIBTOOLIZE=libtoolize
     export CFLAGS="-I/usr/pkg/include"
     export LDFLAGS="-L/usr/pkg/lib"
     export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig"
-    FLAGS="$FLAGS --disable-monodoc --disable-mono --disable-qt3 --disable-qt4 --disable-xmltoman --prefix=/opt --with-distro=none --disable-python --disable-glib --disable-gtk --disable-manpages"
+    FLAGS="$FLAGS --prefix=/opt"
     ;;
     Linux)
     ;;
 esac
 
-case "$USER" in
-    lathiat|trentl)
-    FLAGS="$FLAGS --disable-qt4"
-    ;;
-    sebest)
-    FLAGS="$FLAGS --disable-monodoc --enable-dbus=no --enable-mono=no --enable-qt3=no --enable-qt4=no  --sysconfdir=/etc --localstatedir=/var --prefix=/usr  --disable-manpages --disable-xmltoman"
-    ;;
-esac
-
-CFLAGS="$CFLAGS -g -O0" exec ./autogen.sh $FLAGS "$@" --enable-qt3=no
+CFLAGS="$CFLAGS -g -O0" exec ./autogen.sh $FLAGS "$@"
