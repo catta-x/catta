@@ -4,9 +4,10 @@ containing only the common and core components
 
 TO BUILD FROM GIT:
 
-./bootstrap
-./configure
+./bootstrap         # first time
+./configure ...     # if other flags desired
 make
+make check          # to run some tests
 
 requires: libtool, pkgconfig, autoconf, automake
 
@@ -21,7 +22,7 @@ requires: doxygen
 CONFIGURE SWITCHES:
 
 --enable-tests
-build some stuff for 'make check'.
+build some test programs, including those for 'make check'.
 
 --enable-core-docs
 include files from 'avahi-core' when building the doxygen docs.

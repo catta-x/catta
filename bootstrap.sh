@@ -47,4 +47,5 @@ case `uname -s` in
     ;;
 esac
 
-CFLAGS="$CFLAGS -g -O0" exec ./autogen.sh $FLAGS "$@"
+export CFLAGS="$CFLAGS -g -O0"
+sh autogen.sh && ./configure $FLAGS "$@"
