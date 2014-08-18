@@ -57,9 +57,4 @@ else
     run_versioned autoconf "$AC_VERSION" -Wall
     run_versioned autoheader "$AC_VERSION"
     run_versioned automake "$AM_VERSION" -a -c --foreign
-
-    if test "x$NOCONFIGURE" = "x"; then
-        ./configure "$@"
-        make clean
-    fi
 fi
