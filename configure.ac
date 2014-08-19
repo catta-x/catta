@@ -44,7 +44,6 @@ AS_IF([test "x$STOW" = "xyes" && test -d /usr/local/stow], [
 # Checks for programs.
 AC_PROG_CC
 AC_PROG_CC_C99
-AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_USE_SYSTEM_EXTENSIONS
 AC_PROG_CPP
