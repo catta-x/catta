@@ -52,6 +52,10 @@ AC_PROG_LN_S
 AC_PROG_MAKE_SET
 AC_PROG_GCC_TRADITIONAL
 
+if test x"$ac_cv_prog_cc_c99" = x"no"; then
+    AC_MSG_ERROR([C99 support is required])
+fi
+
 # -fstack-protector
 AC_ARG_ENABLE([stack-protector],
     [AS_HELP_STRING([--disable-stack-protector],
