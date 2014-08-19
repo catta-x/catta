@@ -263,14 +263,7 @@ if test "x$GCC" = "xyes" ; then
 fi
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h limits.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/time.h unistd.h netdb.h syslog.h])
-AC_HEADER_STDBOOL
-
-# Checks for typedefs, structures, and compiler characteristics.
-AC_C_CONST
-AC_TYPE_SIZE_T
-AC_HEADER_TIME
-AC_HEADER_SYS_WAIT
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h unistd.h netdb.h syslog.h])
 
  # Solaris stuff
  AC_SEARCH_LIBS([inet_ntop],[nsl])
@@ -278,13 +271,8 @@ AC_HEADER_SYS_WAIT
  AC_CHECK_DECL([CMSG_SPACE],,CFLAGS="$CFLAGS -D_XOPEN_SOURCE=500 -D__EXTENSIONS__", [[#include <sys/socket.h>]])
 
 # Checks for library functions.
-AC_FUNC_MEMCMP
 AC_FUNC_SELECT_ARGTYPES
-# avahi_malloc actually returns NULL for avahi_malloc(0), so it does not matter
-# whether libc's malloc does too. (Same for realloc.)
-#AC_FUNC_MALLOC
-#AC_FUNC_REALLOC
-AC_CHECK_FUNCS([gethostname memchr memmove memset mkdir select socket strchr strcspn strdup strerror strrchr strspn strstr uname setresuid setreuid setresgid setregid strcasecmp gettimeofday putenv strncasecmp strlcpy gethostbyname seteuid setegid setproctitle getprogname])
+AC_CHECK_FUNCS([gethostname mkdir select socket strdup uname setresuid setreuid setresgid setregid strcasecmp gettimeofday putenv strncasecmp strlcpy gethostbyname seteuid setegid setproctitle getprogname])
 
 AC_FUNC_CHOWN
 AC_FUNC_STAT
