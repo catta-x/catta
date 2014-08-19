@@ -56,19 +56,15 @@ DX_INPUT = \
 	$(srcdir)/avahi-common/domain.h \
 	$(srcdir)/avahi-common/watch.h \
 	$(srcdir)/avahi-common/simple-watch.h \
-	$(srcdir)/avahi-common/thread-watch.h
-
-DX_EXAMPLE_PATH = $(srcdir)/examples
-DX_EXAMPLE_PATTERNS = *.c
-
-if ENABLE_CORE_DOCS
-DX_INPUT += \
+	$(srcdir)/avahi-common/thread-watch.h \
 	$(srcdir)/avahi-core/core.h \
 	$(srcdir)/avahi-core/lookup.h \
 	$(srcdir)/avahi-core/publish.h \
 	$(srcdir)/avahi-core/rr.h \
 	$(srcdir)/avahi-core/log.h
-endif
+
+DX_EXAMPLE_PATH = $(srcdir)/examples
+DX_EXAMPLE_PATTERNS = *.c
 
 pkgconfigdir = $(libdir)/pkgconfig
 

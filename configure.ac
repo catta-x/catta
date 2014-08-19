@@ -331,16 +331,6 @@ DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
 DX_INIT_DOXYGEN(avahi, doxygen.cfg, doxygen)
 
-AC_ARG_ENABLE(core-docs,
-        AS_HELP_STRING([--enable-core-docs],[Enable building of documentation for avahi-core]),
-[case "${enableval}" in
-  yes) ENABLE_CORE_DOCS=yes ;;
-  no)  ENABLE_CORE_DOCS=no ;;
-  *) AC_MSG_ERROR([bad value ${enableval} for --enable-core-docs]) ;;
-esac],[ENABLE_CORE_DOCS=no])
-
-AM_CONDITIONAL([ENABLE_CORE_DOCS], [test "x$ENABLE_CORE_DOCS" = xyes])
-
 #
 # Conditionally compile test and example programs
 #
@@ -380,5 +370,4 @@ echo "
 echo "\
     Building libavahi-core              yes
     Building tests:                     ${ENABLE_TESTS}
-    Building avahi-core documentation:  ${ENABLE_CORE_DOCS}
 "
