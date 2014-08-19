@@ -226,7 +226,7 @@ AC_TRY_COMPILE([#include <netinet/in.h>], [
 ])
 
 test_gcc_flag() {
-    AC_LANG_CONFTEST([int main() {}])
+    AC_LANG_CONFTEST([AC_LANG_SOURCE([[int main() {}]])])
     $CC -c conftest.c $CFLAGS $@ > /dev/null 2> /dev/null
     ret=$?
     rm -f conftest.o
