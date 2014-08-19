@@ -263,7 +263,7 @@ if test "x$GCC" = "xyes" ; then
 fi
 
 # Checks for header files.
-AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h unistd.h netdb.h syslog.h])
+AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/time.h unistd.h])
 
  # Solaris stuff
  AC_SEARCH_LIBS([inet_ntop],[nsl])
@@ -272,7 +272,7 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/
 
 # Checks for library functions.
 AC_FUNC_SELECT_ARGTYPES
-AC_CHECK_FUNCS([gethostname mkdir select socket strdup uname setresuid setreuid setresgid setregid strcasecmp gettimeofday putenv strncasecmp strlcpy gethostbyname seteuid setegid setproctitle getprogname])
+AC_CHECK_FUNCS([gethostname select socket uname strcasecmp gettimeofday strncasecmp strlcpy])
 
 AC_FUNC_CHOWN
 AC_FUNC_STAT
