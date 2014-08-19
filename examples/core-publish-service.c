@@ -210,6 +210,7 @@ int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char*argv[]) {
     avahi_server_config_init(&config);
     config.host_name = avahi_strdup("gurkiman");
     config.publish_workstation = 0;
+    config.publish_no_reverse = 1;
 
     /* Allocate a new server */
     server = avahi_server_new(avahi_simple_poll_get(simple_poll), &config, server_callback, NULL, &error);
