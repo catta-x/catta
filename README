@@ -4,10 +4,9 @@ containing only the common and core components
 
 TO BUILD FROM GIT:
 
-./bootstrap         # first time
-./configure ...     # if other flags desired
+autoreconf          # first time
+./configure
 make
-make check          # to run some tests
 
 requires: libtool, pkgconfig, autoconf, automake
 
