@@ -272,7 +272,6 @@ if test "x$GCC" = "xyes" ; then
 fi
 
 # Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h inttypes.h limits.h netinet/in.h stdlib.h string.h sys/ioctl.h sys/socket.h sys/time.h unistd.h netdb.h syslog.h])
 AC_HEADER_STDBOOL
 
