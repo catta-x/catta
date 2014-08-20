@@ -7,11 +7,11 @@
 
 <xsl:output method="xml" version="1.0" indent="yes"/>
 
-<xsl:param name="reference_prefix">../../../doc/avahi-docs/html/</xsl:param>
+<xsl:param name="reference_prefix">../../../doc/catta-docs/html/</xsl:param>
 
 <xsl:template match="/">
-  <book title="Avahi Reference Manual"
-        name="avahi"
+  <book title="Catta Reference Manual"
+        name="catta"
         link="{$reference_prefix}main.html">
   <chapters>
     <sub name="Headers" link="{$reference_prefix}files.html">

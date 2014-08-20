@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -24,47 +24,47 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include <avahi/timeval.h>
-#include <avahi/malloc.h>
-#include <avahi/log.h>
+#include <catta/timeval.h>
+#include <catta/malloc.h>
+#include <catta/log.h>
 
 #include "timeeventq.h"
 
-struct AvahiTimeEvent {
-    AvahiTimeEventQueue *queue;
-    AvahiPrioQueueNode *node;
+struct CattaTimeEvent {
+    CattaTimeEventQueue *queue;
+    CattaPrioQueueNode *node;
     struct timeval expiry;
     struct timeval last_run;
-    AvahiTimeEventCallback callback;
+    CattaTimeEventCallback callback;
     void* userdata;
 };
 
-struct AvahiTimeEventQueue {
-    const AvahiPoll *poll_api;
-    AvahiPrioQueue *prioq;
-    AvahiTimeout *timeout;
+struct CattaTimeEventQueue {
+    const CattaPoll *poll_api;
+    CattaPrioQueue *prioq;
+    CattaTimeout *timeout;
 };
 
 static int compare(const void* _a, const void* _b) {
-    const AvahiTimeEvent *a = _a,  *b = _b;
+    const CattaTimeEvent *a = _a,  *b = _b;
     int ret;
 
-    if ((ret = avahi_timeval_compare(&a->expiry, &b->expiry)) != 0)
+    if ((ret = catta_timeval_compare(&a->expiry, &b->expiry)) != 0)
         return ret;
 
     /* If both exevents are scheduled for the same time, put the entry
      * that has been run earlier the last time first. */
-    return avahi_timeval_compare(&a->last_run, &b->last_run);
+    return catta_timeval_compare(&a->last_run, &b->last_run);
 }
 
-static AvahiTimeEvent* time_event_queue_root(AvahiTimeEventQueue *q) {
+static CattaTimeEvent* time_event_queue_root(CattaTimeEventQueue *q) {
     assert(q);
 
     return q->prioq->root ? q->prioq->root->data : NULL;
 }
 
-static void update_timeout(AvahiTimeEventQueue *q) {
-    AvahiTimeEvent *e;
+static void update_timeout(CattaTimeEventQueue *q) {
+    CattaTimeEvent *e;
     assert(q);
 
     if ((e = time_event_queue_root(q)))
@@ -73,9 +73,9 @@ static void update_timeout(AvahiTimeEventQueue *q) {
         q->poll_api->timeout_update(q->timeout, NULL);
 }
 
-static void expiration_event(AVAHI_GCC_UNUSED AvahiTimeout *timeout, void *userdata) {
-    AvahiTimeEventQueue *q = userdata;
-    AvahiTimeEvent *e;
+static void expiration_event(CATTA_GCC_UNUSED CattaTimeout *timeout, void *userdata) {
+    CattaTimeEventQueue *q = userdata;
+    CattaTimeEvent *e;
 
     if ((e = time_event_queue_root(q))) {
         struct timeval now;
@@ -83,11 +83,11 @@ static void expiration_event(AVAHI_GCC_UNUSED AvahiTimeout *timeout, void *userd
         gettimeofday(&now, NULL);
 
         /* Check if expired */
-        if (avahi_timeval_compare(&now, &e->expiry) >= 0) {
+        if (catta_timeval_compare(&now, &e->expiry) >= 0) {
 
             /* Make sure to move the entry away from the front */
             e->last_run = now;
-            avahi_prio_queue_shuffle(q->prioq, e->node);
+            catta_prio_queue_shuffle(q->prioq, e->node);
 
             /* Run it */
             assert(e->callback);
@@ -98,11 +98,11 @@ static void expiration_event(AVAHI_GCC_UNUSED AvahiTimeout *timeout, void *userd
         }
     }
 
-    avahi_log_debug(__FILE__": Strange, expiration_event() called, but nothing really happened.");
+    catta_log_debug(__FILE__": Strange, expiration_event() called, but nothing really happened.");
     update_timeout(q);
 }
 
-static void fix_expiry_time(AvahiTimeEvent *e) {
+static void fix_expiry_time(CattaTimeEvent *e) {
     struct timeval now;
     assert(e);
 
@@ -110,21 +110,21 @@ static void fix_expiry_time(AvahiTimeEvent *e) {
 
     gettimeofday(&now, NULL);
 
-    if (avahi_timeval_compare(&now, &e->expiry) > 0)
+    if (catta_timeval_compare(&now, &e->expiry) > 0)
         e->expiry = now;
 }
 
-AvahiTimeEventQueue* avahi_time_event_queue_new(const AvahiPoll *poll_api) {
-    AvahiTimeEventQueue *q;
+CattaTimeEventQueue* catta_time_event_queue_new(const CattaPoll *poll_api) {
+    CattaTimeEventQueue *q;
 
-    if (!(q = avahi_new(AvahiTimeEventQueue, 1))) {
-        avahi_log_error(__FILE__": Out of memory");
+    if (!(q = catta_new(CattaTimeEventQueue, 1))) {
+        catta_log_error(__FILE__": Out of memory");
         goto oom;
     }
 
     q->poll_api = poll_api;
 
-    if (!(q->prioq = avahi_prio_queue_new(compare)))
+    if (!(q->prioq = catta_prio_queue_new(compare)))
         goto oom;
 
     if (!(q->timeout = poll_api->timeout_new(poll_api, NULL, expiration_event, q)))
@@ -135,43 +135,43 @@ AvahiTimeEventQueue* avahi_time_event_queue_new(const AvahiPoll *poll_api) {
 oom:
 
     if (q) {
-        avahi_free(q);
+        catta_free(q);
 
         if (q->prioq)
-            avahi_prio_queue_free(q->prioq);
+            catta_prio_queue_free(q->prioq);
     }
 
     return NULL;
 }
 
-void avahi_time_event_queue_free(AvahiTimeEventQueue *q) {
-    AvahiTimeEvent *e;
+void catta_time_event_queue_free(CattaTimeEventQueue *q) {
+    CattaTimeEvent *e;
 
     assert(q);
 
     while ((e = time_event_queue_root(q)))
-        avahi_time_event_free(e);
-    avahi_prio_queue_free(q->prioq);
+        catta_time_event_free(e);
+    catta_prio_queue_free(q->prioq);
 
     q->poll_api->timeout_free(q->timeout);
 
-    avahi_free(q);
+    catta_free(q);
 }
 
-AvahiTimeEvent* avahi_time_event_new(
-    AvahiTimeEventQueue *q,
+CattaTimeEvent* catta_time_event_new(
+    CattaTimeEventQueue *q,
     const struct timeval *timeval,
-    AvahiTimeEventCallback callback,
+    CattaTimeEventCallback callback,
     void* userdata) {
 
-    AvahiTimeEvent *e;
+    CattaTimeEvent *e;
 
     assert(q);
     assert(callback);
     assert(userdata);
 
-    if (!(e = avahi_new(AvahiTimeEvent, 1))) {
-        avahi_log_error(__FILE__": Out of memory");
+    if (!(e = catta_new(CattaTimeEvent, 1))) {
+        catta_log_error(__FILE__": Out of memory");
         return NULL; /* OOM */
     }
 
@@ -191,8 +191,8 @@ AvahiTimeEvent* avahi_time_event_new(
     e->last_run.tv_sec = 0;
     e->last_run.tv_usec = 0;
 
-    if (!(e->node = avahi_prio_queue_put(q->prioq, e))) {
-        avahi_free(e);
+    if (!(e->node = catta_prio_queue_put(q->prioq, e))) {
+        catta_free(e);
         return NULL;
     }
 
@@ -200,25 +200,25 @@ AvahiTimeEvent* avahi_time_event_new(
     return e;
 }
 
-void avahi_time_event_free(AvahiTimeEvent *e) {
-    AvahiTimeEventQueue *q;
+void catta_time_event_free(CattaTimeEvent *e) {
+    CattaTimeEventQueue *q;
     assert(e);
 
     q = e->queue;
 
-    avahi_prio_queue_remove(q->prioq, e->node);
-    avahi_free(e);
+    catta_prio_queue_remove(q->prioq, e->node);
+    catta_free(e);
 
     update_timeout(q);
 }
 
-void avahi_time_event_update(AvahiTimeEvent *e, const struct timeval *timeval) {
+void catta_time_event_update(CattaTimeEvent *e, const struct timeval *timeval) {
     assert(e);
     assert(timeval);
 
     e->expiry = *timeval;
     fix_expiry_time(e);
-    avahi_prio_queue_shuffle(e->queue->prioq, e->node);
+    catta_prio_queue_shuffle(e->queue->prioq, e->node);
 
     update_timeout(e->queue);
 }

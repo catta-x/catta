@@ -2,31 +2,31 @@
 #define foointernalhfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
 /** A locally registered DNS resource record */
-typedef struct AvahiEntry AvahiEntry;
+typedef struct CattaEntry CattaEntry;
 
-#include <avahi/llist.h>
-#include <avahi/watch.h>
-#include <avahi/timeval.h>
-#include <avahi/core.h>
+#include <catta/llist.h>
+#include <catta/watch.h>
+#include <catta/timeval.h>
+#include <catta/core.h>
 
 #include "iface.h"
 #include "prioq.h"
@@ -40,92 +40,92 @@ typedef struct AvahiEntry AvahiEntry;
 #include "multicast-lookup.h"
 #include "dns-srv-rr.h"
 
-#define AVAHI_LEGACY_UNICAST_REFLECT_SLOTS_MAX 100
+#define CATTA_LEGACY_UNICAST_REFLECT_SLOTS_MAX 100
 
-#define AVAHI_FLAGS_VALID(flags, max) (!((flags) & ~(max)))
+#define CATTA_FLAGS_VALID(flags, max) (!((flags) & ~(max)))
 
-#define AVAHI_RR_HOLDOFF_MSEC 1000
-#define AVAHI_RR_HOLDOFF_MSEC_RATE_LIMIT 20000
-#define AVAHI_RR_RATE_LIMIT_COUNT 15
+#define CATTA_RR_HOLDOFF_MSEC 1000
+#define CATTA_RR_HOLDOFF_MSEC_RATE_LIMIT 20000
+#define CATTA_RR_RATE_LIMIT_COUNT 15
 
-typedef struct AvahiLegacyUnicastReflectSlot AvahiLegacyUnicastReflectSlot;
+typedef struct CattaLegacyUnicastReflectSlot CattaLegacyUnicastReflectSlot;
 
-struct AvahiLegacyUnicastReflectSlot {
-    AvahiServer *server;
+struct CattaLegacyUnicastReflectSlot {
+    CattaServer *server;
 
     uint16_t id, original_id;
-    AvahiAddress address;
+    CattaAddress address;
     uint16_t port;
     int interface;
     struct timeval elapse_time;
-    AvahiTimeEvent *time_event;
+    CattaTimeEvent *time_event;
 };
 
-struct AvahiEntry {
-    AvahiServer *server;
-    AvahiSEntryGroup *group;
+struct CattaEntry {
+    CattaServer *server;
+    CattaSEntryGroup *group;
 
     int dead;
 
-    AvahiPublishFlags flags;
-    AvahiRecord *record;
-    AvahiIfIndex interface;
-    AvahiProtocol protocol;
+    CattaPublishFlags flags;
+    CattaRecord *record;
+    CattaIfIndex interface;
+    CattaProtocol protocol;
 
-    AVAHI_LLIST_FIELDS(AvahiEntry, entries);
-    AVAHI_LLIST_FIELDS(AvahiEntry, by_key);
-    AVAHI_LLIST_FIELDS(AvahiEntry, by_group);
+    CATTA_LLIST_FIELDS(CattaEntry, entries);
+    CATTA_LLIST_FIELDS(CattaEntry, by_key);
+    CATTA_LLIST_FIELDS(CattaEntry, by_group);
 
-    AVAHI_LLIST_HEAD(AvahiAnnouncer, announcers);
+    CATTA_LLIST_HEAD(CattaAnnouncer, announcers);
 };
 
-struct AvahiSEntryGroup {
-    AvahiServer *server;
+struct CattaSEntryGroup {
+    CattaServer *server;
     int dead;
 
-    AvahiEntryGroupState state;
+    CattaEntryGroupState state;
     void* userdata;
-    AvahiSEntryGroupCallback callback;
+    CattaSEntryGroupCallback callback;
 
     unsigned n_probing;
 
     unsigned n_register_try;
     struct timeval register_time;
-    AvahiTimeEvent *register_time_event;
+    CattaTimeEvent *register_time_event;
 
     struct timeval established_at;
 
-    AVAHI_LLIST_FIELDS(AvahiSEntryGroup, groups);
-    AVAHI_LLIST_HEAD(AvahiEntry, entries);
+    CATTA_LLIST_FIELDS(CattaSEntryGroup, groups);
+    CATTA_LLIST_HEAD(CattaEntry, entries);
 };
 
-struct AvahiServer {
-    const AvahiPoll *poll_api;
+struct CattaServer {
+    const CattaPoll *poll_api;
 
-    AvahiInterfaceMonitor *monitor;
-    AvahiServerConfig config;
+    CattaInterfaceMonitor *monitor;
+    CattaServerConfig config;
 
-    AVAHI_LLIST_HEAD(AvahiEntry, entries);
-    AvahiHashmap *entries_by_key;
+    CATTA_LLIST_HEAD(CattaEntry, entries);
+    CattaHashmap *entries_by_key;
 
-    AVAHI_LLIST_HEAD(AvahiSEntryGroup, groups);
+    CATTA_LLIST_HEAD(CattaSEntryGroup, groups);
 
-    AVAHI_LLIST_HEAD(AvahiSRecordBrowser, record_browsers);
-    AvahiHashmap *record_browser_hashmap;
-    AVAHI_LLIST_HEAD(AvahiSHostNameResolver, host_name_resolvers);
-    AVAHI_LLIST_HEAD(AvahiSAddressResolver, address_resolvers);
-    AVAHI_LLIST_HEAD(AvahiSDomainBrowser, domain_browsers);
-    AVAHI_LLIST_HEAD(AvahiSServiceTypeBrowser, service_type_browsers);
-    AVAHI_LLIST_HEAD(AvahiSServiceBrowser, service_browsers);
-    AVAHI_LLIST_HEAD(AvahiSServiceResolver, service_resolvers);
-    AVAHI_LLIST_HEAD(AvahiSDNSServerBrowser, dns_server_browsers);
+    CATTA_LLIST_HEAD(CattaSRecordBrowser, record_browsers);
+    CattaHashmap *record_browser_hashmap;
+    CATTA_LLIST_HEAD(CattaSHostNameResolver, host_name_resolvers);
+    CATTA_LLIST_HEAD(CattaSAddressResolver, address_resolvers);
+    CATTA_LLIST_HEAD(CattaSDomainBrowser, domain_browsers);
+    CATTA_LLIST_HEAD(CattaSServiceTypeBrowser, service_type_browsers);
+    CATTA_LLIST_HEAD(CattaSServiceBrowser, service_browsers);
+    CATTA_LLIST_HEAD(CattaSServiceResolver, service_resolvers);
+    CATTA_LLIST_HEAD(CattaSDNSServerBrowser, dns_server_browsers);
 
     int need_entry_cleanup, need_group_cleanup, need_browser_cleanup;
 
     /* Used for scheduling RR cleanup */
-    AvahiTimeEvent *cleanup_time_event;
+    CattaTimeEvent *cleanup_time_event;
 
-    AvahiTimeEventQueue *time_event_queue;
+    CattaTimeEventQueue *time_event_queue;
 
     char *host_name, *host_name_fqdn, *domain_name;
 
@@ -133,22 +133,22 @@ struct AvahiServer {
         /* The following two sockets two are used for reflection only */
         fd_legacy_unicast_ipv4, fd_legacy_unicast_ipv6;
 
-    AvahiWatch *watch_ipv4, *watch_ipv6,
+    CattaWatch *watch_ipv4, *watch_ipv6,
         *watch_legacy_unicast_ipv4, *watch_legacy_unicast_ipv6;
 
-    AvahiServerState state;
-    AvahiServerCallback callback;
+    CattaServerState state;
+    CattaServerCallback callback;
     void* userdata;
 
-    AvahiSEntryGroup *hinfo_entry_group;
-    AvahiSEntryGroup *browse_domain_entry_group;
+    CattaSEntryGroup *hinfo_entry_group;
+    CattaSEntryGroup *browse_domain_entry_group;
     unsigned n_host_rr_pending;
 
     /* Used for assembling responses */
-    AvahiRecordList *record_list;
+    CattaRecordList *record_list;
 
     /* Used for reflection of legacy unicast packets */
-    AvahiLegacyUnicastReflectSlot **legacy_unicast_reflect_slots;
+    CattaLegacyUnicastReflectSlot **legacy_unicast_reflect_slots;
     uint16_t legacy_unicast_reflect_id;
 
     /* The last error code */
@@ -157,69 +157,69 @@ struct AvahiServer {
     /* The local service cookie */
     uint32_t local_service_cookie;
 
-    AvahiMulticastLookupEngine *multicast_lookup_engine;
-    AvahiWideAreaLookupEngine *wide_area_lookup_engine;
+    CattaMulticastLookupEngine *multicast_lookup_engine;
+    CattaWideAreaLookupEngine *wide_area_lookup_engine;
 };
 
-void avahi_entry_free(AvahiServer*s, AvahiEntry *e);
-void avahi_entry_group_free(AvahiServer *s, AvahiSEntryGroup *g);
+void catta_entry_free(CattaServer*s, CattaEntry *e);
+void catta_entry_group_free(CattaServer *s, CattaSEntryGroup *g);
 
-void avahi_cleanup_dead_entries(AvahiServer *s);
+void catta_cleanup_dead_entries(CattaServer *s);
 
-void avahi_server_prepare_response(AvahiServer *s, AvahiInterface *i, AvahiEntry *e, int unicast_response, int auxiliary);
-void avahi_server_prepare_matching_responses(AvahiServer *s, AvahiInterface *i, AvahiKey *k, int unicast_response);
-void avahi_server_generate_response(AvahiServer *s, AvahiInterface *i, AvahiDnsPacket *p, const AvahiAddress *a, uint16_t port, int legacy_unicast, int is_probe);
+void catta_server_prepare_response(CattaServer *s, CattaInterface *i, CattaEntry *e, int unicast_response, int auxiliary);
+void catta_server_prepare_matching_responses(CattaServer *s, CattaInterface *i, CattaKey *k, int unicast_response);
+void catta_server_generate_response(CattaServer *s, CattaInterface *i, CattaDnsPacket *p, const CattaAddress *a, uint16_t port, int legacy_unicast, int is_probe);
 
-void avahi_s_entry_group_change_state(AvahiSEntryGroup *g, AvahiEntryGroupState state);
+void catta_s_entry_group_change_state(CattaSEntryGroup *g, CattaEntryGroupState state);
 
-int avahi_entry_is_commited(AvahiEntry *e);
+int catta_entry_is_commited(CattaEntry *e);
 
-void avahi_server_enumerate_aux_records(AvahiServer *s, AvahiInterface *i, AvahiRecord *r, void (*callback)(AvahiServer *s, AvahiRecord *r, int flush_cache, void* userdata), void* userdata);
+void catta_server_enumerate_aux_records(CattaServer *s, CattaInterface *i, CattaRecord *r, void (*callback)(CattaServer *s, CattaRecord *r, int flush_cache, void* userdata), void* userdata);
 
-void avahi_host_rr_entry_group_callback(AvahiServer *s, AvahiSEntryGroup *g, AvahiEntryGroupState state, void *userdata);
+void catta_host_rr_entry_group_callback(CattaServer *s, CattaSEntryGroup *g, CattaEntryGroupState state, void *userdata);
 
-void avahi_server_decrease_host_rr_pending(AvahiServer *s);
+void catta_server_decrease_host_rr_pending(CattaServer *s);
 
-int avahi_server_set_errno(AvahiServer *s, int error);
+int catta_server_set_errno(CattaServer *s, int error);
 
-int avahi_server_is_service_local(AvahiServer *s, AvahiIfIndex interface, AvahiProtocol protocol, const char *name);
-int avahi_server_is_record_local(AvahiServer *s, AvahiIfIndex interface, AvahiProtocol protocol, AvahiRecord *record);
+int catta_server_is_service_local(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, const char *name);
+int catta_server_is_record_local(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, CattaRecord *record);
 
-int avahi_server_add_ptr(
-    AvahiServer *s,
-    AvahiSEntryGroup *g,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiPublishFlags flags,
+int catta_server_add_ptr(
+    CattaServer *s,
+    CattaSEntryGroup *g,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaPublishFlags flags,
     uint32_t ttl,
     const char *name,
     const char *dest);
 
-#define AVAHI_CHECK_VALIDITY(server, expression, error) { \
+#define CATTA_CHECK_VALIDITY(server, expression, error) { \
         if (!(expression)) \
-            return avahi_server_set_errno((server), (error)); \
+            return catta_server_set_errno((server), (error)); \
 }
 
-#define AVAHI_CHECK_VALIDITY_RETURN_NULL(server, expression, error) { \
+#define CATTA_CHECK_VALIDITY_RETURN_NULL(server, expression, error) { \
         if (!(expression)) { \
-            avahi_server_set_errno((server), (error)); \
+            catta_server_set_errno((server), (error)); \
             return NULL; \
         } \
 }
 
-#define AVAHI_CHECK_VALIDITY_SET_RET_GOTO_FAIL(server, expression, error) {\
+#define CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(server, expression, error) {\
     if (!(expression)) { \
-        ret = avahi_server_set_errno((server), (error)); \
+        ret = catta_server_set_errno((server), (error)); \
         goto fail; \
     } \
 }
 
-#define AVAHI_ASSERT_TRUE(expression) { \
+#define CATTA_ASSERT_TRUE(expression) { \
     int __tmp = !!(expression); \
     assert(__tmp); \
 }
 
-#define AVAHI_ASSERT_SUCCESS(expression) { \
+#define CATTA_ASSERT_SUCCESS(expression) { \
     int __tmp = (expression); \
     assert(__tmp == 0); \
 }

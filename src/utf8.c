@@ -47,7 +47,7 @@
 
 
 const char *
-avahi_utf8_valid (const char *str)
+catta_utf8_valid (const char *str)
 
 {
   unsigned val = 0;

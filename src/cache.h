@@ -2,74 +2,74 @@
 #define foocachehfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-typedef struct AvahiCache AvahiCache;
+typedef struct CattaCache CattaCache;
 
-#include <avahi/llist.h>
+#include <catta/llist.h>
 #include "prioq.h"
 #include "internal.h"
 #include "timeeventq.h"
 #include "hashmap.h"
 
 typedef enum {
-    AVAHI_CACHE_VALID,
-    AVAHI_CACHE_EXPIRY1,
-    AVAHI_CACHE_EXPIRY2,
-    AVAHI_CACHE_EXPIRY3,
-    AVAHI_CACHE_EXPIRY_FINAL,
-    AVAHI_CACHE_POOF,       /* Passive observation of failure */
-    AVAHI_CACHE_POOF_FINAL,
-    AVAHI_CACHE_GOODBYE_FINAL,
-    AVAHI_CACHE_REPLACE_FINAL
-} AvahiCacheEntryState;
+    CATTA_CACHE_VALID,
+    CATTA_CACHE_EXPIRY1,
+    CATTA_CACHE_EXPIRY2,
+    CATTA_CACHE_EXPIRY3,
+    CATTA_CACHE_EXPIRY_FINAL,
+    CATTA_CACHE_POOF,       /* Passive observation of failure */
+    CATTA_CACHE_POOF_FINAL,
+    CATTA_CACHE_GOODBYE_FINAL,
+    CATTA_CACHE_REPLACE_FINAL
+} CattaCacheEntryState;
 
-typedef struct AvahiCacheEntry AvahiCacheEntry;
+typedef struct CattaCacheEntry CattaCacheEntry;
 
-struct AvahiCacheEntry {
-    AvahiCache *cache;
-    AvahiRecord *record;
+struct CattaCacheEntry {
+    CattaCache *cache;
+    CattaRecord *record;
     struct timeval timestamp;
     struct timeval poof_timestamp;
     struct timeval expiry;
     int cache_flush;
     int poof_num;
 
-    AvahiAddress origin;
+    CattaAddress origin;
 
-    AvahiCacheEntryState state;
-    AvahiTimeEvent *time_event;
+    CattaCacheEntryState state;
+    CattaTimeEvent *time_event;
 
-    AvahiAddress poof_address;
+    CattaAddress poof_address;
 
-    AVAHI_LLIST_FIELDS(AvahiCacheEntry, by_key);
-    AVAHI_LLIST_FIELDS(AvahiCacheEntry, entry);
+    CATTA_LLIST_FIELDS(CattaCacheEntry, by_key);
+    CATTA_LLIST_FIELDS(CattaCacheEntry, entry);
 };
 
-struct AvahiCache {
-    AvahiServer *server;
+struct CattaCache {
+    CattaServer *server;
 
-    AvahiInterface *interface;
+    CattaInterface *interface;
 
-    AvahiHashmap *hashmap;
+    CattaHashmap *hashmap;
 
-    AVAHI_LLIST_HEAD(AvahiCacheEntry, entries);
+    CATTA_LLIST_HEAD(CattaCacheEntry, entries);
 
     unsigned n_entries;
 
@@ -77,25 +77,25 @@ struct AvahiCache {
     time_t last_rand_timestamp;
 };
 
-AvahiCache *avahi_cache_new(AvahiServer *server, AvahiInterface *interface);
-void avahi_cache_free(AvahiCache *c);
+CattaCache *catta_cache_new(CattaServer *server, CattaInterface *interface);
+void catta_cache_free(CattaCache *c);
 
-void avahi_cache_update(AvahiCache *c, AvahiRecord *r, int cache_flush, const AvahiAddress *a);
+void catta_cache_update(CattaCache *c, CattaRecord *r, int cache_flush, const CattaAddress *a);
 
-int avahi_cache_dump(AvahiCache *c, AvahiDumpCallback callback, void* userdata);
+int catta_cache_dump(CattaCache *c, CattaDumpCallback callback, void* userdata);
 
-typedef void* AvahiCacheWalkCallback(AvahiCache *c, AvahiKey *pattern, AvahiCacheEntry *e, void* userdata);
-void* avahi_cache_walk(AvahiCache *c, AvahiKey *pattern, AvahiCacheWalkCallback cb, void* userdata);
+typedef void* CattaCacheWalkCallback(CattaCache *c, CattaKey *pattern, CattaCacheEntry *e, void* userdata);
+void* catta_cache_walk(CattaCache *c, CattaKey *pattern, CattaCacheWalkCallback cb, void* userdata);
 
-int avahi_cache_entry_half_ttl(AvahiCache *c, AvahiCacheEntry *e);
+int catta_cache_entry_half_ttl(CattaCache *c, CattaCacheEntry *e);
 
 /** Start the "Passive observation of Failure" algorithm for all
  * records of the specified key. The specified address is  */
-void avahi_cache_start_poof(AvahiCache *c, AvahiKey *key, const AvahiAddress *a);
+void catta_cache_start_poof(CattaCache *c, CattaKey *key, const CattaAddress *a);
 
 /* Stop a previously started POOF algorithm for a record. (Used for response suppresions records */
-void avahi_cache_stop_poof(AvahiCache *c, AvahiRecord *record, const AvahiAddress *a);
+void catta_cache_stop_poof(CattaCache *c, CattaRecord *record, const CattaAddress *a);
 
-void avahi_cache_flush(AvahiCache *c);
+void catta_cache_flush(CattaCache *c);
 
 #endif

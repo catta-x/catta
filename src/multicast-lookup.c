@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -23,81 +23,81 @@
 
 #include <stdlib.h>
 
-#include <avahi/malloc.h>
-#include <avahi/timeval.h>
+#include <catta/malloc.h>
+#include <catta/timeval.h>
 
 #include "internal.h"
 #include "browse.h"
 #include "socket.h"
-#include <avahi/log.h>
+#include <catta/log.h>
 #include "hashmap.h"
 #include "multicast-lookup.h"
 #include "rr-util.h"
 
-struct AvahiMulticastLookup {
-    AvahiMulticastLookupEngine *engine;
+struct CattaMulticastLookup {
+    CattaMulticastLookupEngine *engine;
     int dead;
 
-    AvahiKey *key, *cname_key;
+    CattaKey *key, *cname_key;
 
-    AvahiMulticastLookupCallback callback;
+    CattaMulticastLookupCallback callback;
     void *userdata;
 
-    AvahiIfIndex interface;
-    AvahiProtocol protocol;
+    CattaIfIndex interface;
+    CattaProtocol protocol;
 
     int queriers_added;
 
-    AvahiTimeEvent *all_for_now_event;
+    CattaTimeEvent *all_for_now_event;
 
-    AVAHI_LLIST_FIELDS(AvahiMulticastLookup, lookups);
-    AVAHI_LLIST_FIELDS(AvahiMulticastLookup, by_key);
+    CATTA_LLIST_FIELDS(CattaMulticastLookup, lookups);
+    CATTA_LLIST_FIELDS(CattaMulticastLookup, by_key);
 };
 
-struct AvahiMulticastLookupEngine {
-    AvahiServer *server;
+struct CattaMulticastLookupEngine {
+    CattaServer *server;
 
     /* Lookups */
-    AVAHI_LLIST_HEAD(AvahiMulticastLookup, lookups);
-    AvahiHashmap *lookups_by_key;
+    CATTA_LLIST_HEAD(CattaMulticastLookup, lookups);
+    CattaHashmap *lookups_by_key;
 
     int cleanup_dead;
 };
 
-static void all_for_now_callback(AvahiTimeEvent *e, void* userdata) {
-    AvahiMulticastLookup *l = userdata;
+static void all_for_now_callback(CattaTimeEvent *e, void* userdata) {
+    CattaMulticastLookup *l = userdata;
 
     assert(e);
     assert(l);
 
-    avahi_time_event_free(l->all_for_now_event);
+    catta_time_event_free(l->all_for_now_event);
     l->all_for_now_event = NULL;
 
-    l->callback(l->engine, l->interface, l->protocol, AVAHI_BROWSER_ALL_FOR_NOW, AVAHI_LOOKUP_RESULT_MULTICAST, NULL, l->userdata);
+    l->callback(l->engine, l->interface, l->protocol, CATTA_BROWSER_ALL_FOR_NOW, CATTA_LOOKUP_RESULT_MULTICAST, NULL, l->userdata);
 }
 
-AvahiMulticastLookup *avahi_multicast_lookup_new(
-    AvahiMulticastLookupEngine *e,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiKey *key,
-    AvahiMulticastLookupCallback callback,
+CattaMulticastLookup *catta_multicast_lookup_new(
+    CattaMulticastLookupEngine *e,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaKey *key,
+    CattaMulticastLookupCallback callback,
     void *userdata) {
 
-    AvahiMulticastLookup *l, *t;
+    CattaMulticastLookup *l, *t;
     struct timeval tv;
 
     assert(e);
-    assert(AVAHI_IF_VALID(interface));
-    assert(AVAHI_PROTO_VALID(protocol));
+    assert(CATTA_IF_VALID(interface));
+    assert(CATTA_PROTO_VALID(protocol));
     assert(key);
     assert(callback);
 
-    l = avahi_new(AvahiMulticastLookup, 1);
+    l = catta_new(CattaMulticastLookup, 1);
     l->engine = e;
     l->dead = 0;
-    l->key = avahi_key_ref(key);
-    l->cname_key = avahi_key_new_cname(l->key);
+    l->key = catta_key_ref(key);
+    l->cname_key = catta_key_new_cname(l->key);
     l->callback = callback;
     l->userdata = userdata;
     l->interface = interface;
@@ -105,65 +105,65 @@ AvahiMulticastLookup *avahi_multicast_lookup_new(
     l->all_for_now_event = NULL;
     l->queriers_added = 0;
 
-    t = avahi_hashmap_lookup(e->lookups_by_key, l->key);
-    AVAHI_LLIST_PREPEND(AvahiMulticastLookup, by_key, t, l);
-    avahi_hashmap_replace(e->lookups_by_key, avahi_key_ref(l->key), t);
+    t = catta_hashmap_lookup(e->lookups_by_key, l->key);
+    CATTA_LLIST_PREPEND(CattaMulticastLookup, by_key, t, l);
+    catta_hashmap_replace(e->lookups_by_key, catta_key_ref(l->key), t);
 
-    AVAHI_LLIST_PREPEND(AvahiMulticastLookup, lookups, e->lookups, l);
+    CATTA_LLIST_PREPEND(CattaMulticastLookup, lookups, e->lookups, l);
 
-    avahi_querier_add_for_all(e->server, interface, protocol, l->key, &tv);
+    catta_querier_add_for_all(e->server, interface, protocol, l->key, &tv);
     l->queriers_added = 1;
 
     /* Add a second */
-    avahi_timeval_add(&tv, 1000000);
+    catta_timeval_add(&tv, 1000000);
 
     /* Issue the ALL_FOR_NOW event one second after the querier was initially created */
-    l->all_for_now_event = avahi_time_event_new(e->server->time_event_queue, &tv, all_for_now_callback, l);
+    l->all_for_now_event = catta_time_event_new(e->server->time_event_queue, &tv, all_for_now_callback, l);
 
     return l;
 }
 
-static void lookup_stop(AvahiMulticastLookup *l) {
+static void lookup_stop(CattaMulticastLookup *l) {
     assert(l);
 
     l->callback = NULL;
 
     if (l->queriers_added) {
-        avahi_querier_remove_for_all(l->engine->server, l->interface, l->protocol, l->key);
+        catta_querier_remove_for_all(l->engine->server, l->interface, l->protocol, l->key);
         l->queriers_added = 0;
     }
 
     if (l->all_for_now_event) {
-        avahi_time_event_free(l->all_for_now_event);
+        catta_time_event_free(l->all_for_now_event);
         l->all_for_now_event = NULL;
     }
 }
 
-static void lookup_destroy(AvahiMulticastLookup *l) {
-    AvahiMulticastLookup *t;
+static void lookup_destroy(CattaMulticastLookup *l) {
+    CattaMulticastLookup *t;
     assert(l);
 
     lookup_stop(l);
 
-    t = avahi_hashmap_lookup(l->engine->lookups_by_key, l->key);
-    AVAHI_LLIST_REMOVE(AvahiMulticastLookup, by_key, t, l);
+    t = catta_hashmap_lookup(l->engine->lookups_by_key, l->key);
+    CATTA_LLIST_REMOVE(CattaMulticastLookup, by_key, t, l);
     if (t)
-        avahi_hashmap_replace(l->engine->lookups_by_key, avahi_key_ref(l->key), t);
+        catta_hashmap_replace(l->engine->lookups_by_key, catta_key_ref(l->key), t);
     else
-        avahi_hashmap_remove(l->engine->lookups_by_key, l->key);
+        catta_hashmap_remove(l->engine->lookups_by_key, l->key);
 
-    AVAHI_LLIST_REMOVE(AvahiMulticastLookup, lookups, l->engine->lookups, l);
+    CATTA_LLIST_REMOVE(CattaMulticastLookup, lookups, l->engine->lookups, l);
 
     if (l->key)
-        avahi_key_unref(l->key);
+        catta_key_unref(l->key);
 
     if (l->cname_key)
-        avahi_key_unref(l->cname_key);
+        catta_key_unref(l->cname_key);
 
-    avahi_free(l);
+    catta_free(l);
 }
 
-void avahi_multicast_lookup_free(AvahiMulticastLookup *l) {
+void catta_multicast_lookup_free(CattaMulticastLookup *l) {
     assert(l);
 
     if (l->dead)
@@ -174,8 +174,8 @@ void avahi_multicast_lookup_free(AvahiMulticastLookup *l) {
     lookup_stop(l);
 }
 
-void avahi_multicast_lookup_engine_cleanup(AvahiMulticastLookupEngine *e) {
-    AvahiMulticastLookup *l, *n;
+void catta_multicast_lookup_engine_cleanup(CattaMulticastLookupEngine *e) {
+    CattaMulticastLookup *l, *n;
     assert(e);
 
     while (e->cleanup_dead) {
@@ -191,15 +191,15 @@ void avahi_multicast_lookup_engine_cleanup(AvahiMulticastLookupEngine *e) {
 }
 
 struct cbdata {
-    AvahiMulticastLookupEngine *engine;
-    AvahiMulticastLookupCallback callback;
+    CattaMulticastLookupEngine *engine;
+    CattaMulticastLookupCallback callback;
     void *userdata;
-    AvahiKey *key, *cname_key;
-    AvahiInterface *interface;
+    CattaKey *key, *cname_key;
+    CattaInterface *interface;
     unsigned n_found;
 };
 
-static void* scan_cache_callback(AvahiCache *c, AvahiKey *pattern, AvahiCacheEntry *e, void* userdata) {
+static void* scan_cache_callback(CattaCache *c, CattaKey *pattern, CattaCacheEntry *e, void* userdata) {
     struct cbdata *cbdata = userdata;
 
     assert(c);
@@ -211,8 +211,8 @@ static void* scan_cache_callback(AvahiCache *c, AvahiKey *pattern, AvahiCacheEnt
         cbdata->engine,
         cbdata->interface->hardware->index,
         cbdata->interface->protocol,
-        AVAHI_BROWSER_NEW,
-        AVAHI_LOOKUP_RESULT_CACHED|AVAHI_LOOKUP_RESULT_MULTICAST,
+        CATTA_BROWSER_NEW,
+        CATTA_LOOKUP_RESULT_CACHED|CATTA_LOOKUP_RESULT_MULTICAST,
         e->record,
         cbdata->userdata);
 
@@ -221,7 +221,7 @@ static void* scan_cache_callback(AvahiCache *c, AvahiKey *pattern, AvahiCacheEnt
     return NULL;
 }
 
-static void scan_interface_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, void* userdata) {
+static void scan_interface_callback(CattaInterfaceMonitor *m, CattaInterface *i, void* userdata) {
     struct cbdata *cbdata = userdata;
 
     assert(m);
@@ -230,20 +230,20 @@ static void scan_interface_callback(AvahiInterfaceMonitor *m, AvahiInterface *i,
 
     cbdata->interface = i;
 
-    avahi_cache_walk(i->cache, cbdata->key, scan_cache_callback, cbdata);
+    catta_cache_walk(i->cache, cbdata->key, scan_cache_callback, cbdata);
 
     if (cbdata->cname_key)
-        avahi_cache_walk(i->cache, cbdata->cname_key, scan_cache_callback, cbdata);
+        catta_cache_walk(i->cache, cbdata->cname_key, scan_cache_callback, cbdata);
 
     cbdata->interface = NULL;
 }
 
-unsigned avahi_multicast_lookup_engine_scan_cache(
-    AvahiMulticastLookupEngine *e,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiKey *key,
-    AvahiMulticastLookupCallback callback,
+unsigned catta_multicast_lookup_engine_scan_cache(
+    CattaMulticastLookupEngine *e,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaKey *key,
+    CattaMulticastLookupCallback callback,
     void *userdata) {
 
     struct cbdata cbdata;
@@ -252,27 +252,27 @@ unsigned avahi_multicast_lookup_engine_scan_cache(
     assert(key);
     assert(callback);
 
-    assert(AVAHI_IF_VALID(interface));
-    assert(AVAHI_PROTO_VALID(protocol));
+    assert(CATTA_IF_VALID(interface));
+    assert(CATTA_PROTO_VALID(protocol));
 
     cbdata.engine = e;
     cbdata.key = key;
-    cbdata.cname_key = avahi_key_new_cname(key);
+    cbdata.cname_key = catta_key_new_cname(key);
     cbdata.callback = callback;
     cbdata.userdata = userdata;
     cbdata.interface = NULL;
     cbdata.n_found = 0;
 
-    avahi_interface_monitor_walk(e->server->monitor, interface, protocol, scan_interface_callback, &cbdata);
+    catta_interface_monitor_walk(e->server->monitor, interface, protocol, scan_interface_callback, &cbdata);
 
     if (cbdata.cname_key)
-        avahi_key_unref(cbdata.cname_key);
+        catta_key_unref(cbdata.cname_key);
 
     return cbdata.n_found;
 }
 
-void avahi_multicast_lookup_engine_new_interface(AvahiMulticastLookupEngine *e, AvahiInterface *i) {
-    AvahiMulticastLookup *l;
+void catta_multicast_lookup_engine_new_interface(CattaMulticastLookupEngine *e, CattaInterface *i) {
+    CattaMulticastLookup *l;
 
     assert(e);
     assert(i);
@@ -282,69 +282,69 @@ void avahi_multicast_lookup_engine_new_interface(AvahiMulticastLookupEngine *e, 
         if (l->dead || !l->callback)
             continue;
 
-        if (l->queriers_added && avahi_interface_match(i, l->interface, l->protocol))
-            avahi_querier_add(i, l->key, NULL);
+        if (l->queriers_added && catta_interface_match(i, l->interface, l->protocol))
+            catta_querier_add(i, l->key, NULL);
     }
 }
 
-void avahi_multicast_lookup_engine_notify(AvahiMulticastLookupEngine *e, AvahiInterface *i, AvahiRecord *record, AvahiBrowserEvent event) {
-    AvahiMulticastLookup *l;
+void catta_multicast_lookup_engine_notify(CattaMulticastLookupEngine *e, CattaInterface *i, CattaRecord *record, CattaBrowserEvent event) {
+    CattaMulticastLookup *l;
 
     assert(e);
     assert(record);
     assert(i);
 
-    for (l = avahi_hashmap_lookup(e->lookups_by_key, record->key); l; l = l->by_key_next) {
+    for (l = catta_hashmap_lookup(e->lookups_by_key, record->key); l; l = l->by_key_next) {
         if (l->dead || !l->callback)
             continue;
 
-        if (avahi_interface_match(i, l->interface, l->protocol))
-            l->callback(e, i->hardware->index, i->protocol, event, AVAHI_LOOKUP_RESULT_MULTICAST, record, l->userdata);
+        if (catta_interface_match(i, l->interface, l->protocol))
+            l->callback(e, i->hardware->index, i->protocol, event, CATTA_LOOKUP_RESULT_MULTICAST, record, l->userdata);
     }
 
 
-    if (record->key->clazz == AVAHI_DNS_CLASS_IN && record->key->type == AVAHI_DNS_TYPE_CNAME) {
+    if (record->key->clazz == CATTA_DNS_CLASS_IN && record->key->type == CATTA_DNS_TYPE_CNAME) {
         /* It's a CNAME record, so we have to scan the all lookups to see if one matches */
 
         for (l = e->lookups; l; l = l->lookups_next) {
-            AvahiKey *key;
+            CattaKey *key;
 
             if (l->dead || !l->callback)
                 continue;
 
-            if ((key = avahi_key_new_cname(l->key))) {
-                if (avahi_key_equal(record->key, key))
-                    l->callback(e, i->hardware->index, i->protocol, event, AVAHI_LOOKUP_RESULT_MULTICAST, record, l->userdata);
+            if ((key = catta_key_new_cname(l->key))) {
+                if (catta_key_equal(record->key, key))
+                    l->callback(e, i->hardware->index, i->protocol, event, CATTA_LOOKUP_RESULT_MULTICAST, record, l->userdata);
 
-                avahi_key_unref(key);
+                catta_key_unref(key);
             }
         }
     }
 }
 
-AvahiMulticastLookupEngine *avahi_multicast_lookup_engine_new(AvahiServer *s) {
-    AvahiMulticastLookupEngine *e;
+CattaMulticastLookupEngine *catta_multicast_lookup_engine_new(CattaServer *s) {
+    CattaMulticastLookupEngine *e;
 
     assert(s);
 
-    e = avahi_new(AvahiMulticastLookupEngine, 1);
+    e = catta_new(CattaMulticastLookupEngine, 1);
     e->server = s;
     e->cleanup_dead = 0;
 
     /* Initialize lookup list */
-    e->lookups_by_key = avahi_hashmap_new((AvahiHashFunc) avahi_key_hash, (AvahiEqualFunc) avahi_key_equal, (AvahiFreeFunc) avahi_key_unref, NULL);
-    AVAHI_LLIST_HEAD_INIT(AvahiWideAreaLookup, e->lookups);
+    e->lookups_by_key = catta_hashmap_new((CattaHashFunc) catta_key_hash, (CattaEqualFunc) catta_key_equal, (CattaFreeFunc) catta_key_unref, NULL);
+    CATTA_LLIST_HEAD_INIT(CattaWideAreaLookup, e->lookups);
 
     return e;
 }
 
-void avahi_multicast_lookup_engine_free(AvahiMulticastLookupEngine *e) {
+void catta_multicast_lookup_engine_free(CattaMulticastLookupEngine *e) {
     assert(e);
 
     while (e->lookups)
         lookup_destroy(e->lookups);
 
-    avahi_hashmap_free(e->lookups_by_key);
-    avahi_free(e);
+    catta_hashmap_free(e->lookups_by_key);
+    catta_free(e);
 }
 

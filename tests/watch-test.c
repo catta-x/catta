@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -27,23 +27,23 @@
 #include <errno.h>
 #include <string.h>
 
-#include <avahi/watch.h>
-#include <avahi/timeval.h>
-#include <avahi/gccmacro.h>
+#include <catta/watch.h>
+#include <catta/timeval.h>
+#include <catta/gccmacro.h>
 
-static const AvahiPoll *api = NULL;
+static const CattaPoll *api = NULL;
 
 #ifndef USE_THREAD
-#include <avahi/simple-watch.h>
-static AvahiSimplePoll *simple_poll = NULL;
+#include <catta/simple-watch.h>
+static CattaSimplePoll *simple_poll = NULL;
 #else
-#include <avahi/thread-watch.h>
-static AvahiThreadedPoll *threaded_poll = NULL;
+#include <catta/thread-watch.h>
+static CattaThreadedPoll *threaded_poll = NULL;
 #endif
 
-static void callback(AvahiWatch *w, int fd, AvahiWatchEvent event, AVAHI_GCC_UNUSED void *userdata) {
+static void callback(CattaWatch *w, int fd, CattaWatchEvent event, CATTA_GCC_UNUSED void *userdata) {
 
-    if (event & AVAHI_WATCH_IN) {
+    if (event & CATTA_WATCH_IN) {
         ssize_t r;
         char c;
 
@@ -57,7 +57,7 @@ static void callback(AvahiWatch *w, int fd, AvahiWatchEvent event, AVAHI_GCC_UNU
     }
 }
 
-static void wakeup(AvahiTimeout *t, AVAHI_GCC_UNUSED void *userdata) {
+static void wakeup(CattaTimeout *t, CATTA_GCC_UNUSED void *userdata) {
     static int i = 0;
     struct timeval tv;
 
@@ -65,49 +65,49 @@ static void wakeup(AvahiTimeout *t, AVAHI_GCC_UNUSED void *userdata) {
 
     if (i > 10) {
 #ifndef USE_THREAD
-        avahi_simple_poll_quit(simple_poll);
+        catta_simple_poll_quit(simple_poll);
 #else
-        avahi_threaded_poll_quit(threaded_poll);
+        catta_threaded_poll_quit(threaded_poll);
 #endif
     } else {
-        avahi_elapse_time(&tv, 1000, 0);
+        catta_elapse_time(&tv, 1000, 0);
         api->timeout_update(t, &tv);
     }
 }
 
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
+int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
     struct timeval tv;
 
 #ifndef USE_THREAD
-    simple_poll = avahi_simple_poll_new();
+    simple_poll = catta_simple_poll_new();
     assert(simple_poll);
-    api = avahi_simple_poll_get(simple_poll);
+    api = catta_simple_poll_get(simple_poll);
     assert(api);
 #else
-    threaded_poll = avahi_threaded_poll_new();
+    threaded_poll = catta_threaded_poll_new();
     assert(threaded_poll);
-    api = avahi_threaded_poll_get(threaded_poll);
+    api = catta_threaded_poll_get(threaded_poll);
     assert(api);
 #endif
 
-    api->watch_new(api, 0, AVAHI_WATCH_IN, callback, NULL);
+    api->watch_new(api, 0, CATTA_WATCH_IN, callback, NULL);
 
-    avahi_elapse_time(&tv, 1000, 0);
+    catta_elapse_time(&tv, 1000, 0);
     api->timeout_new(api, &tv, wakeup, NULL);
 
 #ifndef USE_THREAD
     /* Our main loop */
-    avahi_simple_poll_loop(simple_poll);
-    avahi_simple_poll_free(simple_poll);
+    catta_simple_poll_loop(simple_poll);
+    catta_simple_poll_free(simple_poll);
 
 #else
-    avahi_threaded_poll_start(threaded_poll);
+    catta_threaded_poll_start(threaded_poll);
 
     fprintf(stderr, "Now doing some stupid stuff ...\n");
     sleep(20);
     fprintf(stderr, "... stupid stuff is done.\n");
 
-    avahi_threaded_poll_free(threaded_poll);
+    catta_threaded_poll_free(threaded_poll);
 
 #endif
 

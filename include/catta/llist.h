@@ -2,20 +2,20 @@
 #define foollistfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -24,29 +24,29 @@
 
 #include <assert.h>
 
-#include <avahi/cdecl.h>
+#include <catta/cdecl.h>
 
-AVAHI_C_DECL_BEGIN
+CATTA_C_DECL_BEGIN
 
 /** The head of the linked list. Use this in the structure that shall
  * contain the head of the linked list */
-#define AVAHI_LLIST_HEAD(t,name) t *name
+#define CATTA_LLIST_HEAD(t,name) t *name
 
 /** The pointers in the linked list's items. Use this in the item structure */
-#define AVAHI_LLIST_FIELDS(t,name) t *name##_next, *name##_prev
+#define CATTA_LLIST_FIELDS(t,name) t *name##_next, *name##_prev
 
 /** Initialize the list's head */
-#define AVAHI_LLIST_HEAD_INIT(t,head) do { (head) = NULL; } while(0)
+#define CATTA_LLIST_HEAD_INIT(t,head) do { (head) = NULL; } while(0)
 
 /** Initialize a list item */
-#define AVAHI_LLIST_INIT(t,name,item) do { \
+#define CATTA_LLIST_INIT(t,name,item) do { \
                                t *_item = (item); \
                                assert(_item); \
                                _item->name##_prev = _item->name##_next = NULL; \
                                } while(0)
 
 /** Prepend an item to the list */
-#define AVAHI_LLIST_PREPEND(t,name,head,item) do { \
+#define CATTA_LLIST_PREPEND(t,name,head,item) do { \
                                         t **_head = &(head), *_item = (item); \
                                         assert(_item); \
                                         if ((_item->name##_next = *_head)) \
@@ -56,7 +56,7 @@ AVAHI_C_DECL_BEGIN
                                         } while (0)
 
 /** Remove an item from the list */
-#define AVAHI_LLIST_REMOVE(t,name,head,item) do { \
+#define CATTA_LLIST_REMOVE(t,name,head,item) do { \
                                     t **_head = &(head), *_item = (item); \
                                     assert(_item); \
                                     if (_item->name##_next) \
@@ -70,6 +70,6 @@ AVAHI_C_DECL_BEGIN
                                     _item->name##_next = _item->name##_prev = NULL; \
                                     } while(0)
 
-AVAHI_C_DECL_END
+CATTA_C_DECL_END
 
 #endif

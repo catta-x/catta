@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <avahi/malloc.h>
+#include <catta/malloc.h>
 
 #ifndef va_copy
 #ifdef __va_copy
@@ -37,9 +37,9 @@
 #endif
 #endif
 
-static const AvahiAllocator *allocator = NULL;
+static const CattaAllocator *allocator = NULL;
 
-static void oom(void) AVAHI_GCC_NORETURN;
+static void oom(void) CATTA_GCC_NORETURN;
 
 static void oom(void) {
 
@@ -58,7 +58,7 @@ static void oom(void) {
     abort();
 }
 
-/* Default implementation for avahi_malloc() */
+/* Default implementation for catta_malloc() */
 static void* xmalloc(size_t size) {
     void *p;
 
@@ -71,7 +71,7 @@ static void* xmalloc(size_t size) {
     return p;
 }
 
-/* Default implementation for avahi_realloc() */
+/* Default implementation for catta_realloc() */
 static void *xrealloc(void *p, size_t size) {
 
     if (size == 0) {
@@ -85,7 +85,7 @@ static void *xrealloc(void *p, size_t size) {
     return p;
 }
 
-/* Default implementation for avahi_calloc() */
+/* Default implementation for catta_calloc() */
 static void *xcalloc(size_t nmemb, size_t size) {
     void *p;
 
@@ -98,7 +98,7 @@ static void *xcalloc(size_t nmemb, size_t size) {
     return p;
 }
 
-void *avahi_malloc(size_t size) {
+void *catta_malloc(size_t size) {
 
     if (size <= 0)
         return NULL;
@@ -110,7 +110,7 @@ void *avahi_malloc(size_t size) {
     return allocator->malloc(size);
 }
 
-void *avahi_malloc0(size_t size) {
+void *catta_malloc0(size_t size) {
     void *p;
 
     if (size <= 0)
@@ -129,7 +129,7 @@ void *avahi_malloc0(size_t size) {
     return p;
 }
 
-void avahi_free(void *p) {
+void catta_free(void *p) {
 
     if (!p)
         return;
@@ -143,10 +143,10 @@ void avahi_free(void *p) {
     allocator->free(p);
 }
 
-void *avahi_realloc(void *p, size_t size) {
+void *catta_realloc(void *p, size_t size) {
 
     if (size == 0) {
-        avahi_free(p);
+        catta_free(p);
         return NULL;
     }
 
@@ -157,7 +157,7 @@ void *avahi_realloc(void *p, size_t size) {
     return allocator->realloc(p, size);
 }
 
-char *avahi_strdup(const char *s) {
+char *catta_strdup(const char *s) {
     char *r;
     size_t size;
 
@@ -165,14 +165,14 @@ char *avahi_strdup(const char *s) {
         return NULL;
 
     size = strlen(s);
-    if (!(r = avahi_malloc(size+1)))
+    if (!(r = catta_malloc(size+1)))
         return NULL;
 
     memcpy(r, s, size+1);
     return r;
 }
 
-char *avahi_strndup(const char *s, size_t max) {
+char *catta_strndup(const char *s, size_t max) {
     char *r;
     size_t size;
     const char *p;
@@ -184,7 +184,7 @@ char *avahi_strndup(const char *s, size_t max) {
          size < max && *p;
          p++, size++);
 
-    if (!(r = avahi_new(char, size+1)))
+    if (!(r = catta_new(char, size+1)))
         return NULL;
 
     memcpy(r, s, size);
@@ -193,17 +193,17 @@ char *avahi_strndup(const char *s, size_t max) {
 }
 
 /* Change the allocator */
-void avahi_set_allocator(const AvahiAllocator *a) {
+void catta_set_allocator(const CattaAllocator *a) {
     allocator = a;
 }
 
-char *avahi_strdup_vprintf(const char *fmt, va_list ap) {
+char *catta_strdup_vprintf(const char *fmt, va_list ap) {
     size_t len = 80;
     char *buf;
 
     assert(fmt);
 
-    if (!(buf = avahi_malloc(len)))
+    if (!(buf = catta_malloc(len)))
         return NULL;
 
     for (;;) {
@@ -223,8 +223,8 @@ char *avahi_strdup_vprintf(const char *fmt, va_list ap) {
         else
             len *= 2;
 
-        if (!(nbuf = avahi_realloc(buf, len))) {
-            avahi_free(buf);
+        if (!(nbuf = catta_realloc(buf, len))) {
+            catta_free(buf);
             return NULL;
         }
 
@@ -232,24 +232,24 @@ char *avahi_strdup_vprintf(const char *fmt, va_list ap) {
     }
 }
 
-char *avahi_strdup_printf(const char *fmt, ... ) {
+char *catta_strdup_printf(const char *fmt, ... ) {
     char *s;
     va_list ap;
 
     assert(fmt);
 
     va_start(ap, fmt);
-    s = avahi_strdup_vprintf(fmt, ap);
+    s = catta_strdup_vprintf(fmt, ap);
     va_end(ap);
 
     return s;
 }
 
-void *avahi_memdup(const void *s, size_t l) {
+void *catta_memdup(const void *s, size_t l) {
     void *p;
     assert(s);
 
-    if (!(p = avahi_malloc(l)))
+    if (!(p = catta_malloc(l)))
         return NULL;
 
     memcpy(p, s, l);

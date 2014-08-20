@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -23,75 +23,75 @@
 
 #include <stdlib.h>
 
-#include <avahi/timeval.h>
-#include <avahi/malloc.h>
+#include <catta/timeval.h>
+#include <catta/malloc.h>
 
 #include "announce.h"
-#include <avahi/log.h>
+#include <catta/log.h>
 #include "rr-util.h"
 
-#define AVAHI_ANNOUNCEMENT_JITTER_MSEC 250
-#define AVAHI_PROBE_JITTER_MSEC 250
-#define AVAHI_PROBE_INTERVAL_MSEC 250
+#define CATTA_ANNOUNCEMENT_JITTER_MSEC 250
+#define CATTA_PROBE_JITTER_MSEC 250
+#define CATTA_PROBE_INTERVAL_MSEC 250
 
-static void remove_announcer(AvahiServer *s, AvahiAnnouncer *a) {
+static void remove_announcer(CattaServer *s, CattaAnnouncer *a) {
     assert(s);
     assert(a);
 
     if (a->time_event)
-        avahi_time_event_free(a->time_event);
+        catta_time_event_free(a->time_event);
 
-    AVAHI_LLIST_REMOVE(AvahiAnnouncer, by_interface, a->interface->announcers, a);
-    AVAHI_LLIST_REMOVE(AvahiAnnouncer, by_entry, a->entry->announcers, a);
+    CATTA_LLIST_REMOVE(CattaAnnouncer, by_interface, a->interface->announcers, a);
+    CATTA_LLIST_REMOVE(CattaAnnouncer, by_entry, a->entry->announcers, a);
 
-    avahi_free(a);
+    catta_free(a);
 }
 
-static void elapse_announce(AvahiTimeEvent *e, void *userdata);
+static void elapse_announce(CattaTimeEvent *e, void *userdata);
 
-static void set_timeout(AvahiAnnouncer *a, const struct timeval *tv) {
+static void set_timeout(CattaAnnouncer *a, const struct timeval *tv) {
     assert(a);
 
     if (!tv) {
         if (a->time_event) {
-            avahi_time_event_free(a->time_event);
+            catta_time_event_free(a->time_event);
             a->time_event = NULL;
         }
     } else {
 
         if (a->time_event)
-            avahi_time_event_update(a->time_event, tv);
+            catta_time_event_update(a->time_event, tv);
         else
-            a->time_event = avahi_time_event_new(a->server->time_event_queue, tv, elapse_announce, a);
+            a->time_event = catta_time_event_new(a->server->time_event_queue, tv, elapse_announce, a);
     }
 }
 
-static void next_state(AvahiAnnouncer *a);
+static void next_state(CattaAnnouncer *a);
 
-void avahi_s_entry_group_check_probed(AvahiSEntryGroup *g, int immediately) {
-    AvahiEntry *e;
+void catta_s_entry_group_check_probed(CattaSEntryGroup *g, int immediately) {
+    CattaEntry *e;
     assert(g);
     assert(!g->dead);
 
     /* Check whether all group members have been probed */
 
-    if (g->state != AVAHI_ENTRY_GROUP_REGISTERING || g->n_probing > 0)
+    if (g->state != CATTA_ENTRY_GROUP_REGISTERING || g->n_probing > 0)
         return;
 
-    avahi_s_entry_group_change_state(g, AVAHI_ENTRY_GROUP_ESTABLISHED);
+    catta_s_entry_group_change_state(g, CATTA_ENTRY_GROUP_ESTABLISHED);
 
     if (g->dead)
         return;
 
     for (e = g->entries; e; e = e->by_group_next) {
-        AvahiAnnouncer *a;
+        CattaAnnouncer *a;
 
         for (a = e->announcers; a; a = a->by_entry_next) {
 
-            if (a->state != AVAHI_WAITING)
+            if (a->state != CATTA_WAITING)
                 continue;
 
-            a->state = AVAHI_ANNOUNCING;
+            a->state = CATTA_ANNOUNCING;
 
             if (immediately) {
                 /* Shortcut */
@@ -101,23 +101,23 @@ void avahi_s_entry_group_check_probed(AvahiSEntryGroup *g, int immediately) {
             } else {
                 struct timeval tv;
                 a->n_iteration = 0;
-                avahi_elapse_time(&tv, 0, AVAHI_ANNOUNCEMENT_JITTER_MSEC);
+                catta_elapse_time(&tv, 0, CATTA_ANNOUNCEMENT_JITTER_MSEC);
                 set_timeout(a, &tv);
             }
         }
     }
 }
 
-static void next_state(AvahiAnnouncer *a) {
+static void next_state(CattaAnnouncer *a) {
     assert(a);
 
-    if (a->state == AVAHI_WAITING) {
+    if (a->state == CATTA_WAITING) {
 
         assert(a->entry->group);
 
-        avahi_s_entry_group_check_probed(a->entry->group, 1);
+        catta_s_entry_group_check_probed(a->entry->group, 1);
 
-    } else if (a->state == AVAHI_PROBING) {
+    } else if (a->state == CATTA_PROBING) {
 
         if (a->n_iteration >= 4) {
             /* Probing done */
@@ -127,10 +127,10 @@ static void next_state(AvahiAnnouncer *a) {
                 a->entry->group->n_probing--;
             }
 
-            if (a->entry->group && a->entry->group->state == AVAHI_ENTRY_GROUP_REGISTERING)
-                a->state = AVAHI_WAITING;
+            if (a->entry->group && a->entry->group->state == CATTA_ENTRY_GROUP_REGISTERING)
+                a->state = CATTA_WAITING;
             else {
-                a->state = AVAHI_ANNOUNCING;
+                a->state = CATTA_ANNOUNCING;
                 a->n_iteration = 1;
             }
 
@@ -139,33 +139,33 @@ static void next_state(AvahiAnnouncer *a) {
         } else {
             struct timeval tv;
 
-            avahi_interface_post_probe(a->interface, a->entry->record, 0);
+            catta_interface_post_probe(a->interface, a->entry->record, 0);
 
-            avahi_elapse_time(&tv, AVAHI_PROBE_INTERVAL_MSEC, 0);
+            catta_elapse_time(&tv, CATTA_PROBE_INTERVAL_MSEC, 0);
             set_timeout(a, &tv);
 
             a->n_iteration++;
         }
 
-    } else if (a->state == AVAHI_ANNOUNCING) {
+    } else if (a->state == CATTA_ANNOUNCING) {
 
-        if (a->entry->flags & AVAHI_PUBLISH_UNIQUE)
+        if (a->entry->flags & CATTA_PUBLISH_UNIQUE)
             /* Send the whole rrset at once */
-            avahi_server_prepare_matching_responses(a->server, a->interface, a->entry->record->key, 0);
+            catta_server_prepare_matching_responses(a->server, a->interface, a->entry->record->key, 0);
         else
-            avahi_server_prepare_response(a->server, a->interface, a->entry, 0, 0);
+            catta_server_prepare_response(a->server, a->interface, a->entry, 0, 0);
 
-        avahi_server_generate_response(a->server, a->interface, NULL, NULL, 0, 0, 0);
+        catta_server_generate_response(a->server, a->interface, NULL, NULL, 0, 0, 0);
 
         if (++a->n_iteration >= 4) {
             /* Announcing done */
 
-            a->state = AVAHI_ESTABLISHED;
+            a->state = CATTA_ESTABLISHED;
 
             set_timeout(a, NULL);
         } else {
             struct timeval tv;
-            avahi_elapse_time(&tv, a->sec_delay*1000, AVAHI_ANNOUNCEMENT_JITTER_MSEC);
+            catta_elapse_time(&tv, a->sec_delay*1000, CATTA_ANNOUNCEMENT_JITTER_MSEC);
 
             if (a->n_iteration < 10)
                 a->sec_delay *= 2;
@@ -175,14 +175,14 @@ static void next_state(AvahiAnnouncer *a) {
     }
 }
 
-static void elapse_announce(AvahiTimeEvent *e, void *userdata) {
+static void elapse_announce(CattaTimeEvent *e, void *userdata) {
     assert(e);
 
     next_state(userdata);
 }
 
-static AvahiAnnouncer *get_announcer(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
-    AvahiAnnouncer *a;
+static CattaAnnouncer *get_announcer(CattaServer *s, CattaEntry *e, CattaInterface *i) {
+    CattaAnnouncer *a;
 
     assert(s);
     assert(e);
@@ -195,56 +195,56 @@ static AvahiAnnouncer *get_announcer(AvahiServer *s, AvahiEntry *e, AvahiInterfa
     return NULL;
 }
 
-static void go_to_initial_state(AvahiAnnouncer *a) {
-    AvahiEntry *e;
+static void go_to_initial_state(CattaAnnouncer *a) {
+    CattaEntry *e;
     struct timeval tv;
 
     assert(a);
     e = a->entry;
 
-    if ((e->flags & AVAHI_PUBLISH_UNIQUE) && !(e->flags & AVAHI_PUBLISH_NO_PROBE))
-        a->state = AVAHI_PROBING;
-    else if (!(e->flags & AVAHI_PUBLISH_NO_ANNOUNCE)) {
+    if ((e->flags & CATTA_PUBLISH_UNIQUE) && !(e->flags & CATTA_PUBLISH_NO_PROBE))
+        a->state = CATTA_PROBING;
+    else if (!(e->flags & CATTA_PUBLISH_NO_ANNOUNCE)) {
 
-        if (!e->group || e->group->state == AVAHI_ENTRY_GROUP_ESTABLISHED)
-            a->state = AVAHI_ANNOUNCING;
+        if (!e->group || e->group->state == CATTA_ENTRY_GROUP_ESTABLISHED)
+            a->state = CATTA_ANNOUNCING;
         else
-            a->state = AVAHI_WAITING;
+            a->state = CATTA_WAITING;
 
     } else
-        a->state = AVAHI_ESTABLISHED;
+        a->state = CATTA_ESTABLISHED;
 
     a->n_iteration = 1;
     a->sec_delay = 1;
 
-    if (a->state == AVAHI_PROBING && e->group)
+    if (a->state == CATTA_PROBING && e->group)
         e->group->n_probing++;
 
-    if (a->state == AVAHI_PROBING)
-        set_timeout(a, avahi_elapse_time(&tv, 0, AVAHI_PROBE_JITTER_MSEC));
-    else if (a->state == AVAHI_ANNOUNCING)
-        set_timeout(a, avahi_elapse_time(&tv, 0, AVAHI_ANNOUNCEMENT_JITTER_MSEC));
+    if (a->state == CATTA_PROBING)
+        set_timeout(a, catta_elapse_time(&tv, 0, CATTA_PROBE_JITTER_MSEC));
+    else if (a->state == CATTA_ANNOUNCING)
+        set_timeout(a, catta_elapse_time(&tv, 0, CATTA_ANNOUNCEMENT_JITTER_MSEC));
     else
         set_timeout(a, NULL);
 }
 
-static void new_announcer(AvahiServer *s, AvahiInterface *i, AvahiEntry *e) {
-    AvahiAnnouncer *a;
+static void new_announcer(CattaServer *s, CattaInterface *i, CattaEntry *e) {
+    CattaAnnouncer *a;
 
     assert(s);
     assert(i);
     assert(e);
     assert(!e->dead);
 
-    if (!avahi_interface_match(i, e->interface, e->protocol) || !i->announcing || !avahi_entry_is_commited(e))
+    if (!catta_interface_match(i, e->interface, e->protocol) || !i->announcing || !catta_entry_is_commited(e))
         return;
 
     /* We don't want duplicate announcers */
     if (get_announcer(s, e, i))
         return;
 
-    if ((!(a = avahi_new(AvahiAnnouncer, 1)))) {
-        avahi_log_error(__FILE__": Out of memory.");
+    if ((!(a = catta_new(CattaAnnouncer, 1)))) {
+        catta_log_error(__FILE__": Out of memory.");
         return;
     }
 
@@ -253,14 +253,14 @@ static void new_announcer(AvahiServer *s, AvahiInterface *i, AvahiEntry *e) {
     a->entry = e;
     a->time_event = NULL;
 
-    AVAHI_LLIST_PREPEND(AvahiAnnouncer, by_interface, i->announcers, a);
-    AVAHI_LLIST_PREPEND(AvahiAnnouncer, by_entry, e->announcers, a);
+    CATTA_LLIST_PREPEND(CattaAnnouncer, by_interface, i->announcers, a);
+    CATTA_LLIST_PREPEND(CattaAnnouncer, by_entry, e->announcers, a);
 
     go_to_initial_state(a);
 }
 
-void avahi_announce_interface(AvahiServer *s, AvahiInterface *i) {
-    AvahiEntry *e;
+void catta_announce_interface(CattaServer *s, CattaInterface *i) {
+    CattaEntry *e;
 
     assert(s);
     assert(i);
@@ -273,8 +273,8 @@ void avahi_announce_interface(AvahiServer *s, AvahiInterface *i) {
             new_announcer(s, i, e);
 }
 
-static void announce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, void* userdata) {
-    AvahiEntry *e = userdata;
+static void announce_walk_callback(CattaInterfaceMonitor *m, CattaInterface *i, void* userdata) {
+    CattaEntry *e = userdata;
 
     assert(m);
     assert(i);
@@ -284,27 +284,27 @@ static void announce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, 
     new_announcer(m->server, i, e);
 }
 
-void avahi_announce_entry(AvahiServer *s, AvahiEntry *e) {
+void catta_announce_entry(CattaServer *s, CattaEntry *e) {
     assert(s);
     assert(e);
     assert(!e->dead);
 
-    avahi_interface_monitor_walk(s->monitor, e->interface, e->protocol, announce_walk_callback, e);
+    catta_interface_monitor_walk(s->monitor, e->interface, e->protocol, announce_walk_callback, e);
 }
 
-void avahi_announce_group(AvahiServer *s, AvahiSEntryGroup *g) {
-    AvahiEntry *e;
+void catta_announce_group(CattaServer *s, CattaSEntryGroup *g) {
+    CattaEntry *e;
 
     assert(s);
     assert(g);
 
     for (e = g->entries; e; e = e->by_group_next)
         if (!e->dead)
-            avahi_announce_entry(s, e);
+            catta_announce_entry(s, e);
 }
 
-int avahi_entry_is_registered(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
-    AvahiAnnouncer *a;
+int catta_entry_is_registered(CattaServer *s, CattaEntry *e, CattaInterface *i) {
+    CattaAnnouncer *a;
 
     assert(s);
     assert(e);
@@ -315,13 +315,13 @@ int avahi_entry_is_registered(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) 
         return 0;
 
     return
-        a->state == AVAHI_ANNOUNCING ||
-        a->state == AVAHI_ESTABLISHED ||
-        (a->state == AVAHI_WAITING && !(e->flags & AVAHI_PUBLISH_UNIQUE));
+        a->state == CATTA_ANNOUNCING ||
+        a->state == CATTA_ESTABLISHED ||
+        (a->state == CATTA_WAITING && !(e->flags & CATTA_PUBLISH_UNIQUE));
 }
 
-int avahi_entry_is_probing(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
-    AvahiAnnouncer *a;
+int catta_entry_is_probing(CattaServer *s, CattaEntry *e, CattaInterface *i) {
+    CattaAnnouncer *a;
 
     assert(s);
     assert(e);
@@ -332,12 +332,12 @@ int avahi_entry_is_probing(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
         return 0;
 
     return
-        a->state == AVAHI_PROBING ||
-        (a->state == AVAHI_WAITING && (e->flags & AVAHI_PUBLISH_UNIQUE));
+        a->state == CATTA_PROBING ||
+        (a->state == CATTA_WAITING && (e->flags & CATTA_PUBLISH_UNIQUE));
 }
 
-void avahi_entry_return_to_initial_state(AvahiServer *s, AvahiEntry *e, AvahiInterface *i) {
-    AvahiAnnouncer *a;
+void catta_entry_return_to_initial_state(CattaServer *s, CattaEntry *e, CattaInterface *i) {
+    CattaAnnouncer *a;
 
     assert(s);
     assert(e);
@@ -346,18 +346,18 @@ void avahi_entry_return_to_initial_state(AvahiServer *s, AvahiEntry *e, AvahiInt
     if (!(a = get_announcer(s, e, i)))
         return;
 
-    if (a->state == AVAHI_PROBING && a->entry->group)
+    if (a->state == CATTA_PROBING && a->entry->group)
         a->entry->group->n_probing--;
 
     go_to_initial_state(a);
 }
 
-static AvahiRecord *make_goodbye_record(AvahiRecord *r) {
-    AvahiRecord *g;
+static CattaRecord *make_goodbye_record(CattaRecord *r) {
+    CattaRecord *g;
 
     assert(r);
 
-    if (!(g = avahi_record_copy(r)))
+    if (!(g = catta_record_copy(r)))
         return NULL; /* OOM */
 
     assert(g->ref == 1);
@@ -366,18 +366,18 @@ static AvahiRecord *make_goodbye_record(AvahiRecord *r) {
     return g;
 }
 
-static int is_duplicate_entry(AvahiServer *s, AvahiEntry *e) {
-    AvahiEntry *i;
+static int is_duplicate_entry(CattaServer *s, CattaEntry *e) {
+    CattaEntry *i;
 
     assert(s);
     assert(e);
 
-    for (i = avahi_hashmap_lookup(s->entries_by_key, e->record->key); i; i = i->by_key_next) {
+    for (i = catta_hashmap_lookup(s->entries_by_key, e->record->key); i; i = i->by_key_next) {
 
         if ((i == e) || (i->dead))
             continue;
 
-        if (!avahi_record_equal_no_ttl(i->record, e->record))
+        if (!catta_record_equal_no_ttl(i->record, e->record))
             continue;
 
         return 1;
@@ -386,22 +386,22 @@ static int is_duplicate_entry(AvahiServer *s, AvahiEntry *e) {
     return 0;
 }
 
-static void send_goodbye_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, void* userdata) {
-    AvahiEntry *e = userdata;
-    AvahiRecord *g;
+static void send_goodbye_callback(CattaInterfaceMonitor *m, CattaInterface *i, void* userdata) {
+    CattaEntry *e = userdata;
+    CattaRecord *g;
 
     assert(m);
     assert(i);
     assert(e);
     assert(!e->dead);
 
-    if (!avahi_interface_match(i, e->interface, e->protocol))
+    if (!catta_interface_match(i, e->interface, e->protocol))
         return;
 
-    if (e->flags & AVAHI_PUBLISH_NO_ANNOUNCE)
+    if (e->flags & CATTA_PUBLISH_NO_ANNOUNCE)
         return;
 
-    if (!avahi_entry_is_registered(m->server, e, i))
+    if (!catta_entry_is_registered(m->server, e, i))
         return;
 
     if (is_duplicate_entry(m->server, e))
@@ -410,66 +410,66 @@ static void send_goodbye_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, v
     if (!(g = make_goodbye_record(e->record)))
         return; /* OOM */
 
-    avahi_interface_post_response(i, g, e->flags & AVAHI_PUBLISH_UNIQUE, NULL, 1);
-    avahi_record_unref(g);
+    catta_interface_post_response(i, g, e->flags & CATTA_PUBLISH_UNIQUE, NULL, 1);
+    catta_record_unref(g);
 }
 
-static void reannounce(AvahiAnnouncer *a) {
-    AvahiEntry *e;
+static void reannounce(CattaAnnouncer *a) {
+    CattaEntry *e;
     struct timeval tv;
 
     assert(a);
     e = a->entry;
 
     /* If the group this entry belongs to is not even commited, there's nothing to reannounce */
-    if (e->group && (e->group->state == AVAHI_ENTRY_GROUP_UNCOMMITED || e->group->state == AVAHI_ENTRY_GROUP_COLLISION))
+    if (e->group && (e->group->state == CATTA_ENTRY_GROUP_UNCOMMITED || e->group->state == CATTA_ENTRY_GROUP_COLLISION))
         return;
 
     /* Because we might change state we decrease the probing counter first */
-    if (a->state == AVAHI_PROBING && a->entry->group)
+    if (a->state == CATTA_PROBING && a->entry->group)
         a->entry->group->n_probing--;
 
-    if (a->state == AVAHI_PROBING ||
-        (a->state == AVAHI_WAITING && (e->flags & AVAHI_PUBLISH_UNIQUE) && !(e->flags & AVAHI_PUBLISH_NO_PROBE)))
+    if (a->state == CATTA_PROBING ||
+        (a->state == CATTA_WAITING && (e->flags & CATTA_PUBLISH_UNIQUE) && !(e->flags & CATTA_PUBLISH_NO_PROBE)))
 
         /* We were probing or waiting after probe, so we restart probing from the beginning here */
 
-        a->state = AVAHI_PROBING;
-    else if (a->state == AVAHI_WAITING)
+        a->state = CATTA_PROBING;
+    else if (a->state == CATTA_WAITING)
 
         /* We were waiting, but were not probing before, so we continue waiting  */
-        a->state = AVAHI_WAITING;
+        a->state = CATTA_WAITING;
 
-    else if (e->flags & AVAHI_PUBLISH_NO_ANNOUNCE)
+    else if (e->flags & CATTA_PUBLISH_NO_ANNOUNCE)
 
         /* No announcer needed */
-        a->state = AVAHI_ESTABLISHED;
+        a->state = CATTA_ESTABLISHED;
 
     else {
 
         /* Ok, let's restart announcing */
-        a->state = AVAHI_ANNOUNCING;
+        a->state = CATTA_ANNOUNCING;
     }
 
     /* Now let's increase the probing counter again */
-    if (a->state == AVAHI_PROBING && e->group)
+    if (a->state == CATTA_PROBING && e->group)
         e->group->n_probing++;
 
     a->n_iteration = 1;
     a->sec_delay = 1;
 
-    if (a->state == AVAHI_PROBING)
-        set_timeout(a, avahi_elapse_time(&tv, 0, AVAHI_PROBE_JITTER_MSEC));
-    else if (a->state == AVAHI_ANNOUNCING)
-        set_timeout(a, avahi_elapse_time(&tv, 0, AVAHI_ANNOUNCEMENT_JITTER_MSEC));
+    if (a->state == CATTA_PROBING)
+        set_timeout(a, catta_elapse_time(&tv, 0, CATTA_PROBE_JITTER_MSEC));
+    else if (a->state == CATTA_ANNOUNCING)
+        set_timeout(a, catta_elapse_time(&tv, 0, CATTA_ANNOUNCEMENT_JITTER_MSEC));
     else
         set_timeout(a, NULL);
 }
 
 
-static void reannounce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i, void* userdata) {
-    AvahiEntry *e = userdata;
-    AvahiAnnouncer *a;
+static void reannounce_walk_callback(CattaInterfaceMonitor *m, CattaInterface *i, void* userdata) {
+    CattaEntry *e = userdata;
+    CattaAnnouncer *a;
 
     assert(m);
     assert(i);
@@ -482,22 +482,22 @@ static void reannounce_walk_callback(AvahiInterfaceMonitor *m, AvahiInterface *i
     reannounce(a);
 }
 
-void avahi_reannounce_entry(AvahiServer *s, AvahiEntry *e) {
+void catta_reannounce_entry(CattaServer *s, CattaEntry *e) {
 
     assert(s);
     assert(e);
     assert(!e->dead);
 
-    avahi_interface_monitor_walk(s->monitor, e->interface, e->protocol, reannounce_walk_callback, e);
+    catta_interface_monitor_walk(s->monitor, e->interface, e->protocol, reannounce_walk_callback, e);
 }
 
-void avahi_goodbye_interface(AvahiServer *s, AvahiInterface *i, int send_goodbye, int remove) {
+void catta_goodbye_interface(CattaServer *s, CattaInterface *i, int send_goodbye, int remove) {
     assert(s);
     assert(i);
 
     if (send_goodbye)
         if (i->announcing) {
-            AvahiEntry *e;
+            CattaEntry *e;
 
             for (e = s->entries; e; e = e->entries_next)
                 if (!e->dead)
@@ -509,13 +509,13 @@ void avahi_goodbye_interface(AvahiServer *s, AvahiInterface *i, int send_goodbye
             remove_announcer(s, i->announcers);
 }
 
-void avahi_goodbye_entry(AvahiServer *s, AvahiEntry *e, int send_goodbye, int remove) {
+void catta_goodbye_entry(CattaServer *s, CattaEntry *e, int send_goodbye, int remove) {
     assert(s);
     assert(e);
 
     if (send_goodbye)
         if (!e->dead)
-            avahi_interface_monitor_walk(s->monitor, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, send_goodbye_callback, e);
+            catta_interface_monitor_walk(s->monitor, CATTA_IF_UNSPEC, CATTA_PROTO_UNSPEC, send_goodbye_callback, e);
 
     if (remove)
         while (e->announcers)

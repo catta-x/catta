@@ -2,27 +2,27 @@
 #define foodefshfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
 /** \file defs.h Some common definitions */
 
-#include <avahi/cdecl.h>
+#include <catta/cdecl.h>
 
 /** \mainpage
  *
@@ -213,27 +213,27 @@
  * returned by AvahiDomainBrowser.
  */
 
-AVAHI_C_DECL_BEGIN
+CATTA_C_DECL_BEGIN
 
 /** @{ \name States */
 
 /** States of a server object */
 typedef enum {
-    AVAHI_SERVER_INVALID,          /**< Invalid state (initial) */
-    AVAHI_SERVER_REGISTERING,      /**< Host RRs are being registered */
-    AVAHI_SERVER_RUNNING,          /**< All host RRs have been established */
-    AVAHI_SERVER_COLLISION,        /**< There is a collision with a host RR. All host RRs have been withdrawn, the user should set a new host name via avahi_server_set_host_name() */
-    AVAHI_SERVER_FAILURE           /**< Some fatal failure happened, the server is unable to proceed */
-} AvahiServerState;
+    CATTA_SERVER_INVALID,          /**< Invalid state (initial) */
+    CATTA_SERVER_REGISTERING,      /**< Host RRs are being registered */
+    CATTA_SERVER_RUNNING,          /**< All host RRs have been established */
+    CATTA_SERVER_COLLISION,        /**< There is a collision with a host RR. All host RRs have been withdrawn, the user should set a new host name via catta_server_set_host_name() */
+    CATTA_SERVER_FAILURE           /**< Some fatal failure happened, the server is unable to proceed */
+} CattaServerState;
 
 /** States of an entry group object */
 typedef enum {
-    AVAHI_ENTRY_GROUP_UNCOMMITED,    /**< The group has not yet been commited, the user must still call avahi_entry_group_commit() */
-    AVAHI_ENTRY_GROUP_REGISTERING,   /**< The entries of the group are currently being registered */
-    AVAHI_ENTRY_GROUP_ESTABLISHED,   /**< The entries have successfully been established */
-    AVAHI_ENTRY_GROUP_COLLISION,     /**< A name collision for one of the entries in the group has been detected, the entries have been withdrawn */
-    AVAHI_ENTRY_GROUP_FAILURE        /**< Some kind of failure happened, the entries have been withdrawn */
-} AvahiEntryGroupState;
+    CATTA_ENTRY_GROUP_UNCOMMITED,    /**< The group has not yet been commited, the user must still call avahi_entry_group_commit() */
+    CATTA_ENTRY_GROUP_REGISTERING,   /**< The entries of the group are currently being registered */
+    CATTA_ENTRY_GROUP_ESTABLISHED,   /**< The entries have successfully been established */
+    CATTA_ENTRY_GROUP_COLLISION,     /**< A name collision for one of the entries in the group has been detected, the entries have been withdrawn */
+    CATTA_ENTRY_GROUP_FAILURE        /**< Some kind of failure happened, the entries have been withdrawn */
+} CattaEntryGroupState;
 
 /** @} */
 
@@ -241,40 +241,40 @@ typedef enum {
 
 /** Some flags for publishing functions */
 typedef enum {
-    AVAHI_PUBLISH_UNIQUE = 1,           /**< For raw records: The RRset is intended to be unique */
-    AVAHI_PUBLISH_NO_PROBE = 2,         /**< For raw records: Though the RRset is intended to be unique no probes shall be sent */
-    AVAHI_PUBLISH_NO_ANNOUNCE = 4,      /**< For raw records: Do not announce this RR to other hosts */
-    AVAHI_PUBLISH_ALLOW_MULTIPLE = 8,   /**< For raw records: Allow multiple local records of this type, even if they are intended to be unique */
+    CATTA_PUBLISH_UNIQUE = 1,           /**< For raw records: The RRset is intended to be unique */
+    CATTA_PUBLISH_NO_PROBE = 2,         /**< For raw records: Though the RRset is intended to be unique no probes shall be sent */
+    CATTA_PUBLISH_NO_ANNOUNCE = 4,      /**< For raw records: Do not announce this RR to other hosts */
+    CATTA_PUBLISH_ALLOW_MULTIPLE = 8,   /**< For raw records: Allow multiple local records of this type, even if they are intended to be unique */
 /** \cond fulldocs */
-    AVAHI_PUBLISH_NO_REVERSE = 16,      /**< For address records: don't create a reverse (PTR) entry */
-    AVAHI_PUBLISH_NO_COOKIE = 32,       /**< For service records: do not implicitly add the local service cookie to TXT data */
+    CATTA_PUBLISH_NO_REVERSE = 16,      /**< For address records: don't create a reverse (PTR) entry */
+    CATTA_PUBLISH_NO_COOKIE = 32,       /**< For service records: do not implicitly add the local service cookie to TXT data */
 /** \endcond */
-    AVAHI_PUBLISH_UPDATE = 64,          /**< Update existing records instead of adding new ones */
+    CATTA_PUBLISH_UPDATE = 64,          /**< Update existing records instead of adding new ones */
 /** \cond fulldocs */
-    AVAHI_PUBLISH_USE_WIDE_AREA = 128,  /**< Register the record using wide area DNS (i.e. unicast DNS update) */
-    AVAHI_PUBLISH_USE_MULTICAST = 256   /**< Register the record using multicast DNS */
+    CATTA_PUBLISH_USE_WIDE_AREA = 128,  /**< Register the record using wide area DNS (i.e. unicast DNS update) */
+    CATTA_PUBLISH_USE_MULTICAST = 256   /**< Register the record using multicast DNS */
 /** \endcond */
-} AvahiPublishFlags;
+} CattaPublishFlags;
 
 /** Some flags for lookup functions */
 typedef enum {
 /** \cond fulldocs */
-    AVAHI_LOOKUP_USE_WIDE_AREA = 1,    /**< Force lookup via wide area DNS */
-    AVAHI_LOOKUP_USE_MULTICAST = 2,    /**< Force lookup via multicast DNS */
+    CATTA_LOOKUP_USE_WIDE_AREA = 1,    /**< Force lookup via wide area DNS */
+    CATTA_LOOKUP_USE_MULTICAST = 2,    /**< Force lookup via multicast DNS */
 /** \endcond */
-    AVAHI_LOOKUP_NO_TXT = 4,           /**< When doing service resolving, don't lookup TXT record */
-    AVAHI_LOOKUP_NO_ADDRESS = 8        /**< When doing service resolving, don't lookup A/AAAA record */
-} AvahiLookupFlags;
+    CATTA_LOOKUP_NO_TXT = 4,           /**< When doing service resolving, don't lookup TXT record */
+    CATTA_LOOKUP_NO_ADDRESS = 8        /**< When doing service resolving, don't lookup A/AAAA record */
+} CattaLookupFlags;
 
 /** Some flags for lookup callback functions */
 typedef enum {
-    AVAHI_LOOKUP_RESULT_CACHED = 1,         /**< This response originates from the cache */
-    AVAHI_LOOKUP_RESULT_WIDE_AREA = 2,      /**< This response originates from wide area DNS */
-    AVAHI_LOOKUP_RESULT_MULTICAST = 4,      /**< This response originates from multicast DNS */
-    AVAHI_LOOKUP_RESULT_LOCAL = 8,          /**< This record/service resides on and was announced by the local host. Only available in service and record browsers and only on AVAHI_BROWSER_NEW. */
-    AVAHI_LOOKUP_RESULT_OUR_OWN = 16,       /**< This service belongs to the same local client as the browser object. Only available in avahi-client, and only for service browsers and only on AVAHI_BROWSER_NEW. */
-    AVAHI_LOOKUP_RESULT_STATIC = 32         /**< The returned data has been defined statically by some configuration option */
-} AvahiLookupResultFlags;
+    CATTA_LOOKUP_RESULT_CACHED = 1,         /**< This response originates from the cache */
+    CATTA_LOOKUP_RESULT_WIDE_AREA = 2,      /**< This response originates from wide area DNS */
+    CATTA_LOOKUP_RESULT_MULTICAST = 4,      /**< This response originates from multicast DNS */
+    CATTA_LOOKUP_RESULT_LOCAL = 8,          /**< This record/service resides on and was announced by the local host. Only available in service and record browsers and only on CATTA_BROWSER_NEW. */
+    CATTA_LOOKUP_RESULT_OUR_OWN = 16,       /**< This service belongs to the same local client as the browser object. Only available in avahi-client, and only for service browsers and only on CATTA_BROWSER_NEW. */
+    CATTA_LOOKUP_RESULT_STATIC = 32         /**< The returned data has been defined statically by some configuration option */
+} CattaLookupResultFlags;
 
 /** @} */
 
@@ -282,18 +282,18 @@ typedef enum {
 
 /** Type of callback event when browsing */
 typedef enum {
-    AVAHI_BROWSER_NEW,               /**< The object is new on the network */
-    AVAHI_BROWSER_REMOVE,            /**< The object has been removed from the network */
-    AVAHI_BROWSER_CACHE_EXHAUSTED,   /**< One-time event, to notify the user that all entries from the caches have been sent */
-    AVAHI_BROWSER_ALL_FOR_NOW,       /**< One-time event, to notify the user that more records will probably not show up in the near future, i.e. all cache entries have been read and all static servers been queried */
-    AVAHI_BROWSER_FAILURE            /**< Browsing failed due to some reason which can be retrieved using avahi_server_errno()/avahi_client_errno() */
-} AvahiBrowserEvent;
+    CATTA_BROWSER_NEW,               /**< The object is new on the network */
+    CATTA_BROWSER_REMOVE,            /**< The object has been removed from the network */
+    CATTA_BROWSER_CACHE_EXHAUSTED,   /**< One-time event, to notify the user that all entries from the caches have been sent */
+    CATTA_BROWSER_ALL_FOR_NOW,       /**< One-time event, to notify the user that more records will probably not show up in the near future, i.e. all cache entries have been read and all static servers been queried */
+    CATTA_BROWSER_FAILURE            /**< Browsing failed due to some reason which can be retrieved using catta_server_errno() */
+} CattaBrowserEvent;
 
 /** Type of callback event when resolving */
 typedef enum {
-    AVAHI_RESOLVER_FOUND,          /**< RR found, resolving successful */
-    AVAHI_RESOLVER_FAILURE         /**< Resolving failed due to some reason which can be retrieved using avahi_server_errno()/avahi_client_errno() */
-} AvahiResolverEvent;
+    CATTA_RESOLVER_FOUND,          /**< RR found, resolving successful */
+    CATTA_RESOLVER_FAILURE         /**< Resolving failed due to some reason which can be retrieved using catta_server_errno() */
+} CattaResolverEvent;
 
 /** @} */
 
@@ -301,13 +301,13 @@ typedef enum {
 
 /** The type of domain to browse for */
 typedef enum {
-    AVAHI_DOMAIN_BROWSER_BROWSE,            /**< Browse for a list of available browsing domains */
-    AVAHI_DOMAIN_BROWSER_BROWSE_DEFAULT,    /**< Browse for the default browsing domain */
-    AVAHI_DOMAIN_BROWSER_REGISTER,          /**< Browse for a list of available registering domains */
-    AVAHI_DOMAIN_BROWSER_REGISTER_DEFAULT,  /**< Browse for the default registering domain */
-    AVAHI_DOMAIN_BROWSER_BROWSE_LEGACY,     /**< Legacy browse domain - see DNS-SD spec for more information */
-    AVAHI_DOMAIN_BROWSER_MAX
-} AvahiDomainBrowserType;
+    CATTA_DOMAIN_BROWSER_BROWSE,            /**< Browse for a list of available browsing domains */
+    CATTA_DOMAIN_BROWSER_BROWSE_DEFAULT,    /**< Browse for the default browsing domain */
+    CATTA_DOMAIN_BROWSER_REGISTER,          /**< Browse for a list of available registering domains */
+    CATTA_DOMAIN_BROWSER_REGISTER_DEFAULT,  /**< Browse for the default registering domain */
+    CATTA_DOMAIN_BROWSER_BROWSE_LEGACY,     /**< Legacy browse domain - see DNS-SD spec for more information */
+    CATTA_DOMAIN_BROWSER_MAX
+} CattaDomainBrowserType;
 
 /** @} */
 
@@ -316,41 +316,41 @@ typedef enum {
  * contains a random cookie which is private to the local daemon. This
  * can be used by clients to determine if two services on two
  * different subnets are effectively the same. */
-#define AVAHI_SERVICE_COOKIE "org.freedesktop.Avahi.cookie"
+#define CATTA_SERVICE_COOKIE "org.freedesktop.Catta.cookie"
 
 /** In invalid cookie as special value */
-#define AVAHI_SERVICE_COOKIE_INVALID (0)
+#define CATTA_SERVICE_COOKIE_INVALID (0)
 /** \endcond fulldocs */
 
 /** @{ \name DNS RR definitions */
 
 /** DNS record types, see RFC 1035 */
 enum {
-    AVAHI_DNS_TYPE_A = 0x01,
-    AVAHI_DNS_TYPE_NS = 0x02,
-    AVAHI_DNS_TYPE_CNAME = 0x05,
-    AVAHI_DNS_TYPE_SOA = 0x06,
-    AVAHI_DNS_TYPE_PTR = 0x0C,
-    AVAHI_DNS_TYPE_HINFO = 0x0D,
-    AVAHI_DNS_TYPE_MX = 0x0F,
-    AVAHI_DNS_TYPE_TXT = 0x10,
-    AVAHI_DNS_TYPE_AAAA = 0x1C,
-    AVAHI_DNS_TYPE_SRV = 0x21
+    CATTA_DNS_TYPE_A = 0x01,
+    CATTA_DNS_TYPE_NS = 0x02,
+    CATTA_DNS_TYPE_CNAME = 0x05,
+    CATTA_DNS_TYPE_SOA = 0x06,
+    CATTA_DNS_TYPE_PTR = 0x0C,
+    CATTA_DNS_TYPE_HINFO = 0x0D,
+    CATTA_DNS_TYPE_MX = 0x0F,
+    CATTA_DNS_TYPE_TXT = 0x10,
+    CATTA_DNS_TYPE_AAAA = 0x1C,
+    CATTA_DNS_TYPE_SRV = 0x21
 };
 
 /** DNS record classes, see RFC 1035 */
 enum {
-    AVAHI_DNS_CLASS_IN = 0x01          /**< Probably the only class we will ever use */
+    CATTA_DNS_CLASS_IN = 0x01          /**< Probably the only class we will ever use */
 };
 
 /** @} */
 
 /** The default TTL for RRs which contain a host name of some kind. */
-#define AVAHI_DEFAULT_TTL_HOST_NAME (120)
+#define CATTA_DEFAULT_TTL_HOST_NAME (120)
 
 /** The default TTL for all other records. */
-#define AVAHI_DEFAULT_TTL (75*60)
+#define CATTA_DEFAULT_TTL (75*60)
 
-AVAHI_C_DECL_END
+CATTA_C_DECL_END
 
 #endif

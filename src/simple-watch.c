@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -29,40 +29,40 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-#include <avahi/llist.h>
-#include <avahi/malloc.h>
-#include <avahi/timeval.h>
-#include <avahi/simple-watch.h>
+#include <catta/llist.h>
+#include <catta/malloc.h>
+#include <catta/timeval.h>
+#include <catta/simple-watch.h>
 
-struct AvahiWatch {
-    AvahiSimplePoll *simple_poll;
+struct CattaWatch {
+    CattaSimplePoll *simple_poll;
     int dead;
 
     int idx;
     struct pollfd pollfd;
 
-    AvahiWatchCallback callback;
+    CattaWatchCallback callback;
     void *userdata;
 
-    AVAHI_LLIST_FIELDS(AvahiWatch, watches);
+    CATTA_LLIST_FIELDS(CattaWatch, watches);
 };
 
-struct AvahiTimeout {
-    AvahiSimplePoll *simple_poll;
+struct CattaTimeout {
+    CattaSimplePoll *simple_poll;
     int dead;
 
     int enabled;
     struct timeval expiry;
 
-    AvahiTimeoutCallback callback;
+    CattaTimeoutCallback callback;
     void  *userdata;
 
-    AVAHI_LLIST_FIELDS(AvahiTimeout, timeouts);
+    CATTA_LLIST_FIELDS(CattaTimeout, timeouts);
 };
 
-struct AvahiSimplePoll {
-    AvahiPoll api;
-    AvahiPollFunc poll_func;
+struct CattaSimplePoll {
+    CattaPoll api;
+    CattaPollFunc poll_func;
     void *poll_func_userdata;
 
     struct pollfd* pollfds;
@@ -73,8 +73,8 @@ struct AvahiSimplePoll {
     int events_valid;
 
     int n_watches;
-    AVAHI_LLIST_HEAD(AvahiWatch, watches);
-    AVAHI_LLIST_HEAD(AvahiTimeout, timeouts);
+    CATTA_LLIST_HEAD(CattaWatch, watches);
+    CATTA_LLIST_HEAD(CattaTimeout, timeouts);
 
     int wakeup_pipe[2];
     int wakeup_issued;
@@ -94,7 +94,7 @@ struct AvahiSimplePoll {
     } state;
 };
 
-void avahi_simple_poll_wakeup(AvahiSimplePoll *s) {
+void catta_simple_poll_wakeup(CattaSimplePoll *s) {
     char c = 'W';
     assert(s);
 
@@ -102,7 +102,7 @@ void avahi_simple_poll_wakeup(AvahiSimplePoll *s) {
     s->wakeup_issued = 1;
 }
 
-static void clear_wakeup(AvahiSimplePoll *s) {
+static void clear_wakeup(CattaSimplePoll *s) {
     char c[10]; /* Read ten at a time */
 
     if (!s->wakeup_issued)
@@ -129,9 +129,9 @@ static int set_nonblock(int fd) {
     return fcntl(fd, F_SETFL, n|O_NONBLOCK);
 }
 
-static AvahiWatch* watch_new(const AvahiPoll *api, int fd, AvahiWatchEvent event, AvahiWatchCallback callback, void *userdata) {
-    AvahiWatch *w;
-    AvahiSimplePoll *s;
+static CattaWatch* watch_new(const CattaPoll *api, int fd, CattaWatchEvent event, CattaWatchCallback callback, void *userdata) {
+    CattaWatch *w;
+    CattaSimplePoll *s;
 
     assert(api);
     assert(fd >= 0);
@@ -140,11 +140,11 @@ static AvahiWatch* watch_new(const AvahiPoll *api, int fd, AvahiWatchEvent event
     s = api->userdata;
     assert(s);
 
-    if (!(w = avahi_new(AvahiWatch, 1)))
+    if (!(w = catta_new(CattaWatch, 1)))
         return NULL;
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(s);
+    catta_simple_poll_wakeup(s);
 
     w->simple_poll = s;
     w->dead = 0;
@@ -159,18 +159,18 @@ static AvahiWatch* watch_new(const AvahiPoll *api, int fd, AvahiWatchEvent event
     w->idx = -1;
     s->rebuild_pollfds = 1;
 
-    AVAHI_LLIST_PREPEND(AvahiWatch, watches, s->watches, w);
+    CATTA_LLIST_PREPEND(CattaWatch, watches, s->watches, w);
     s->n_watches++;
 
     return w;
 }
 
-static void watch_update(AvahiWatch *w, AvahiWatchEvent events) {
+static void watch_update(CattaWatch *w, CattaWatchEvent events) {
     assert(w);
     assert(!w->dead);
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(w->simple_poll);
+    catta_simple_poll_wakeup(w->simple_poll);
 
     w->pollfd.events = events;
 
@@ -181,7 +181,7 @@ static void watch_update(AvahiWatch *w, AvahiWatchEvent events) {
         w->simple_poll->rebuild_pollfds = 1;
 }
 
-static AvahiWatchEvent watch_get_events(AvahiWatch *w) {
+static CattaWatchEvent watch_get_events(CattaWatch *w) {
     assert(w);
     assert(!w->dead);
 
@@ -191,7 +191,7 @@ static AvahiWatchEvent watch_get_events(AvahiWatch *w) {
     return 0;
 }
 
-static void remove_pollfd(AvahiWatch *w) {
+static void remove_pollfd(CattaWatch *w) {
     assert(w);
 
     if (w->idx == -1)
@@ -200,13 +200,13 @@ static void remove_pollfd(AvahiWatch *w) {
     w->simple_poll->rebuild_pollfds = 1;
 }
 
-static void watch_free(AvahiWatch *w) {
+static void watch_free(CattaWatch *w) {
     assert(w);
 
     assert(!w->dead);
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(w->simple_poll);
+    catta_simple_poll_wakeup(w->simple_poll);
 
     remove_pollfd(w);
 
@@ -215,20 +215,20 @@ static void watch_free(AvahiWatch *w) {
     w->simple_poll->watch_req_cleanup = 1;
 }
 
-static void destroy_watch(AvahiWatch *w) {
+static void destroy_watch(CattaWatch *w) {
     assert(w);
 
     remove_pollfd(w);
-    AVAHI_LLIST_REMOVE(AvahiWatch, watches, w->simple_poll->watches, w);
+    CATTA_LLIST_REMOVE(CattaWatch, watches, w->simple_poll->watches, w);
 
     if (!w->dead)
         w->simple_poll->n_watches --;
 
-    avahi_free(w);
+    catta_free(w);
 }
 
-static void cleanup_watches(AvahiSimplePoll *s, int all) {
-    AvahiWatch *w, *next;
+static void cleanup_watches(CattaSimplePoll *s, int all) {
+    CattaWatch *w, *next;
     assert(s);
 
     for (w = s->watches; w; w = next) {
@@ -241,9 +241,9 @@ static void cleanup_watches(AvahiSimplePoll *s, int all) {
     s->timeout_req_cleanup = 0;
 }
 
-static AvahiTimeout* timeout_new(const AvahiPoll *api, const struct timeval *tv, AvahiTimeoutCallback callback, void *userdata) {
-    AvahiTimeout *t;
-    AvahiSimplePoll *s;
+static CattaTimeout* timeout_new(const CattaPoll *api, const struct timeval *tv, CattaTimeoutCallback callback, void *userdata) {
+    CattaTimeout *t;
+    CattaSimplePoll *s;
 
     assert(api);
     assert(callback);
@@ -251,11 +251,11 @@ static AvahiTimeout* timeout_new(const AvahiPoll *api, const struct timeval *tv,
     s = api->userdata;
     assert(s);
 
-    if (!(t = avahi_new(AvahiTimeout, 1)))
+    if (!(t = catta_new(CattaTimeout, 1)))
         return NULL;
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(s);
+    catta_simple_poll_wakeup(s);
 
     t->simple_poll = s;
     t->dead = 0;
@@ -266,43 +266,43 @@ static AvahiTimeout* timeout_new(const AvahiPoll *api, const struct timeval *tv,
     t->callback = callback;
     t->userdata = userdata;
 
-    AVAHI_LLIST_PREPEND(AvahiTimeout, timeouts, s->timeouts, t);
+    CATTA_LLIST_PREPEND(CattaTimeout, timeouts, s->timeouts, t);
     return t;
 }
 
-static void timeout_update(AvahiTimeout *t, const struct timeval *tv) {
+static void timeout_update(CattaTimeout *t, const struct timeval *tv) {
     assert(t);
     assert(!t->dead);
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(t->simple_poll);
+    catta_simple_poll_wakeup(t->simple_poll);
 
     if ((t->enabled = !!tv))
         t->expiry = *tv;
 }
 
-static void timeout_free(AvahiTimeout *t) {
+static void timeout_free(CattaTimeout *t) {
     assert(t);
     assert(!t->dead);
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(t->simple_poll);
+    catta_simple_poll_wakeup(t->simple_poll);
 
     t->dead = 1;
     t->simple_poll->timeout_req_cleanup = 1;
 }
 
 
-static void destroy_timeout(AvahiTimeout *t) {
+static void destroy_timeout(CattaTimeout *t) {
     assert(t);
 
-    AVAHI_LLIST_REMOVE(AvahiTimeout, timeouts, t->simple_poll->timeouts, t);
+    CATTA_LLIST_REMOVE(CattaTimeout, timeouts, t->simple_poll->timeouts, t);
 
-    avahi_free(t);
+    catta_free(t);
 }
 
-static void cleanup_timeouts(AvahiSimplePoll *s, int all) {
-    AvahiTimeout *t, *next;
+static void cleanup_timeouts(CattaSimplePoll *s, int all) {
+    CattaTimeout *t, *next;
     assert(s);
 
     for (t = s->timeouts; t; t = next) {
@@ -315,14 +315,14 @@ static void cleanup_timeouts(AvahiSimplePoll *s, int all) {
     s->timeout_req_cleanup = 0;
 }
 
-AvahiSimplePoll *avahi_simple_poll_new(void) {
-    AvahiSimplePoll *s;
+CattaSimplePoll *catta_simple_poll_new(void) {
+    CattaSimplePoll *s;
 
-    if (!(s = avahi_new(AvahiSimplePoll, 1)))
+    if (!(s = catta_new(CattaSimplePoll, 1)))
         return NULL;
 
     if (pipe(s->wakeup_pipe) < 0) {
-        avahi_free(s);
+        catta_free(s);
         return NULL;
     }
 
@@ -356,22 +356,22 @@ AvahiSimplePoll *avahi_simple_poll_new(void) {
 
     s->wakeup_issued = 0;
 
-    avahi_simple_poll_set_func(s, NULL, NULL);
+    catta_simple_poll_set_func(s, NULL, NULL);
 
-    AVAHI_LLIST_HEAD_INIT(AvahiWatch, s->watches);
-    AVAHI_LLIST_HEAD_INIT(AvahiTimeout, s->timeouts);
+    CATTA_LLIST_HEAD_INIT(CattaWatch, s->watches);
+    CATTA_LLIST_HEAD_INIT(CattaTimeout, s->timeouts);
 
     return s;
 }
 
-void avahi_simple_poll_free(AvahiSimplePoll *s) {
+void catta_simple_poll_free(CattaSimplePoll *s) {
     assert(s);
 
     cleanup_timeouts(s, 1);
     cleanup_watches(s, 1);
     assert(s->n_watches == 0);
 
-    avahi_free(s->pollfds);
+    catta_free(s->pollfds);
 
     if (s->wakeup_pipe[0] >= 0)
         close(s->wakeup_pipe[0]);
@@ -379,11 +379,11 @@ void avahi_simple_poll_free(AvahiSimplePoll *s) {
     if (s->wakeup_pipe[1] >= 0)
         close(s->wakeup_pipe[1]);
 
-    avahi_free(s);
+    catta_free(s);
 }
 
-static int rebuild(AvahiSimplePoll *s) {
-    AvahiWatch *w;
+static int rebuild(CattaSimplePoll *s) {
+    CattaWatch *w;
     int idx;
 
     assert(s);
@@ -393,7 +393,7 @@ static int rebuild(AvahiSimplePoll *s) {
 
         s->max_pollfds = s->n_watches + 10;
 
-        if (!(n = avahi_realloc(s->pollfds, sizeof(struct pollfd) * s->max_pollfds)))
+        if (!(n = catta_realloc(s->pollfds, sizeof(struct pollfd) * s->max_pollfds)))
             return -1;
 
         s->pollfds = n;
@@ -422,8 +422,8 @@ static int rebuild(AvahiSimplePoll *s) {
     return 0;
 }
 
-static AvahiTimeout* find_next_timeout(AvahiSimplePoll *s) {
-    AvahiTimeout *t, *n = NULL;
+static CattaTimeout* find_next_timeout(CattaSimplePoll *s) {
+    CattaTimeout *t, *n = NULL;
     assert(s);
 
     for (t = s->timeouts; t; t = t->timeouts_next) {
@@ -431,14 +431,14 @@ static AvahiTimeout* find_next_timeout(AvahiSimplePoll *s) {
         if (t->dead || !t->enabled)
             continue;
 
-        if (!n || avahi_timeval_compare(&t->expiry, &n->expiry) < 0)
+        if (!n || catta_timeval_compare(&t->expiry, &n->expiry) < 0)
             n = t;
     }
 
     return n;
 }
 
-static void timeout_callback(AvahiTimeout *t) {
+static void timeout_callback(CattaTimeout *t) {
     assert(t);
     assert(!t->dead);
     assert(t->enabled);
@@ -447,8 +447,8 @@ static void timeout_callback(AvahiTimeout *t) {
     t->callback(t, t->userdata);
 }
 
-int avahi_simple_poll_prepare(AvahiSimplePoll *s, int timeout) {
-    AvahiTimeout *next_timeout;
+int catta_simple_poll_prepare(CattaSimplePoll *s, int timeout) {
+    CattaTimeout *next_timeout;
 
     assert(s);
     assert(s->state == STATE_INIT || s->state == STATE_DISPATCHED || s->state == STATE_FAILURE);
@@ -481,7 +481,7 @@ int avahi_simple_poll_prepare(AvahiSimplePoll *s, int timeout) {
     if ((next_timeout = find_next_timeout(s))) {
         struct timeval now;
         int t;
-        AvahiUsec usec;
+        CattaUsec usec;
 
         if (next_timeout->expiry.tv_sec == 0 &&
             next_timeout->expiry.tv_usec == 0) {
@@ -492,7 +492,7 @@ int avahi_simple_poll_prepare(AvahiSimplePoll *s, int timeout) {
         }
 
         gettimeofday(&now, NULL);
-        usec = avahi_timeval_diff(&next_timeout->expiry, &now);
+        usec = catta_timeval_diff(&next_timeout->expiry, &now);
 
         if (usec <= 0) {
             /* Timeout elapsed */
@@ -515,7 +515,7 @@ finish:
     return 0;
 }
 
-int avahi_simple_poll_run(AvahiSimplePoll *s) {
+int catta_simple_poll_run(CattaSimplePoll *s) {
     assert(s);
     assert(s->state == STATE_PREPARED || s->state == STATE_FAILURE);
 
@@ -544,9 +544,9 @@ int avahi_simple_poll_run(AvahiSimplePoll *s) {
     return 0;
 }
 
-int avahi_simple_poll_dispatch(AvahiSimplePoll *s) {
-    AvahiTimeout *next_timeout;
-    AvahiWatch *w;
+int catta_simple_poll_dispatch(CattaSimplePoll *s) {
+    CattaTimeout *next_timeout;
+    CattaWatch *w;
 
     assert(s);
     assert(s->state == STATE_RAN);
@@ -564,7 +564,7 @@ int avahi_simple_poll_dispatch(AvahiSimplePoll *s) {
             goto finish;
         }
 
-        if (avahi_age(&next_timeout->expiry) >= 0) {
+        if (catta_age(&next_timeout->expiry) >= 0) {
 
             /* Timeout elapsed */
             timeout_callback(next_timeout);
@@ -593,57 +593,57 @@ finish:
     return 0;
 }
 
-int avahi_simple_poll_iterate(AvahiSimplePoll *s, int timeout) {
+int catta_simple_poll_iterate(CattaSimplePoll *s, int timeout) {
     int r;
 
-    if ((r = avahi_simple_poll_prepare(s, timeout)) != 0)
+    if ((r = catta_simple_poll_prepare(s, timeout)) != 0)
         return r;
 
-    if ((r = avahi_simple_poll_run(s)) != 0)
+    if ((r = catta_simple_poll_run(s)) != 0)
         return r;
 
-    if ((r = avahi_simple_poll_dispatch(s)) != 0)
+    if ((r = catta_simple_poll_dispatch(s)) != 0)
         return r;
 
     return 0;
 }
 
-void avahi_simple_poll_quit(AvahiSimplePoll *s) {
+void catta_simple_poll_quit(CattaSimplePoll *s) {
     assert(s);
 
     s->quit = 1;
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(s);
+    catta_simple_poll_wakeup(s);
 }
 
-const AvahiPoll* avahi_simple_poll_get(AvahiSimplePoll *s) {
+const CattaPoll* catta_simple_poll_get(CattaSimplePoll *s) {
     assert(s);
 
     return &s->api;
 }
 
-static int system_poll(struct pollfd *ufds, unsigned int nfds, int timeout, AVAHI_GCC_UNUSED void *userdata) {
+static int system_poll(struct pollfd *ufds, unsigned int nfds, int timeout, CATTA_GCC_UNUSED void *userdata) {
     return poll(ufds, nfds, timeout);
 }
 
-void avahi_simple_poll_set_func(AvahiSimplePoll *s, AvahiPollFunc func, void *userdata) {
+void catta_simple_poll_set_func(CattaSimplePoll *s, CattaPollFunc func, void *userdata) {
     assert(s);
 
     s->poll_func = func ? func : system_poll;
     s->poll_func_userdata = func ? userdata : NULL;
 
     /* If there is a background thread running the poll() for us, tell it to exit the poll() */
-    avahi_simple_poll_wakeup(s);
+    catta_simple_poll_wakeup(s);
 }
 
-int avahi_simple_poll_loop(AvahiSimplePoll *s) {
+int catta_simple_poll_loop(CattaSimplePoll *s) {
     int r;
 
     assert(s);
 
     for (;;)
-        if ((r = avahi_simple_poll_iterate(s, -1)) != 0)
+        if ((r = catta_simple_poll_iterate(s, -1)) != 0)
             if (r >= 0 || errno != EINTR)
                 return r;
 }

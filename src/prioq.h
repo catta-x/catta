@@ -2,48 +2,48 @@
 #define fooprioqhfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-typedef struct AvahiPrioQueue AvahiPrioQueue;
-typedef struct AvahiPrioQueueNode AvahiPrioQueueNode;
+typedef struct CattaPrioQueue CattaPrioQueue;
+typedef struct CattaPrioQueueNode CattaPrioQueueNode;
 
-typedef int (*AvahiPQCompareFunc)(const void* a, const void* b);
+typedef int (*CattaPQCompareFunc)(const void* a, const void* b);
 
-struct AvahiPrioQueue {
-    AvahiPrioQueueNode *root, *last;
+struct CattaPrioQueue {
+    CattaPrioQueueNode *root, *last;
     unsigned n_nodes;
-    AvahiPQCompareFunc compare;
+    CattaPQCompareFunc compare;
 };
 
-struct AvahiPrioQueueNode {
-    AvahiPrioQueue *queue;
+struct CattaPrioQueueNode {
+    CattaPrioQueue *queue;
     void* data;
     unsigned x, y;
-    AvahiPrioQueueNode *left, *right, *parent, *next, *prev;
+    CattaPrioQueueNode *left, *right, *parent, *next, *prev;
 };
 
-AvahiPrioQueue* avahi_prio_queue_new(AvahiPQCompareFunc compare);
-void avahi_prio_queue_free(AvahiPrioQueue *q);
+CattaPrioQueue* catta_prio_queue_new(CattaPQCompareFunc compare);
+void catta_prio_queue_free(CattaPrioQueue *q);
 
-AvahiPrioQueueNode* avahi_prio_queue_put(AvahiPrioQueue *q, void* data);
-void avahi_prio_queue_remove(AvahiPrioQueue *q, AvahiPrioQueueNode *n);
+CattaPrioQueueNode* catta_prio_queue_put(CattaPrioQueue *q, void* data);
+void catta_prio_queue_remove(CattaPrioQueue *q, CattaPrioQueueNode *n);
 
-void avahi_prio_queue_shuffle(AvahiPrioQueue *q, AvahiPrioQueueNode *n);
+void catta_prio_queue_shuffle(CattaPrioQueue *q, CattaPrioQueueNode *n);
 
 #endif

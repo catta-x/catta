@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -25,9 +25,9 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <avahi/timeval.h>
+#include <catta/timeval.h>
 
-int avahi_timeval_compare(const struct timeval *a, const struct timeval *b) {
+int catta_timeval_compare(const struct timeval *a, const struct timeval *b) {
     assert(a);
     assert(b);
 
@@ -46,18 +46,18 @@ int avahi_timeval_compare(const struct timeval *a, const struct timeval *b) {
     return 0;
 }
 
-AvahiUsec avahi_timeval_diff(const struct timeval *a, const struct timeval *b) {
+CattaUsec catta_timeval_diff(const struct timeval *a, const struct timeval *b) {
     assert(a);
     assert(b);
 
-    if (avahi_timeval_compare(a, b) < 0)
-        return - avahi_timeval_diff(b, a);
+    if (catta_timeval_compare(a, b) < 0)
+        return - catta_timeval_diff(b, a);
 
-    return ((AvahiUsec) a->tv_sec - b->tv_sec)*1000000 + a->tv_usec - b->tv_usec;
+    return ((CattaUsec) a->tv_sec - b->tv_sec)*1000000 + a->tv_usec - b->tv_usec;
 }
 
-struct timeval* avahi_timeval_add(struct timeval *a, AvahiUsec usec) {
-    AvahiUsec u;
+struct timeval* catta_timeval_add(struct timeval *a, CattaUsec usec) {
+    CattaUsec u;
     assert(a);
 
     u = usec + a->tv_usec;
@@ -73,23 +73,23 @@ struct timeval* avahi_timeval_add(struct timeval *a, AvahiUsec usec) {
     return a;
 }
 
-AvahiUsec avahi_age(const struct timeval *a) {
+CattaUsec catta_age(const struct timeval *a) {
     struct timeval now;
 
     assert(a);
 
     gettimeofday(&now, NULL);
 
-    return avahi_timeval_diff(&now, a);
+    return catta_timeval_diff(&now, a);
 }
 
-struct timeval *avahi_elapse_time(struct timeval *tv, unsigned msec, unsigned jitter) {
+struct timeval *catta_elapse_time(struct timeval *tv, unsigned msec, unsigned jitter) {
     assert(tv);
 
     gettimeofday(tv, NULL);
 
     if (msec)
-        avahi_timeval_add(tv, (AvahiUsec) msec*1000);
+        catta_timeval_add(tv, (CattaUsec) msec*1000);
 
     if (jitter) {
         static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -115,7 +115,7 @@ struct timeval *avahi_elapse_time(struct timeval *tv, unsigned msec, unsigned ji
          * time events elapse in bursts which has the advantage that
          * packet data can be aggregated better */
 
-        avahi_timeval_add(tv, (AvahiUsec) (jitter*1000.0*r/(RAND_MAX+1.0)));
+        catta_timeval_add(tv, (CattaUsec) (jitter*1000.0*r/(RAND_MAX+1.0)));
     }
 
     return tv;

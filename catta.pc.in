@@ -3,8 +3,8 @@ exec_prefix=${prefix}
 libdir=@libdir@
 includedir=${prefix}/include
 
-Name: avahi
-Description: Avahi Multicast DNS Responder (Embeddable Stack)
+Name: catta
+Description: Catta Embeddable mDNS Stack
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lavahi
+Libs: -L${libdir} -lcatta
 Cflags: -D_REENTRANT -I${includedir}

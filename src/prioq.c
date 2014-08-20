@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -24,15 +24,15 @@
 #include <assert.h>
 #include <stdlib.h>
 
-#include <avahi/malloc.h>
+#include <catta/malloc.h>
 
 #include "prioq.h"
 
-AvahiPrioQueue* avahi_prio_queue_new(AvahiPQCompareFunc compare) {
-    AvahiPrioQueue *q;
+CattaPrioQueue* catta_prio_queue_new(CattaPQCompareFunc compare) {
+    CattaPrioQueue *q;
     assert(compare);
 
-    if (!(q = avahi_new(AvahiPrioQueue, 1)))
+    if (!(q = catta_new(CattaPrioQueue, 1)))
         return NULL; /* OOM */
 
     q->root = q->last = NULL;
@@ -42,19 +42,19 @@ AvahiPrioQueue* avahi_prio_queue_new(AvahiPQCompareFunc compare) {
     return q;
 }
 
-void avahi_prio_queue_free(AvahiPrioQueue *q) {
+void catta_prio_queue_free(CattaPrioQueue *q) {
     assert(q);
 
     while (q->last)
-        avahi_prio_queue_remove(q, q->last);
+        catta_prio_queue_remove(q, q->last);
 
     assert(!q->n_nodes);
-    avahi_free(q);
+    catta_free(q);
 }
 
-static AvahiPrioQueueNode* get_node_at_xy(AvahiPrioQueue *q, unsigned x, unsigned y) {
+static CattaPrioQueueNode* get_node_at_xy(CattaPrioQueue *q, unsigned x, unsigned y) {
     unsigned r;
-    AvahiPrioQueueNode *n;
+    CattaPrioQueueNode *n;
     assert(q);
 
     n = q->root;
@@ -75,8 +75,8 @@ static AvahiPrioQueueNode* get_node_at_xy(AvahiPrioQueue *q, unsigned x, unsigne
     return n;
 }
 
-static void exchange_nodes(AvahiPrioQueue *q, AvahiPrioQueueNode *a, AvahiPrioQueueNode *b) {
-    AvahiPrioQueueNode *l, *r, *p, *ap, *an, *bp, *bn;
+static void exchange_nodes(CattaPrioQueue *q, CattaPrioQueueNode *a, CattaPrioQueueNode *b) {
+    CattaPrioQueueNode *l, *r, *p, *ap, *an, *bp, *bn;
     unsigned t;
     assert(q);
     assert(a);
@@ -159,7 +159,7 @@ static void exchange_nodes(AvahiPrioQueue *q, AvahiPrioQueueNode *a, AvahiPrioQu
                 b->left->parent = b;
         }
     } else {
-        AvahiPrioQueueNode *apl = NULL, *bpl = NULL;
+        CattaPrioQueueNode *apl = NULL, *bpl = NULL;
 
         /* Swap parents */
         ap = a->parent;
@@ -255,7 +255,7 @@ static void exchange_nodes(AvahiPrioQueue *q, AvahiPrioQueueNode *a, AvahiPrioQu
 }
 
 /* Move a node to the correct position */
-void avahi_prio_queue_shuffle(AvahiPrioQueue *q, AvahiPrioQueueNode *n) {
+void catta_prio_queue_shuffle(CattaPrioQueue *q, CattaPrioQueueNode *n) {
     assert(q);
     assert(n);
     assert(n->queue == q);
@@ -266,7 +266,7 @@ void avahi_prio_queue_shuffle(AvahiPrioQueue *q, AvahiPrioQueueNode *n) {
 
     /* Move down until the position is OK */
     for (;;) {
-        AvahiPrioQueueNode *min;
+        CattaPrioQueueNode *min;
 
         if (!(min = n->left)) {
             /* No children */
@@ -287,11 +287,11 @@ void avahi_prio_queue_shuffle(AvahiPrioQueue *q, AvahiPrioQueueNode *n) {
     }
 }
 
-AvahiPrioQueueNode* avahi_prio_queue_put(AvahiPrioQueue *q, void* data) {
-    AvahiPrioQueueNode *n;
+CattaPrioQueueNode* catta_prio_queue_put(CattaPrioQueue *q, void* data) {
+    CattaPrioQueueNode *n;
     assert(q);
 
-    if (!(n = avahi_new(AvahiPrioQueueNode, 1)))
+    if (!(n = catta_new(CattaPrioQueueNode, 1)))
         return NULL; /* OOM */
 
     n->queue = q;
@@ -332,21 +332,21 @@ AvahiPrioQueueNode* avahi_prio_queue_put(AvahiPrioQueue *q, void* data) {
     q->last = n;
     q->n_nodes++;
 
-    avahi_prio_queue_shuffle(q, n);
+    catta_prio_queue_shuffle(q, n);
 
     return n;
 }
 
-void avahi_prio_queue_remove(AvahiPrioQueue *q, AvahiPrioQueueNode *n) {
+void catta_prio_queue_remove(CattaPrioQueue *q, CattaPrioQueueNode *n) {
     assert(q);
     assert(n);
     assert(q == n->queue);
 
     if (n != q->last) {
-        AvahiPrioQueueNode *replacement = q->last;
+        CattaPrioQueueNode *replacement = q->last;
         exchange_nodes(q, replacement, n);
-        avahi_prio_queue_remove(q, n);
-        avahi_prio_queue_shuffle(q, replacement);
+        catta_prio_queue_remove(q, n);
+        catta_prio_queue_shuffle(q, replacement);
         return;
     }
 
@@ -380,7 +380,7 @@ void avahi_prio_queue_remove(AvahiPrioQueue *q, AvahiPrioQueueNode *n) {
         q->root = NULL;
     }
 
-    avahi_free(n);
+    catta_free(n);
 
     assert(q->n_nodes > 0);
     q->n_nodes--;

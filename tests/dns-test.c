@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -27,87 +27,87 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <avahi/domain.h>
-#include <avahi/defs.h>
-#include <avahi/malloc.h>
-#include <avahi/log.h>
+#include <catta/domain.h>
+#include <catta/defs.h>
+#include <catta/malloc.h>
+#include <catta/log.h>
 
 #include "../src/dns.h"
 #include "../src/util.h"
 
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
-    char t[AVAHI_DOMAIN_NAME_MAX], *m;
+int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
+    char t[CATTA_DOMAIN_NAME_MAX], *m;
     const char *a, *b, *c, *d;
-    AvahiDnsPacket *p;
-    AvahiRecord *r, *r2;
-    uint8_t rdata[AVAHI_DNS_RDATA_MAX];
+    CattaDnsPacket *p;
+    CattaRecord *r, *r2;
+    uint8_t rdata[CATTA_DNS_RDATA_MAX];
     size_t l;
 
-    p = avahi_dns_packet_new(0);
+    p = catta_dns_packet_new(0);
 
-    assert(avahi_dns_packet_append_name(p, a = "Ahello.hello.hello.de."));
-    assert(avahi_dns_packet_append_name(p, b = "Bthis is a test.hello.de."));
-    assert(avahi_dns_packet_append_name(p, c = "Cthis\\.is\\.a\\.test\\.with\\.dots.hello.de."));
-    assert(avahi_dns_packet_append_name(p, d = "Dthis\\\\is another test.hello.de."));
+    assert(catta_dns_packet_append_name(p, a = "Ahello.hello.hello.de."));
+    assert(catta_dns_packet_append_name(p, b = "Bthis is a test.hello.de."));
+    assert(catta_dns_packet_append_name(p, c = "Cthis\\.is\\.a\\.test\\.with\\.dots.hello.de."));
+    assert(catta_dns_packet_append_name(p, d = "Dthis\\\\is another test.hello.de."));
 
-    avahi_hexdump(AVAHI_DNS_PACKET_DATA(p), p->size);
+    catta_hexdump(CATTA_DNS_PACKET_DATA(p), p->size);
 
-    assert(avahi_dns_packet_consume_name(p, t, sizeof(t)) == 0);
-    avahi_log_debug(">%s<", t);
-    assert(avahi_domain_equal(a, t));
+    assert(catta_dns_packet_consume_name(p, t, sizeof(t)) == 0);
+    catta_log_debug(">%s<", t);
+    assert(catta_domain_equal(a, t));
 
-    assert(avahi_dns_packet_consume_name(p, t, sizeof(t)) == 0);
-    avahi_log_debug(">%s<", t);
-    assert(avahi_domain_equal(b, t));
+    assert(catta_dns_packet_consume_name(p, t, sizeof(t)) == 0);
+    catta_log_debug(">%s<", t);
+    assert(catta_domain_equal(b, t));
 
-    assert(avahi_dns_packet_consume_name(p, t, sizeof(t)) == 0);
-    avahi_log_debug(">%s<", t);
-    assert(avahi_domain_equal(c, t));
+    assert(catta_dns_packet_consume_name(p, t, sizeof(t)) == 0);
+    catta_log_debug(">%s<", t);
+    assert(catta_domain_equal(c, t));
 
-    assert(avahi_dns_packet_consume_name(p, t, sizeof(t)) == 0);
-    avahi_log_debug(">%s<", t);
-    assert(avahi_domain_equal(d, t));
+    assert(catta_dns_packet_consume_name(p, t, sizeof(t)) == 0);
+    catta_log_debug(">%s<", t);
+    assert(catta_domain_equal(d, t));
 
-    avahi_dns_packet_free(p);
+    catta_dns_packet_free(p);
 
     /* RDATA PARSING AND SERIALIZATION */
 
-    /* Create an AvahiRecord with some usful data */
-    r = avahi_record_new_full("foobar.local", AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_HINFO, AVAHI_DEFAULT_TTL);
+    /* Create an CattaRecord with some usful data */
+    r = catta_record_new_full("foobar.local", CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_HINFO, CATTA_DEFAULT_TTL);
     assert(r);
-    r->data.hinfo.cpu = avahi_strdup("FOO");
-    r->data.hinfo.os = avahi_strdup("BAR");
+    r->data.hinfo.cpu = catta_strdup("FOO");
+    r->data.hinfo.os = catta_strdup("BAR");
 
     /* Serialize it into a blob */
-    assert((l = avahi_rdata_serialize(r, rdata, sizeof(rdata))) != (size_t) -1);
+    assert((l = catta_rdata_serialize(r, rdata, sizeof(rdata))) != (size_t) -1);
 
     /* Print it */
-    avahi_hexdump(rdata, l);
+    catta_hexdump(rdata, l);
 
     /* Create a new record and fill in the data from the blob */
-    r2 = avahi_record_new(r->key, AVAHI_DEFAULT_TTL);
+    r2 = catta_record_new(r->key, CATTA_DEFAULT_TTL);
     assert(r2);
-    assert(avahi_rdata_parse(r2, rdata, l) >= 0);
+    assert(catta_rdata_parse(r2, rdata, l) >= 0);
 
     /* Compare both versions */
-    assert(avahi_record_equal_no_ttl(r, r2));
+    assert(catta_record_equal_no_ttl(r, r2));
 
     /* Free the records */
-    avahi_record_unref(r);
-    avahi_record_unref(r2);
+    catta_record_unref(r);
+    catta_record_unref(r2);
 
-    r = avahi_record_new_full("foobar", 77, 77, AVAHI_DEFAULT_TTL);
+    r = catta_record_new_full("foobar", 77, 77, CATTA_DEFAULT_TTL);
     assert(r);
 
-    assert(r->data.generic.data = avahi_memdup("HALLO", r->data.generic.size = 5));
+    assert(r->data.generic.data = catta_memdup("HALLO", r->data.generic.size = 5));
 
-    m = avahi_record_to_string(r);
+    m = catta_record_to_string(r);
     assert(m);
 
-    avahi_log_debug(">%s<", m);
+    catta_log_debug(">%s<", m);
 
-    avahi_free(m);
-    avahi_record_unref(r);
+    catta_free(m);
+    catta_record_unref(r);
 
     return 0;
 }

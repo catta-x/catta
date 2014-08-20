@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -23,49 +23,49 @@
 
 #include <string.h>
 
-#include <avahi/domain.h>
-#include <avahi/malloc.h>
-#include <avahi/error.h>
+#include <catta/domain.h>
+#include <catta/malloc.h>
+#include <catta/error.h>
 
 #include "browse.h"
-#include <avahi/log.h>
+#include <catta/log.h>
 
-struct AvahiSServiceTypeBrowser {
-    AvahiServer *server;
+struct CattaSServiceTypeBrowser {
+    CattaServer *server;
     char *domain_name;
 
-    AvahiSRecordBrowser *record_browser;
+    CattaSRecordBrowser *record_browser;
 
-    AvahiSServiceTypeBrowserCallback callback;
+    CattaSServiceTypeBrowserCallback callback;
     void* userdata;
 
-    AVAHI_LLIST_FIELDS(AvahiSServiceTypeBrowser, browser);
+    CATTA_LLIST_FIELDS(CattaSServiceTypeBrowser, browser);
 };
 
 static void record_browser_callback(
-    AvahiSRecordBrowser*rr,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiBrowserEvent event,
-    AvahiRecord *record,
-    AvahiLookupResultFlags flags,
+    CattaSRecordBrowser*rr,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaBrowserEvent event,
+    CattaRecord *record,
+    CattaLookupResultFlags flags,
     void* userdata) {
 
-    AvahiSServiceTypeBrowser *b = userdata;
+    CattaSServiceTypeBrowser *b = userdata;
 
     assert(rr);
     assert(b);
 
     /* Filter flags */
-    flags &= AVAHI_LOOKUP_RESULT_CACHED | AVAHI_LOOKUP_RESULT_MULTICAST | AVAHI_LOOKUP_RESULT_WIDE_AREA;
+    flags &= CATTA_LOOKUP_RESULT_CACHED | CATTA_LOOKUP_RESULT_MULTICAST | CATTA_LOOKUP_RESULT_WIDE_AREA;
 
     if (record) {
-        char type[AVAHI_DOMAIN_NAME_MAX], domain[AVAHI_DOMAIN_NAME_MAX];
+        char type[CATTA_DOMAIN_NAME_MAX], domain[CATTA_DOMAIN_NAME_MAX];
 
-        assert(record->key->type == AVAHI_DNS_TYPE_PTR);
+        assert(record->key->type == CATTA_DNS_TYPE_PTR);
 
-        if (avahi_service_name_split(record->data.ptr.name, NULL, 0, type, sizeof(type), domain, sizeof(domain)) < 0) {
-            avahi_log_warn("Invalid service type '%s'", record->key->name);
+        if (catta_service_name_split(record->data.ptr.name, NULL, 0, type, sizeof(type), domain, sizeof(domain)) < 0) {
+            catta_log_warn("Invalid service type '%s'", record->key->name);
             return;
         }
 
@@ -74,38 +74,38 @@ static void record_browser_callback(
         b->callback(b, interface, protocol, event, NULL, b->domain_name, flags, b->userdata);
 }
 
-AvahiSServiceTypeBrowser *avahi_s_service_type_browser_new(
-    AvahiServer *server,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
+CattaSServiceTypeBrowser *catta_s_service_type_browser_new(
+    CattaServer *server,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
     const char *domain,
-    AvahiLookupFlags flags,
-    AvahiSServiceTypeBrowserCallback callback,
+    CattaLookupFlags flags,
+    CattaSServiceTypeBrowserCallback callback,
     void* userdata) {
 
-    AvahiSServiceTypeBrowser *b;
-    AvahiKey *k = NULL;
-    char n[AVAHI_DOMAIN_NAME_MAX];
+    CattaSServiceTypeBrowser *b;
+    CattaKey *k = NULL;
+    char n[CATTA_DOMAIN_NAME_MAX];
     int r;
 
     assert(server);
     assert(callback);
 
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_IF_VALID(interface), AVAHI_ERR_INVALID_INTERFACE);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_PROTO_VALID(protocol), AVAHI_ERR_INVALID_PROTOCOL);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, !domain || avahi_is_valid_domain_name(domain), AVAHI_ERR_INVALID_DOMAIN_NAME);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_FLAGS_VALID(flags, AVAHI_LOOKUP_USE_WIDE_AREA|AVAHI_LOOKUP_USE_MULTICAST), AVAHI_ERR_INVALID_FLAGS);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, !domain || catta_is_valid_domain_name(domain), CATTA_ERR_INVALID_DOMAIN_NAME);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_FLAGS_VALID(flags, CATTA_LOOKUP_USE_WIDE_AREA|CATTA_LOOKUP_USE_MULTICAST), CATTA_ERR_INVALID_FLAGS);
 
     if (!domain)
         domain = server->domain_name;
 
-    if ((r = avahi_service_name_join(n, sizeof(n), NULL, "_services._dns-sd._udp", domain)) < 0) {
-        avahi_server_set_errno(server, r);
+    if ((r = catta_service_name_join(n, sizeof(n), NULL, "_services._dns-sd._udp", domain)) < 0) {
+        catta_server_set_errno(server, r);
         return NULL;
     }
 
-    if (!(b = avahi_new(AvahiSServiceTypeBrowser, 1))) {
-        avahi_server_set_errno(server, AVAHI_ERR_NO_MEMORY);
+    if (!(b = catta_new(CattaSServiceTypeBrowser, 1))) {
+        catta_server_set_errno(server, CATTA_ERR_NO_MEMORY);
         return NULL;
     }
 
@@ -114,44 +114,44 @@ AvahiSServiceTypeBrowser *avahi_s_service_type_browser_new(
     b->userdata = userdata;
     b->record_browser = NULL;
 
-    AVAHI_LLIST_PREPEND(AvahiSServiceTypeBrowser, browser, server->service_type_browsers, b);
+    CATTA_LLIST_PREPEND(CattaSServiceTypeBrowser, browser, server->service_type_browsers, b);
 
-    if (!(b->domain_name = avahi_normalize_name_strdup(domain))) {
-        avahi_server_set_errno(server, AVAHI_ERR_NO_MEMORY);
+    if (!(b->domain_name = catta_normalize_name_strdup(domain))) {
+        catta_server_set_errno(server, CATTA_ERR_NO_MEMORY);
         goto fail;
     }
 
-    if (!(k = avahi_key_new(n, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_PTR))) {
-        avahi_server_set_errno(server, AVAHI_ERR_NO_MEMORY);
+    if (!(k = catta_key_new(n, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_PTR))) {
+        catta_server_set_errno(server, CATTA_ERR_NO_MEMORY);
         goto fail;
     }
 
-    if (!(b->record_browser = avahi_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, b)))
+    if (!(b->record_browser = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, b)))
         goto fail;
 
-    avahi_key_unref(k);
+    catta_key_unref(k);
 
     return b;
 
 fail:
     if (k)
-        avahi_key_unref(k);
+        catta_key_unref(k);
 
-    avahi_s_service_type_browser_free(b);
+    catta_s_service_type_browser_free(b);
 
     return NULL;
 }
 
-void avahi_s_service_type_browser_free(AvahiSServiceTypeBrowser *b) {
+void catta_s_service_type_browser_free(CattaSServiceTypeBrowser *b) {
     assert(b);
 
-    AVAHI_LLIST_REMOVE(AvahiSServiceTypeBrowser, browser, b->server->service_type_browsers, b);
+    CATTA_LLIST_REMOVE(CattaSServiceTypeBrowser, browser, b->server->service_type_browsers, b);
 
     if (b->record_browser)
-        avahi_s_record_browser_free(b->record_browser);
+        catta_s_record_browser_free(b->record_browser);
 
-    avahi_free(b->domain_name);
-    avahi_free(b);
+    catta_free(b->domain_name);
+    catta_free(b);
 }
 
 

@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -31,14 +31,14 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include <avahi/llist.h>
-#include <avahi/malloc.h>
-#include <avahi/timeval.h>
-#include <avahi/simple-watch.h>
-#include <avahi/thread-watch.h>
+#include <catta/llist.h>
+#include <catta/malloc.h>
+#include <catta/timeval.h>
+#include <catta/simple-watch.h>
+#include <catta/thread-watch.h>
 
-struct AvahiThreadedPoll {
-    AvahiSimplePoll *simple_poll;
+struct CattaThreadedPoll {
+    CattaSimplePoll *simple_poll;
     pthread_t thread_id;
     pthread_mutex_t mutex;
     int thread_running;
@@ -50,7 +50,7 @@ static int poll_func(struct pollfd *ufds, unsigned int nfds, int timeout, void *
     int r;
 
     /* Before entering poll() we unlock the mutex, so that
-     * avahi_simple_poll_quit() can succeed from another thread. */
+     * catta_simple_poll_quit() can succeed from another thread. */
 
     pthread_mutex_unlock(mutex);
     r = poll(ufds, nfds, timeout);
@@ -60,7 +60,7 @@ static int poll_func(struct pollfd *ufds, unsigned int nfds, int timeout, void *
 }
 
 static void* thread(void *userdata){
-    AvahiThreadedPoll *p = userdata;
+    CattaThreadedPoll *p = userdata;
     sigset_t mask;
 
     /* Make sure that signals are delivered to the main thread */
@@ -68,24 +68,24 @@ static void* thread(void *userdata){
     pthread_sigmask(SIG_BLOCK, &mask, NULL);
 
     pthread_mutex_lock(&p->mutex);
-    p->retval = avahi_simple_poll_loop(p->simple_poll);
+    p->retval = catta_simple_poll_loop(p->simple_poll);
     pthread_mutex_unlock(&p->mutex);
 
     return NULL;
 }
 
-AvahiThreadedPoll *avahi_threaded_poll_new(void) {
-    AvahiThreadedPoll *p;
+CattaThreadedPoll *catta_threaded_poll_new(void) {
+    CattaThreadedPoll *p;
 
-    if (!(p = avahi_new(AvahiThreadedPoll, 1)))
+    if (!(p = catta_new(CattaThreadedPoll, 1)))
         goto fail; /* OOM */
 
-    if (!(p->simple_poll = avahi_simple_poll_new()))
+    if (!(p->simple_poll = catta_simple_poll_new()))
         goto fail;
 
     pthread_mutex_init(&p->mutex, NULL);
 
-    avahi_simple_poll_set_func(p->simple_poll, poll_func, &p->mutex);
+    catta_simple_poll_set_func(p->simple_poll, poll_func, &p->mutex);
 
     p->thread_running = 0;
 
@@ -94,39 +94,39 @@ AvahiThreadedPoll *avahi_threaded_poll_new(void) {
 fail:
     if (p) {
         if (p->simple_poll) {
-            avahi_simple_poll_free(p->simple_poll);
+            catta_simple_poll_free(p->simple_poll);
             pthread_mutex_destroy(&p->mutex);
         }
 
-        avahi_free(p);
+        catta_free(p);
     }
 
     return NULL;
 }
 
-void avahi_threaded_poll_free(AvahiThreadedPoll *p) {
+void catta_threaded_poll_free(CattaThreadedPoll *p) {
     assert(p);
 
     /* Make sure that this function is not called from the helper thread */
     assert(!p->thread_running || !pthread_equal(pthread_self(), p->thread_id));
 
     if (p->thread_running)
-        avahi_threaded_poll_stop(p);
+        catta_threaded_poll_stop(p);
 
     if (p->simple_poll)
-        avahi_simple_poll_free(p->simple_poll);
+        catta_simple_poll_free(p->simple_poll);
 
     pthread_mutex_destroy(&p->mutex);
-    avahi_free(p);
+    catta_free(p);
 }
 
-const AvahiPoll* avahi_threaded_poll_get(AvahiThreadedPoll *p) {
+const CattaPoll* catta_threaded_poll_get(CattaThreadedPoll *p) {
     assert(p);
 
-    return avahi_simple_poll_get(p->simple_poll);
+    return catta_simple_poll_get(p->simple_poll);
 }
 
-int avahi_threaded_poll_start(AvahiThreadedPoll *p) {
+int catta_threaded_poll_start(CattaThreadedPoll *p) {
     assert(p);
 
     assert(!p->thread_running);
@@ -139,7 +139,7 @@ int avahi_threaded_poll_start(AvahiThreadedPoll *p) {
     return 0;
 }
 
-int avahi_threaded_poll_stop(AvahiThreadedPoll *p) {
+int catta_threaded_poll_stop(CattaThreadedPoll *p) {
     assert(p);
 
     if (!p->thread_running)
@@ -149,7 +149,7 @@ int avahi_threaded_poll_stop(AvahiThreadedPoll *p) {
     assert(!pthread_equal(pthread_self(), p->thread_id));
 
     pthread_mutex_lock(&p->mutex);
-    avahi_simple_poll_quit(p->simple_poll);
+    catta_simple_poll_quit(p->simple_poll);
     pthread_mutex_unlock(&p->mutex);
 
     pthread_join(p->thread_id, NULL);
@@ -158,16 +158,16 @@ int avahi_threaded_poll_stop(AvahiThreadedPoll *p) {
     return p->retval;
 }
 
-void avahi_threaded_poll_quit(AvahiThreadedPoll *p) {
+void catta_threaded_poll_quit(CattaThreadedPoll *p) {
     assert(p);
 
     /* Make sure that this function is called from the helper thread */
     assert(pthread_equal(pthread_self(), p->thread_id));
 
-    avahi_simple_poll_quit(p->simple_poll);
+    catta_simple_poll_quit(p->simple_poll);
 }
 
-void avahi_threaded_poll_lock(AvahiThreadedPoll *p) {
+void catta_threaded_poll_lock(CattaThreadedPoll *p) {
     assert(p);
 
     /* Make sure that this function is not called from the helper thread */
@@ -176,7 +176,7 @@ void avahi_threaded_poll_lock(AvahiThreadedPoll *p) {
     pthread_mutex_lock(&p->mutex);
 }
 
-void avahi_threaded_poll_unlock(AvahiThreadedPoll *p) {
+void catta_threaded_poll_unlock(CattaThreadedPoll *p) {
     assert(p);
 
     /* Make sure that this function is not called from the helper thread */

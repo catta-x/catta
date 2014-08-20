@@ -2,59 +2,59 @@
 #define foobrowsehfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-#include <avahi/llist.h>
-#include <avahi/core.h>
-#include <avahi/lookup.h>
+#include <catta/llist.h>
+#include <catta/core.h>
+#include <catta/lookup.h>
 
 #include "timeeventq.h"
 #include "internal.h"
 #include "dns.h"
 
-typedef struct AvahiSRBLookup AvahiSRBLookup;
+typedef struct CattaSRBLookup CattaSRBLookup;
 
-struct AvahiSRecordBrowser {
-    AVAHI_LLIST_FIELDS(AvahiSRecordBrowser, browser);
+struct CattaSRecordBrowser {
+    CATTA_LLIST_FIELDS(CattaSRecordBrowser, browser);
     int dead;
-    AvahiServer *server;
+    CattaServer *server;
 
-    AvahiKey *key;
-    AvahiIfIndex interface;
-    AvahiProtocol protocol;
-    AvahiLookupFlags flags;
+    CattaKey *key;
+    CattaIfIndex interface;
+    CattaProtocol protocol;
+    CattaLookupFlags flags;
 
-    AvahiTimeEvent *defer_time_event;
+    CattaTimeEvent *defer_time_event;
 
-    AvahiSRecordBrowserCallback callback;
+    CattaSRecordBrowserCallback callback;
     void* userdata;
 
     /* Lookup data */
-    AVAHI_LLIST_HEAD(AvahiSRBLookup, lookups);
+    CATTA_LLIST_HEAD(CattaSRBLookup, lookups);
     unsigned n_lookups;
 
-    AvahiSRBLookup *root_lookup;
+    CattaSRBLookup *root_lookup;
 };
 
-void avahi_browser_cleanup(AvahiServer *server);
+void catta_browser_cleanup(CattaServer *server);
 
-void avahi_s_record_browser_destroy(AvahiSRecordBrowser *b);
-void avahi_s_record_browser_restart(AvahiSRecordBrowser *b);
+void catta_s_record_browser_destroy(CattaSRecordBrowser *b);
+void catta_s_record_browser_restart(CattaSRecordBrowser *b);
 
 #endif

@@ -2,33 +2,33 @@
 #define fooprobeschedhfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-typedef struct AvahiProbeScheduler AvahiProbeScheduler;
+typedef struct CattaProbeScheduler CattaProbeScheduler;
 
-#include <avahi/address.h>
+#include <catta/address.h>
 #include "iface.h"
 
-AvahiProbeScheduler *avahi_probe_scheduler_new(AvahiInterface *i);
-void avahi_probe_scheduler_free(AvahiProbeScheduler *s);
-void avahi_probe_scheduler_clear(AvahiProbeScheduler *s);
+CattaProbeScheduler *catta_probe_scheduler_new(CattaInterface *i);
+void catta_probe_scheduler_free(CattaProbeScheduler *s);
+void catta_probe_scheduler_clear(CattaProbeScheduler *s);
 
-int avahi_probe_scheduler_post(AvahiProbeScheduler *s, AvahiRecord *record, int immediately);
+int catta_probe_scheduler_post(CattaProbeScheduler *s, CattaRecord *record, int immediately);
 
 #endif

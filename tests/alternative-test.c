@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -23,11 +23,11 @@
 
 #include <stdio.h>
 
-#include <avahi/alternative.h>
-#include <avahi/malloc.h>
-#include <avahi/domain.h>
+#include <catta/alternative.h>
+#include <catta/malloc.h>
+#include <catta/domain.h>
 
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
+int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
     const char* const test_strings[] = {
         "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
         "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXüüüüüüü",
@@ -71,20 +71,20 @@ int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
             for (i = 0; i <= 100; i++) {
                 char *n;
 
-                n = i == 0 ? avahi_strdup(test_strings[k]) : (j ? avahi_alternative_service_name(r) : avahi_alternative_host_name(r));
-                avahi_free(r);
+                n = i == 0 ? catta_strdup(test_strings[k]) : (j ? catta_alternative_service_name(r) : catta_alternative_host_name(r));
+                catta_free(r);
                 r = n;
 
                 if (j)
-                    assert(avahi_is_valid_service_name(n));
+                    assert(catta_is_valid_service_name(n));
                 else
-                    assert(avahi_is_valid_host_name(n));
+                    assert(catta_is_valid_host_name(n));
 
                 printf("%s\n", r);
             }
         }
     }
 
-    avahi_free(r);
+    catta_free(r);
     return 0;
 }

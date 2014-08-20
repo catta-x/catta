@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -27,14 +27,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <avahi/strlst.h>
-#include <avahi/malloc.h>
-#include <avahi/defs.h>
+#include <catta/strlst.h>
+#include <catta/malloc.h>
+#include <catta/defs.h>
 
-AvahiStringList*avahi_string_list_add_anonymous(AvahiStringList *l, size_t size) {
-    AvahiStringList *n;
+CattaStringList*catta_string_list_add_anonymous(CattaStringList *l, size_t size) {
+    CattaStringList *n;
 
-    if (!(n = avahi_malloc(sizeof(AvahiStringList) + size)))
+    if (!(n = catta_malloc(sizeof(CattaStringList) + size)))
         return NULL;
 
     n->next = l;
@@ -46,12 +46,12 @@ AvahiStringList*avahi_string_list_add_anonymous(AvahiStringList *l, size_t size)
     return n;
 }
 
-AvahiStringList *avahi_string_list_add_arbitrary(AvahiStringList *l, const uint8_t*text, size_t size) {
-    AvahiStringList *n;
+CattaStringList *catta_string_list_add_arbitrary(CattaStringList *l, const uint8_t*text, size_t size) {
+    CattaStringList *n;
 
     assert(size == 0 || text);
 
-    if (!(n = avahi_string_list_add_anonymous(l, size)))
+    if (!(n = catta_string_list_add_anonymous(l, size)))
         return NULL;
 
     if (size > 0)
@@ -60,15 +60,15 @@ AvahiStringList *avahi_string_list_add_arbitrary(AvahiStringList *l, const uint8
     return n;
 }
 
-AvahiStringList *avahi_string_list_add(AvahiStringList *l, const char *text) {
+CattaStringList *catta_string_list_add(CattaStringList *l, const char *text) {
     assert(text);
 
-    return avahi_string_list_add_arbitrary(l, (const uint8_t*) text, strlen(text));
+    return catta_string_list_add_arbitrary(l, (const uint8_t*) text, strlen(text));
 }
 
-int avahi_string_list_parse(const void* data, size_t size, AvahiStringList **ret) {
+int catta_string_list_parse(const void* data, size_t size, CattaStringList **ret) {
     const uint8_t *c;
-    AvahiStringList *r = NULL;
+    CattaStringList *r = NULL;
 
     assert(data);
     assert(ret);
@@ -84,9 +84,9 @@ int avahi_string_list_parse(const void* data, size_t size, AvahiStringList **ret
             goto fail; /* Overflow */
 
         if (k > 0) { /* Ignore empty strings */
-            AvahiStringList *n;
+            CattaStringList *n;
 
-            if (!(n = avahi_string_list_add_arbitrary(r, c, k)))
+            if (!(n = catta_string_list_add_arbitrary(r, c, k)))
                 goto fail; /* OOM */
 
             r = n;
@@ -101,22 +101,22 @@ int avahi_string_list_parse(const void* data, size_t size, AvahiStringList **ret
     return 0;
 
 fail:
-    avahi_string_list_free(r);
+    catta_string_list_free(r);
     return -1;
 }
 
-void avahi_string_list_free(AvahiStringList *l) {
-    AvahiStringList *n;
+void catta_string_list_free(CattaStringList *l) {
+    CattaStringList *n;
 
     while (l) {
         n = l->next;
-        avahi_free(l);
+        catta_free(l);
         l = n;
     }
 }
 
-AvahiStringList* avahi_string_list_reverse(AvahiStringList *l) {
-    AvahiStringList *r = NULL, *n;
+CattaStringList* catta_string_list_reverse(CattaStringList *l) {
+    CattaStringList *r = NULL, *n;
 
     while (l) {
         n = l->next;
@@ -128,8 +128,8 @@ AvahiStringList* avahi_string_list_reverse(AvahiStringList *l) {
     return r;
 }
 
-char* avahi_string_list_to_string(AvahiStringList *l) {
-    AvahiStringList *n;
+char* catta_string_list_to_string(CattaStringList *l) {
+    CattaStringList *n;
     size_t s = 0;
     char *t, *e;
 
@@ -140,10 +140,10 @@ char* avahi_string_list_to_string(AvahiStringList *l) {
         s += n->size+2;
     }
 
-    if (!(t = e = avahi_new(char, s+1)))
+    if (!(t = e = catta_new(char, s+1)))
         return NULL;
 
-    l = avahi_string_list_reverse(l);
+    l = catta_string_list_reverse(l);
 
     for (n = l; n; n = n->next) {
         if (n != l)
@@ -158,21 +158,21 @@ char* avahi_string_list_to_string(AvahiStringList *l) {
         assert(e);
     }
 
-    l = avahi_string_list_reverse(l);
+    l = catta_string_list_reverse(l);
 
     *e = 0;
 
     return t;
 }
 
-size_t avahi_string_list_serialize(AvahiStringList *l, void *data, size_t size) {
+size_t catta_string_list_serialize(CattaStringList *l, void *data, size_t size) {
     size_t used = 0;
 
     if (data) {
-        AvahiStringList *n;
+        CattaStringList *n;
         uint8_t *c;
 
-        l = avahi_string_list_reverse(l);
+        l = catta_string_list_reverse(l);
         c = data;
 
         for (n = l; size > 1 && n; n = n->next) {
@@ -198,7 +198,7 @@ size_t avahi_string_list_serialize(AvahiStringList *l, void *data, size_t size) 
             size -= 1 + k;
         }
 
-        l = avahi_string_list_reverse(l);
+        l = catta_string_list_reverse(l);
 
         if (used == 0 && size > 0) {
 
@@ -211,7 +211,7 @@ size_t avahi_string_list_serialize(AvahiStringList *l, void *data, size_t size) 
         }
 
     } else {
-        AvahiStringList *n;
+        CattaStringList *n;
 
         for (n = l; n; n = n->next) {
             size_t k;
@@ -232,7 +232,7 @@ size_t avahi_string_list_serialize(AvahiStringList *l, void *data, size_t size) 
     return used;
 }
 
-int avahi_string_list_equal(const AvahiStringList *a, const AvahiStringList *b) {
+int catta_string_list_equal(const CattaStringList *a, const CattaStringList *b) {
 
     for (;;) {
         if (!a && !b)
@@ -252,69 +252,69 @@ int avahi_string_list_equal(const AvahiStringList *a, const AvahiStringList *b) 
     }
 }
 
-AvahiStringList *avahi_string_list_add_many(AvahiStringList *r, ...) {
+CattaStringList *catta_string_list_add_many(CattaStringList *r, ...) {
     va_list va;
 
     va_start(va, r);
-    r = avahi_string_list_add_many_va(r, va);
+    r = catta_string_list_add_many_va(r, va);
     va_end(va);
 
     return r;
 }
 
-AvahiStringList *avahi_string_list_add_many_va(AvahiStringList *r, va_list va) {
+CattaStringList *catta_string_list_add_many_va(CattaStringList *r, va_list va) {
     const char *txt;
 
     while ((txt = va_arg(va, const char*)))
-        r = avahi_string_list_add(r, txt);
+        r = catta_string_list_add(r, txt);
 
     return r;
 }
 
-AvahiStringList *avahi_string_list_new(const char *txt, ...) {
+CattaStringList *catta_string_list_new(const char *txt, ...) {
     va_list va;
-    AvahiStringList *r = NULL;
+    CattaStringList *r = NULL;
 
     if (txt) {
-        r = avahi_string_list_add(r, txt);
+        r = catta_string_list_add(r, txt);
 
         va_start(va, txt);
-        r = avahi_string_list_add_many_va(r, va);
+        r = catta_string_list_add_many_va(r, va);
         va_end(va);
     }
 
     return r;
 }
 
-AvahiStringList *avahi_string_list_new_va(va_list va) {
-    return avahi_string_list_add_many_va(NULL, va);
+CattaStringList *catta_string_list_new_va(va_list va) {
+    return catta_string_list_add_many_va(NULL, va);
 }
 
-AvahiStringList *avahi_string_list_copy(const AvahiStringList *l) {
-    AvahiStringList *r = NULL;
+CattaStringList *catta_string_list_copy(const CattaStringList *l) {
+    CattaStringList *r = NULL;
 
     for (; l; l = l->next)
-        if (!(r = avahi_string_list_add_arbitrary(r, l->text, l->size))) {
-            avahi_string_list_free(r);
+        if (!(r = catta_string_list_add_arbitrary(r, l->text, l->size))) {
+            catta_string_list_free(r);
             return NULL;
         }
 
-    return avahi_string_list_reverse(r);
+    return catta_string_list_reverse(r);
 }
 
-AvahiStringList *avahi_string_list_new_from_array(const char *array[], int length) {
-    AvahiStringList *r = NULL;
+CattaStringList *catta_string_list_new_from_array(const char *array[], int length) {
+    CattaStringList *r = NULL;
     int i;
 
     assert(array);
 
     for (i = 0; length >= 0 ? i < length : !!array[i]; i++)
-        r = avahi_string_list_add(r, array[i]);
+        r = catta_string_list_add(r, array[i]);
 
     return r;
 }
 
-unsigned avahi_string_list_length(const AvahiStringList *l) {
+unsigned catta_string_list_length(const CattaStringList *l) {
     unsigned n = 0;
 
     for (; l; l = l->next)
@@ -323,18 +323,18 @@ unsigned avahi_string_list_length(const AvahiStringList *l) {
     return n;
 }
 
-AvahiStringList *avahi_string_list_add_vprintf(AvahiStringList *l, const char *format, va_list va) {
+CattaStringList *catta_string_list_add_vprintf(CattaStringList *l, const char *format, va_list va) {
     size_t len = 80;
-    AvahiStringList *r;
+    CattaStringList *r;
 
     assert(format);
 
-    if (!(r = avahi_malloc(sizeof(AvahiStringList) + len)))
+    if (!(r = catta_malloc(sizeof(CattaStringList) + len)))
         return NULL;
 
     for (;;) {
         int n;
-        AvahiStringList *nr;
+        CattaStringList *nr;
         va_list va2;
 
         va_copy(va2, va);
@@ -349,8 +349,8 @@ AvahiStringList *avahi_string_list_add_vprintf(AvahiStringList *l, const char *f
         else
             len *= 2;
 
-        if (!(nr = avahi_realloc(r, sizeof(AvahiStringList) + len))) {
-            avahi_free(r);
+        if (!(nr = catta_realloc(r, sizeof(CattaStringList) + len))) {
+            catta_free(r);
             return NULL;
         }
 
@@ -363,19 +363,19 @@ AvahiStringList *avahi_string_list_add_vprintf(AvahiStringList *l, const char *f
     return r;
 }
 
-AvahiStringList *avahi_string_list_add_printf(AvahiStringList *l, const char *format, ...) {
+CattaStringList *catta_string_list_add_printf(CattaStringList *l, const char *format, ...) {
     va_list va;
 
     assert(format);
 
     va_start(va, format);
-    l  = avahi_string_list_add_vprintf(l, format, va);
+    l  = catta_string_list_add_vprintf(l, format, va);
     va_end(va);
 
     return l;
 }
 
-AvahiStringList *avahi_string_list_find(AvahiStringList *l, const char *key) {
+CattaStringList *catta_string_list_find(CattaStringList *l, const char *key) {
     size_t n;
 
     assert(key);
@@ -392,25 +392,25 @@ AvahiStringList *avahi_string_list_find(AvahiStringList *l, const char *key) {
     return NULL;
 }
 
-AvahiStringList *avahi_string_list_add_pair(AvahiStringList *l, const char *key, const char *value) {
+CattaStringList *catta_string_list_add_pair(CattaStringList *l, const char *key, const char *value) {
     assert(key);
 
     if (value)
-        return avahi_string_list_add_printf(l, "%s=%s", key, value);
+        return catta_string_list_add_printf(l, "%s=%s", key, value);
     else
-        return avahi_string_list_add(l, key);
+        return catta_string_list_add(l, key);
 }
 
-AvahiStringList *avahi_string_list_add_pair_arbitrary(AvahiStringList *l, const char *key, const uint8_t *value, size_t size) {
+CattaStringList *catta_string_list_add_pair_arbitrary(CattaStringList *l, const char *key, const uint8_t *value, size_t size) {
     size_t n;
     assert(key);
 
     if (!value)
-        return avahi_string_list_add(l, key);
+        return catta_string_list_add(l, key);
 
     n = strlen(key);
 
-    if (!(l = avahi_string_list_add_anonymous(l, n + 1 + size)))
+    if (!(l = catta_string_list_add_anonymous(l, n + 1 + size)))
         return NULL;
 
     memcpy(l->text, key, n);
@@ -420,7 +420,7 @@ AvahiStringList *avahi_string_list_add_pair_arbitrary(AvahiStringList *l, const 
     return l;
 }
 
-int avahi_string_list_get_pair(AvahiStringList *l, char **key, char **value, size_t *size) {
+int catta_string_list_get_pair(CattaStringList *l, char **key, char **value, size_t *size) {
     char *e;
 
     assert(l);
@@ -428,7 +428,7 @@ int avahi_string_list_get_pair(AvahiStringList *l, char **key, char **value, siz
     if (!(e = memchr(l->text, '=', l->size))) {
 
         if (key)
-            if (!(*key = avahi_strdup((char*) l->text)))
+            if (!(*key = catta_strdup((char*) l->text)))
                 return -1;
 
         if (value)
@@ -441,7 +441,7 @@ int avahi_string_list_get_pair(AvahiStringList *l, char **key, char **value, siz
         size_t n;
 
         if (key)
-            if (!(*key = avahi_strndup((char*) l->text, e - (char *) l->text)))
+            if (!(*key = catta_strndup((char*) l->text, e - (char *) l->text)))
                 return -1;
 
         e++; /* Advance after '=' */
@@ -450,9 +450,9 @@ int avahi_string_list_get_pair(AvahiStringList *l, char **key, char **value, siz
 
         if (value) {
 
-            if (!(*value = avahi_memdup(e, n+1))) {
+            if (!(*value = catta_memdup(e, n+1))) {
                 if (key)
-                    avahi_free(*key);
+                    catta_free(*key);
                 return -1;
             }
 
@@ -466,40 +466,40 @@ int avahi_string_list_get_pair(AvahiStringList *l, char **key, char **value, siz
     return 0;
 }
 
-AvahiStringList *avahi_string_list_get_next(AvahiStringList *l) {
+CattaStringList *catta_string_list_get_next(CattaStringList *l) {
     assert(l);
     return l->next;
 }
 
-uint8_t *avahi_string_list_get_text(AvahiStringList *l) {
+uint8_t *catta_string_list_get_text(CattaStringList *l) {
     assert(l);
     return l->text;
 }
 
-size_t avahi_string_list_get_size(AvahiStringList *l) {
+size_t catta_string_list_get_size(CattaStringList *l) {
     assert(l);
     return l->size;
 }
 
-uint32_t avahi_string_list_get_service_cookie(AvahiStringList *l) {
-    AvahiStringList *f;
+uint32_t catta_string_list_get_service_cookie(CattaStringList *l) {
+    CattaStringList *f;
     char *value = NULL, *end = NULL;
     uint32_t ret;
 
-    if (!(f = avahi_string_list_find(l, AVAHI_SERVICE_COOKIE)))
-        return AVAHI_SERVICE_COOKIE_INVALID;
+    if (!(f = catta_string_list_find(l, CATTA_SERVICE_COOKIE)))
+        return CATTA_SERVICE_COOKIE_INVALID;
 
-    if (avahi_string_list_get_pair(f, NULL, &value, NULL) < 0 || !value)
-        return AVAHI_SERVICE_COOKIE_INVALID;
+    if (catta_string_list_get_pair(f, NULL, &value, NULL) < 0 || !value)
+        return CATTA_SERVICE_COOKIE_INVALID;
 
     ret = (uint32_t) strtoll(value, &end, 0);
 
     if (*value && end && *end != 0) {
-        avahi_free(value);
-        return AVAHI_SERVICE_COOKIE_INVALID;
+        catta_free(value);
+        return CATTA_SERVICE_COOKIE_INVALID;
     }
 
-    avahi_free(value);
+    catta_free(value);
 
     return ret;
 }

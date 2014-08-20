@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -24,99 +24,99 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <avahi/malloc.h>
-#include <avahi/simple-watch.h>
-#include <avahi/alternative.h>
-#include <avahi/timeval.h>
+#include <catta/malloc.h>
+#include <catta/simple-watch.h>
+#include <catta/alternative.h>
+#include <catta/timeval.h>
 
-#include <avahi/core.h>
-#include <avahi/log.h>
-#include <avahi/publish.h>
-#include <avahi/lookup.h>
+#include <catta/core.h>
+#include <catta/log.h>
+#include <catta/publish.h>
+#include <catta/lookup.h>
 
 #define DOMAIN NULL
 #define SERVICE_TYPE "_http._tcp"
 
-static AvahiSServiceBrowser *service_browser1 = NULL, *service_browser2 = NULL;
-static const AvahiPoll * poll_api = NULL;
-static AvahiServer *server = NULL;
-static AvahiSimplePoll *simple_poll;
+static CattaSServiceBrowser *service_browser1 = NULL, *service_browser2 = NULL;
+static const CattaPoll * poll_api = NULL;
+static CattaServer *server = NULL;
+static CattaSimplePoll *simple_poll;
 
-static const char *browser_event_to_string(AvahiBrowserEvent event) {
+static const char *browser_event_to_string(CattaBrowserEvent event) {
     switch (event) {
-        case AVAHI_BROWSER_NEW : return "NEW";
-        case AVAHI_BROWSER_REMOVE : return "REMOVE";
-        case AVAHI_BROWSER_CACHE_EXHAUSTED : return "CACHE_EXHAUSTED";
-        case AVAHI_BROWSER_ALL_FOR_NOW : return "ALL_FOR_NOW";
-        case AVAHI_BROWSER_FAILURE : return "FAILURE";
+        case CATTA_BROWSER_NEW : return "NEW";
+        case CATTA_BROWSER_REMOVE : return "REMOVE";
+        case CATTA_BROWSER_CACHE_EXHAUSTED : return "CACHE_EXHAUSTED";
+        case CATTA_BROWSER_ALL_FOR_NOW : return "ALL_FOR_NOW";
+        case CATTA_BROWSER_FAILURE : return "FAILURE";
     }
 
     abort();
 }
 
 static void sb_callback(
-    AvahiSServiceBrowser *b,
-    AvahiIfIndex iface,
-    AvahiProtocol protocol,
-    AvahiBrowserEvent event,
+    CattaSServiceBrowser *b,
+    CattaIfIndex iface,
+    CattaProtocol protocol,
+    CattaBrowserEvent event,
     const char *name,
     const char *service_type,
     const char *domain,
-    AvahiLookupResultFlags flags,
-    AVAHI_GCC_UNUSED void* userdata) {
-    avahi_log_debug("SB%i: (%i.%s) <%s> as <%s> in <%s> [%s] cached=%i", b == service_browser1 ? 1 : 2, iface, avahi_proto_to_string(protocol), name, service_type, domain, browser_event_to_string(event), !!(flags & AVAHI_LOOKUP_RESULT_CACHED));
+    CattaLookupResultFlags flags,
+    CATTA_GCC_UNUSED void* userdata) {
+    catta_log_debug("SB%i: (%i.%s) <%s> as <%s> in <%s> [%s] cached=%i", b == service_browser1 ? 1 : 2, iface, catta_proto_to_string(protocol), name, service_type, domain, browser_event_to_string(event), !!(flags & CATTA_LOOKUP_RESULT_CACHED));
 }
 
-static void create_second_service_browser(AvahiTimeout *timeout, AVAHI_GCC_UNUSED void* userdata) {
+static void create_second_service_browser(CattaTimeout *timeout, CATTA_GCC_UNUSED void* userdata) {
 
-    service_browser2 = avahi_s_service_browser_new(server, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, SERVICE_TYPE, DOMAIN, 0, sb_callback, NULL);
+    service_browser2 = catta_s_service_browser_new(server, CATTA_IF_UNSPEC, CATTA_PROTO_UNSPEC, SERVICE_TYPE, DOMAIN, 0, sb_callback, NULL);
     assert(service_browser2);
 
     poll_api->timeout_free(timeout);
 }
 
-static void quit(AVAHI_GCC_UNUSED AvahiTimeout *timeout, AVAHI_GCC_UNUSED void *userdata) {
-    avahi_simple_poll_quit(simple_poll);
+static void quit(CATTA_GCC_UNUSED CattaTimeout *timeout, CATTA_GCC_UNUSED void *userdata) {
+    catta_simple_poll_quit(simple_poll);
 }
 
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
+int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
     struct timeval tv;
-    AvahiServerConfig config;
+    CattaServerConfig config;
 
-    simple_poll = avahi_simple_poll_new();
+    simple_poll = catta_simple_poll_new();
     assert(simple_poll);
 
-    poll_api = avahi_simple_poll_get(simple_poll);
+    poll_api = catta_simple_poll_get(simple_poll);
     assert(poll_api);
 
-    avahi_server_config_init(&config);
+    catta_server_config_init(&config);
     config.publish_hinfo = 0;
     config.publish_addresses = 0;
     config.publish_workstation = 0;
     config.publish_domain = 0;
 
-    avahi_address_parse("192.168.50.1", AVAHI_PROTO_UNSPEC, &config.wide_area_servers[0]);
+    catta_address_parse("192.168.50.1", CATTA_PROTO_UNSPEC, &config.wide_area_servers[0]);
     config.n_wide_area_servers = 1;
     config.enable_wide_area = 1;
 
-    server = avahi_server_new(poll_api, &config, NULL, NULL, NULL);
+    server = catta_server_new(poll_api, &config, NULL, NULL, NULL);
     assert(server);
-    avahi_server_config_free(&config);
+    catta_server_config_free(&config);
 
-    service_browser1 = avahi_s_service_browser_new(server, AVAHI_IF_UNSPEC, AVAHI_PROTO_UNSPEC, SERVICE_TYPE, DOMAIN, 0, sb_callback, NULL);
+    service_browser1 = catta_s_service_browser_new(server, CATTA_IF_UNSPEC, CATTA_PROTO_UNSPEC, SERVICE_TYPE, DOMAIN, 0, sb_callback, NULL);
     assert(service_browser1);
 
-    poll_api->timeout_new(poll_api, avahi_elapse_time(&tv, 10000, 0), create_second_service_browser, NULL);
+    poll_api->timeout_new(poll_api, catta_elapse_time(&tv, 10000, 0), create_second_service_browser, NULL);
 
-    poll_api->timeout_new(poll_api, avahi_elapse_time(&tv, 60000, 0), quit, NULL);
+    poll_api->timeout_new(poll_api, catta_elapse_time(&tv, 60000, 0), quit, NULL);
 
 
     for (;;)
-        if (avahi_simple_poll_iterate(simple_poll, -1) != 0)
+        if (catta_simple_poll_iterate(simple_poll, -1) != 0)
             break;
 
-    avahi_server_free(server);
-    avahi_simple_poll_free(simple_poll);
+    catta_server_free(server);
+    catta_simple_poll_free(simple_poll);
 
     return 0;
 }

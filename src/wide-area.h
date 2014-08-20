@@ -2,49 +2,49 @@
 #define foowideareahfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-#include <avahi/lookup.h>
+#include <catta/lookup.h>
 #include "browse.h"
 
-typedef struct AvahiWideAreaLookupEngine AvahiWideAreaLookupEngine;
-typedef struct AvahiWideAreaLookup AvahiWideAreaLookup;
+typedef struct CattaWideAreaLookupEngine CattaWideAreaLookupEngine;
+typedef struct CattaWideAreaLookup CattaWideAreaLookup;
 
-typedef void (*AvahiWideAreaLookupCallback)(
-    AvahiWideAreaLookupEngine *e,
-    AvahiBrowserEvent event,
-    AvahiLookupResultFlags flags,
-    AvahiRecord *r,
+typedef void (*CattaWideAreaLookupCallback)(
+    CattaWideAreaLookupEngine *e,
+    CattaBrowserEvent event,
+    CattaLookupResultFlags flags,
+    CattaRecord *r,
     void *userdata);
 
-AvahiWideAreaLookupEngine *avahi_wide_area_engine_new(AvahiServer *s);
-void avahi_wide_area_engine_free(AvahiWideAreaLookupEngine *e);
+CattaWideAreaLookupEngine *catta_wide_area_engine_new(CattaServer *s);
+void catta_wide_area_engine_free(CattaWideAreaLookupEngine *e);
 
-unsigned avahi_wide_area_scan_cache(AvahiWideAreaLookupEngine *e, AvahiKey *key, AvahiWideAreaLookupCallback callback, void *userdata);
-void avahi_wide_area_cache_dump(AvahiWideAreaLookupEngine *e, AvahiDumpCallback callback, void* userdata);
-void avahi_wide_area_set_servers(AvahiWideAreaLookupEngine *e, const AvahiAddress *a, unsigned n);
-void avahi_wide_area_clear_cache(AvahiWideAreaLookupEngine *e);
-void avahi_wide_area_cleanup(AvahiWideAreaLookupEngine *e);
-int avahi_wide_area_has_servers(AvahiWideAreaLookupEngine *e);
+unsigned catta_wide_area_scan_cache(CattaWideAreaLookupEngine *e, CattaKey *key, CattaWideAreaLookupCallback callback, void *userdata);
+void catta_wide_area_cache_dump(CattaWideAreaLookupEngine *e, CattaDumpCallback callback, void* userdata);
+void catta_wide_area_set_servers(CattaWideAreaLookupEngine *e, const CattaAddress *a, unsigned n);
+void catta_wide_area_clear_cache(CattaWideAreaLookupEngine *e);
+void catta_wide_area_cleanup(CattaWideAreaLookupEngine *e);
+int catta_wide_area_has_servers(CattaWideAreaLookupEngine *e);
 
-AvahiWideAreaLookup *avahi_wide_area_lookup_new(AvahiWideAreaLookupEngine *e, AvahiKey *key, AvahiWideAreaLookupCallback callback, void *userdata);
-void avahi_wide_area_lookup_free(AvahiWideAreaLookup *q);
+CattaWideAreaLookup *catta_wide_area_lookup_new(CattaWideAreaLookupEngine *e, CattaKey *key, CattaWideAreaLookupCallback callback, void *userdata);
+void catta_wide_area_lookup_free(CattaWideAreaLookup *q);
 
 
 

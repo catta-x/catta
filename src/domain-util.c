@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -29,9 +29,9 @@
 #include <sys/utsname.h>
 #include <stdio.h>
 
-#include <avahi/malloc.h>
+#include <catta/malloc.h>
 
-#include <avahi/log.h>
+#include <catta/log.h>
 #include "domain-util.h"
 #include "util.h"
 
@@ -84,7 +84,7 @@ static int load_lsb_distrib_id(char *ret_s, size_t size) {
 }
 #endif
 
-char *avahi_get_host_name(char *ret_s, size_t size) {
+char *catta_get_host_name(char *ret_s, size_t size) {
     assert(ret_s);
     assert(size > 0);
 
@@ -96,7 +96,7 @@ char *avahi_get_host_name(char *ret_s, size_t size) {
 
     if (strcmp(ret_s, "localhost") == 0 || strncmp(ret_s, "localhost.", 10) == 0) {
         *ret_s = 0;
-        avahi_log_warn("System host name is set to 'localhost'. This is not a suitable mDNS host name, looking for alternatives.");
+        catta_log_warn("System host name is set to 'localhost'. This is not a suitable mDNS host name, looking for alternatives.");
     }
 
     if (*ret_s == 0) {
@@ -107,7 +107,7 @@ char *avahi_get_host_name(char *ret_s, size_t size) {
         /* Try LSB distribution name first */
         if (load_lsb_distrib_id(ret_s, size) >= 0) {
             strip_bad_chars(ret_s);
-            avahi_strdown(ret_s);
+            catta_strdown(ret_s);
         }
 
         if (*ret_s == 0)
@@ -120,7 +120,7 @@ char *avahi_get_host_name(char *ret_s, size_t size) {
             if (uname(&utsname) >= 0) {
                 snprintf(ret_s, size, "%s", utsname.sysname);
                 strip_bad_chars(ret_s);
-                avahi_strdown(ret_s);
+                catta_strdown(ret_s);
             }
 
             /* Give up */
@@ -129,22 +129,22 @@ char *avahi_get_host_name(char *ret_s, size_t size) {
         }
     }
 
-    if (size >= AVAHI_LABEL_MAX)
-	ret_s[AVAHI_LABEL_MAX-1] = 0;
+    if (size >= CATTA_LABEL_MAX)
+	ret_s[CATTA_LABEL_MAX-1] = 0;
 
     return ret_s;
 }
 
-char *avahi_get_host_name_strdup(void) {
-    char t[AVAHI_DOMAIN_NAME_MAX];
+char *catta_get_host_name_strdup(void) {
+    char t[CATTA_DOMAIN_NAME_MAX];
 
-    if (!(avahi_get_host_name(t, sizeof(t))))
+    if (!(catta_get_host_name(t, sizeof(t))))
         return NULL;
 
-    return avahi_strdup(t);
+    return catta_strdup(t);
 }
 
-int avahi_binary_domain_cmp(const char *a, const char *b) {
+int catta_binary_domain_cmp(const char *a, const char *b) {
     assert(a);
     assert(b);
 
@@ -152,12 +152,12 @@ int avahi_binary_domain_cmp(const char *a, const char *b) {
         return 0;
 
     for (;;) {
-        char ca[AVAHI_LABEL_MAX], cb[AVAHI_LABEL_MAX], *p;
+        char ca[CATTA_LABEL_MAX], cb[CATTA_LABEL_MAX], *p;
         int r;
 
-        p = avahi_unescape_label(&a, ca, sizeof(ca));
+        p = catta_unescape_label(&a, ca, sizeof(ca));
         assert(p);
-        p = avahi_unescape_label(&b, cb, sizeof(cb));
+        p = catta_unescape_label(&b, cb, sizeof(cb));
         assert(p);
 
         if ((r = strcmp(ca, cb)))
@@ -168,20 +168,20 @@ int avahi_binary_domain_cmp(const char *a, const char *b) {
     }
 }
 
-int avahi_domain_ends_with(const char *domain, const char *suffix) {
+int catta_domain_ends_with(const char *domain, const char *suffix) {
     assert(domain);
     assert(suffix);
 
     for (;;) {
-        char dummy[AVAHI_LABEL_MAX], *r;
+        char dummy[CATTA_LABEL_MAX], *r;
 
         if (*domain == 0)
             return 0;
 
-        if (avahi_domain_equal(domain, suffix))
+        if (catta_domain_equal(domain, suffix))
             return 1;
 
-        r = avahi_unescape_label(&domain, dummy, sizeof(dummy));
+        r = catta_unescape_label(&domain, dummy, sizeof(dummy));
         assert(r);
     }
 }

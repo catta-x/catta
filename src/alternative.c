@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -26,9 +26,9 @@
 #include <ctype.h>
 #include <assert.h>
 
-#include <avahi/alternative.h>
-#include <avahi/malloc.h>
-#include <avahi/domain.h>
+#include <catta/alternative.h>
+#include <catta/malloc.h>
+#include <catta/domain.h>
 #include "utf8.h"
 
 static void drop_incomplete_utf8(char *c) {
@@ -38,7 +38,7 @@ static void drop_incomplete_utf8(char *c) {
 
     while (e >= c) {
 
-        if (avahi_utf8_valid(c))
+        if (catta_utf8_valid(c))
             break;
 
         assert(*e & 128);
@@ -48,13 +48,13 @@ static void drop_incomplete_utf8(char *c) {
     }
 }
 
-char *avahi_alternative_host_name(const char *s) {
+char *catta_alternative_host_name(const char *s) {
     const char *e;
     char *r;
 
     assert(s);
 
-    if (!avahi_is_valid_host_name(s))
+    if (!catta_is_valid_host_name(s))
         return NULL;
 
     if ((e = strrchr(s, '-'))) {
@@ -78,49 +78,49 @@ char *avahi_alternative_host_name(const char *s) {
         int n;
 
         n = atoi(e)+1;
-        if (!(m = avahi_strdup_printf("%i", n)))
+        if (!(m = catta_strdup_printf("%i", n)))
             return NULL;
 
         l = e-s-1;
 
-        if (l >= AVAHI_LABEL_MAX-1-strlen(m)-1)
-            l = AVAHI_LABEL_MAX-1-strlen(m)-1;
+        if (l >= CATTA_LABEL_MAX-1-strlen(m)-1)
+            l = CATTA_LABEL_MAX-1-strlen(m)-1;
 
-        if (!(c = avahi_strndup(s, l))) {
-            avahi_free(m);
+        if (!(c = catta_strndup(s, l))) {
+            catta_free(m);
             return NULL;
         }
 
         drop_incomplete_utf8(c);
 
-        r = avahi_strdup_printf("%s-%s", c, m);
-        avahi_free(c);
-        avahi_free(m);
+        r = catta_strdup_printf("%s-%s", c, m);
+        catta_free(c);
+        catta_free(m);
 
     } else {
         char *c;
 
-        if (!(c = avahi_strndup(s, AVAHI_LABEL_MAX-1-2)))
+        if (!(c = catta_strndup(s, CATTA_LABEL_MAX-1-2)))
             return NULL;
 
         drop_incomplete_utf8(c);
 
-        r = avahi_strdup_printf("%s-2", c);
-        avahi_free(c);
+        r = catta_strdup_printf("%s-2", c);
+        catta_free(c);
     }
 
-    assert(avahi_is_valid_host_name(r));
+    assert(catta_is_valid_host_name(r));
 
     return r;
 }
 
-char *avahi_alternative_service_name(const char *s) {
+char *catta_alternative_service_name(const char *s) {
     const char *e;
     char *r;
 
     assert(s);
 
-    if (!avahi_is_valid_service_name(s))
+    if (!catta_is_valid_service_name(s))
         return NULL;
 
     if ((e = strstr(s, " #"))) {
@@ -146,37 +146,37 @@ char *avahi_alternative_service_name(const char *s) {
         int n;
 
         n = atoi(e)+1;
-        if (!(m = avahi_strdup_printf("%i", n)))
+        if (!(m = catta_strdup_printf("%i", n)))
             return NULL;
 
         l = e-s-2;
 
-        if (l >= AVAHI_LABEL_MAX-1-strlen(m)-2)
-            l = AVAHI_LABEL_MAX-1-strlen(m)-2;
+        if (l >= CATTA_LABEL_MAX-1-strlen(m)-2)
+            l = CATTA_LABEL_MAX-1-strlen(m)-2;
 
-        if (!(c = avahi_strndup(s, l))) {
-            avahi_free(m);
+        if (!(c = catta_strndup(s, l))) {
+            catta_free(m);
             return NULL;
         }
 
         drop_incomplete_utf8(c);
 
-        r = avahi_strdup_printf("%s #%s", c, m);
-        avahi_free(c);
-        avahi_free(m);
+        r = catta_strdup_printf("%s #%s", c, m);
+        catta_free(c);
+        catta_free(m);
     } else {
         char *c;
 
-        if (!(c = avahi_strndup(s, AVAHI_LABEL_MAX-1-3)))
+        if (!(c = catta_strndup(s, CATTA_LABEL_MAX-1-3)))
             return NULL;
 
         drop_incomplete_utf8(c);
 
-        r = avahi_strdup_printf("%s #2", c);
-        avahi_free(c);
+        r = catta_strdup_printf("%s #2", c);
+        catta_free(c);
     }
 
-    assert(avahi_is_valid_service_name(r));
+    assert(catta_is_valid_service_name(r));
 
     return r;
 }

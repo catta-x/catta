@@ -1,22 +1,22 @@
-# This file is part of avahi.
+# This file is part of catta.
 #
-# avahi is free software; you can redistribute it and/or modify it
+# catta is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 2 of the
 # License, or (at your option) any later version.
 #
-# avahi is distributed in the hope that it will be useful, but WITHOUT
+# catta is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public
-# License along with avahi; if not, write to the Free Software
+# License along with catta; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
 AM_CFLAGS=-I$(top_srcdir)/include
-AM_LDADD=$(top_srcdir)/src/libavahi.la
+AM_LDADD=$(top_srcdir)/src/libcatta.la
 
 # This cool debug trap works on i386/gcc only
 AM_CFLAGS+='-DDEBUG_TRAP=__asm__("int $$3")'
@@ -31,9 +31,9 @@ noinst_PROGRAMS = \
 	watch-test-thread \
 	utf8-test \
 	prioq-test \
-	avahi-test \
+	catta-test \
 	conformance-test \
-	avahi-reflector \
+	catta-reflector \
 	dns-test \
 	dns-spin-test \
 	timeeventq-test \
@@ -80,9 +80,9 @@ prioq_test_SOURCES = prioq-test.c
 prioq_test_CFLAGS = $(AM_CFLAGS)
 prioq_test_LDADD = $(AM_LDADD)
 
-avahi_test_SOURCES = avahi-test.c
-avahi_test_CFLAGS = $(AM_CFLAGS)
-avahi_test_LDADD = $(AM_LDADD)
+catta_test_SOURCES = catta-test.c
+catta_test_CFLAGS = $(AM_CFLAGS)
+catta_test_LDADD = $(AM_LDADD)
 
 update_test_SOURCES = update-test.c
 update_test_CFLAGS = $(AM_CFLAGS)
@@ -96,9 +96,9 @@ conformance_test_SOURCES = conformance-test.c
 conformance_test_CFLAGS = $(AM_CFLAGS)
 conformance_test_LDADD = $(AM_LDADD)
 
-avahi_reflector_SOURCES = avahi-reflector.c
-avahi_reflector_CFLAGS = $(AM_CFLAGS)
-avahi_reflector_LDADD = $(AM_LDADD)
+catta_reflector_SOURCES = catta-reflector.c
+catta_reflector_CFLAGS = $(AM_CFLAGS)
+catta_reflector_LDADD = $(AM_LDADD)
 
 dns_test_SOURCES = dns-test.c
 dns_test_CFLAGS = $(AM_CFLAGS)
@@ -116,8 +116,8 @@ hashmap_test_SOURCES = hashmap-test.c
 hashmap_test_CFLAGS = $(AM_CFLAGS)
 hashmap_test_LDADD = $(AM_LDADD)
 
-valgrind: avahi-test
-	libtool --mode=execute valgrind ./avahi-test
+valgrind: catta-test
+	libtool --mode=execute valgrind ./catta-test
 
-gdb: avahi-test
-	libtool --mode=execute gdb ./avahi-test
+gdb: catta-test
+	libtool --mode=execute gdb ./catta-test

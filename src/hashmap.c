@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -24,9 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <avahi/llist.h>
-#include <avahi/domain.h>
-#include <avahi/malloc.h>
+#include <catta/llist.h>
+#include <catta/domain.h>
+#include <catta/malloc.h>
 
 #include "hashmap.h"
 #include "util.h"
@@ -35,24 +35,24 @@
 
 typedef struct Entry Entry;
 struct Entry {
-    AvahiHashmap *hashmap;
+    CattaHashmap *hashmap;
     void *key;
     void *value;
 
-    AVAHI_LLIST_FIELDS(Entry, bucket);
-    AVAHI_LLIST_FIELDS(Entry, entries);
+    CATTA_LLIST_FIELDS(Entry, bucket);
+    CATTA_LLIST_FIELDS(Entry, entries);
 };
 
-struct AvahiHashmap {
-    AvahiHashFunc hash_func;
-    AvahiEqualFunc equal_func;
-    AvahiFreeFunc key_free_func, value_free_func;
+struct CattaHashmap {
+    CattaHashFunc hash_func;
+    CattaEqualFunc equal_func;
+    CattaFreeFunc key_free_func, value_free_func;
 
     Entry *entries[HASH_MAP_SIZE];
-    AVAHI_LLIST_HEAD(Entry, entries_list);
+    CATTA_LLIST_HEAD(Entry, entries_list);
 };
 
-static Entry* entry_get(AvahiHashmap *m, const void *key) {
+static Entry* entry_get(CattaHashmap *m, const void *key) {
     unsigned idx;
     Entry *e;
 
@@ -65,31 +65,31 @@ static Entry* entry_get(AvahiHashmap *m, const void *key) {
     return NULL;
 }
 
-static void entry_free(AvahiHashmap *m, Entry *e, int stolen) {
+static void entry_free(CattaHashmap *m, Entry *e, int stolen) {
     unsigned idx;
     assert(m);
     assert(e);
 
     idx = m->hash_func(e->key) % HASH_MAP_SIZE;
 
-    AVAHI_LLIST_REMOVE(Entry, bucket, m->entries[idx], e);
-    AVAHI_LLIST_REMOVE(Entry, entries, m->entries_list, e);
+    CATTA_LLIST_REMOVE(Entry, bucket, m->entries[idx], e);
+    CATTA_LLIST_REMOVE(Entry, entries, m->entries_list, e);
 
     if (m->key_free_func)
         m->key_free_func(e->key);
     if (m->value_free_func && !stolen)
         m->value_free_func(e->value);
 
-    avahi_free(e);
+    catta_free(e);
 }
 
-AvahiHashmap* avahi_hashmap_new(AvahiHashFunc hash_func, AvahiEqualFunc equal_func, AvahiFreeFunc key_free_func, AvahiFreeFunc value_free_func) {
-    AvahiHashmap *m;
+CattaHashmap* catta_hashmap_new(CattaHashFunc hash_func, CattaEqualFunc equal_func, CattaFreeFunc key_free_func, CattaFreeFunc value_free_func) {
+    CattaHashmap *m;
 
     assert(hash_func);
     assert(equal_func);
 
-    if (!(m = avahi_new0(AvahiHashmap, 1)))
+    if (!(m = catta_new0(CattaHashmap, 1)))
         return NULL;
 
     m->hash_func = hash_func;
@@ -97,21 +97,21 @@ AvahiHashmap* avahi_hashmap_new(AvahiHashFunc hash_func, AvahiEqualFunc equal_fu
     m->key_free_func = key_free_func;
     m->value_free_func = value_free_func;
 
-    AVAHI_LLIST_HEAD_INIT(Entry, m->entries_list);
+    CATTA_LLIST_HEAD_INIT(Entry, m->entries_list);
 
     return m;
 }
 
-void avahi_hashmap_free(AvahiHashmap *m) {
+void catta_hashmap_free(CattaHashmap *m) {
     assert(m);
 
     while (m->entries_list)
         entry_free(m, m->entries_list, 0);
 
-    avahi_free(m);
+    catta_free(m);
 }
 
-void* avahi_hashmap_lookup(AvahiHashmap *m, const void *key) {
+void* catta_hashmap_lookup(CattaHashmap *m, const void *key) {
     Entry *e;
 
     assert(m);
@@ -122,7 +122,7 @@ void* avahi_hashmap_lookup(AvahiHashmap *m, const void *key) {
     return e->value;
 }
 
-int avahi_hashmap_insert(AvahiHashmap *m, void *key, void *value) {
+int catta_hashmap_insert(CattaHashmap *m, void *key, void *value) {
     unsigned idx;
     Entry *e;
 
@@ -137,23 +137,23 @@ int avahi_hashmap_insert(AvahiHashmap *m, void *key, void *value) {
         return 1;
     }
 
-    if (!(e = avahi_new(Entry, 1)))
+    if (!(e = catta_new(Entry, 1)))
         return -1;
 
     e->hashmap = m;
     e->key = key;
     e->value = value;
 
-    AVAHI_LLIST_PREPEND(Entry, entries, m->entries_list, e);
+    CATTA_LLIST_PREPEND(Entry, entries, m->entries_list, e);
 
     idx = m->hash_func(key) % HASH_MAP_SIZE;
-    AVAHI_LLIST_PREPEND(Entry, bucket, m->entries[idx], e);
+    CATTA_LLIST_PREPEND(Entry, bucket, m->entries[idx], e);
 
     return 0;
 }
 
 
-int avahi_hashmap_replace(AvahiHashmap *m, void *key, void *value) {
+int catta_hashmap_replace(CattaHashmap *m, void *key, void *value) {
     unsigned idx;
     Entry *e;
 
@@ -171,22 +171,22 @@ int avahi_hashmap_replace(AvahiHashmap *m, void *key, void *value) {
         return 1;
     }
 
-    if (!(e = avahi_new(Entry, 1)))
+    if (!(e = catta_new(Entry, 1)))
         return -1;
 
     e->hashmap = m;
     e->key = key;
     e->value = value;
 
-    AVAHI_LLIST_PREPEND(Entry, entries, m->entries_list, e);
+    CATTA_LLIST_PREPEND(Entry, entries, m->entries_list, e);
 
     idx = m->hash_func(key) % HASH_MAP_SIZE;
-    AVAHI_LLIST_PREPEND(Entry, bucket, m->entries[idx], e);
+    CATTA_LLIST_PREPEND(Entry, bucket, m->entries[idx], e);
 
     return 0;
 }
 
-void avahi_hashmap_remove(AvahiHashmap *m, const void *key) {
+void catta_hashmap_remove(CattaHashmap *m, const void *key) {
     Entry *e;
 
     assert(m);
@@ -197,7 +197,7 @@ void avahi_hashmap_remove(AvahiHashmap *m, const void *key) {
     entry_free(m, e, 0);
 }
 
-void avahi_hashmap_foreach(AvahiHashmap *m, AvahiHashmapForeachCallback callback, void *userdata) {
+void catta_hashmap_foreach(CattaHashmap *m, CattaHashmapForeachCallback callback, void *userdata) {
     Entry *e, *next;
     assert(m);
     assert(callback);
@@ -209,7 +209,7 @@ void avahi_hashmap_foreach(AvahiHashmap *m, AvahiHashmapForeachCallback callback
     }
 }
 
-unsigned avahi_string_hash(const void *data) {
+unsigned catta_string_hash(const void *data) {
     const char *p = data;
     unsigned hash = 0;
 
@@ -221,7 +221,7 @@ unsigned avahi_string_hash(const void *data) {
     return hash;
 }
 
-int avahi_string_equal(const void *a, const void *b) {
+int catta_string_equal(const void *a, const void *b) {
     const char *p = a, *q = b;
 
     assert(p);
@@ -230,7 +230,7 @@ int avahi_string_equal(const void *a, const void *b) {
     return strcmp(p, q) == 0;
 }
 
-unsigned avahi_int_hash(const void *data) {
+unsigned catta_int_hash(const void *data) {
     const int *i = data;
 
     assert(i);
@@ -238,7 +238,7 @@ unsigned avahi_int_hash(const void *data) {
     return (unsigned) *i;
 }
 
-int avahi_int_equal(const void *a, const void *b) {
+int catta_int_equal(const void *a, const void *b) {
     const int *_a = a, *_b = b;
 
     assert(_a);

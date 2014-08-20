@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -23,137 +23,137 @@
 
 #include <stdlib.h>
 
-#include <avahi/domain.h>
-#include <avahi/timeval.h>
-#include <avahi/malloc.h>
+#include <catta/domain.h>
+#include <catta/timeval.h>
+#include <catta/malloc.h>
 
 #include "probe-sched.h"
-#include <avahi/log.h>
+#include <catta/log.h>
 #include "rr-util.h"
 
-#define AVAHI_PROBE_HISTORY_MSEC 150
-#define AVAHI_PROBE_DEFER_MSEC 50
+#define CATTA_PROBE_HISTORY_MSEC 150
+#define CATTA_PROBE_DEFER_MSEC 50
 
-typedef struct AvahiProbeJob AvahiProbeJob;
+typedef struct CattaProbeJob CattaProbeJob;
 
-struct AvahiProbeJob {
-    AvahiProbeScheduler *scheduler;
-    AvahiTimeEvent *time_event;
+struct CattaProbeJob {
+    CattaProbeScheduler *scheduler;
+    CattaTimeEvent *time_event;
 
     int chosen; /* Use for packet assembling */
     int done;
     struct timeval delivery;
 
-    AvahiRecord *record;
+    CattaRecord *record;
 
-    AVAHI_LLIST_FIELDS(AvahiProbeJob, jobs);
+    CATTA_LLIST_FIELDS(CattaProbeJob, jobs);
 };
 
-struct AvahiProbeScheduler {
-    AvahiInterface *interface;
-    AvahiTimeEventQueue *time_event_queue;
+struct CattaProbeScheduler {
+    CattaInterface *interface;
+    CattaTimeEventQueue *time_event_queue;
 
-    AVAHI_LLIST_HEAD(AvahiProbeJob, jobs);
-    AVAHI_LLIST_HEAD(AvahiProbeJob, history);
+    CATTA_LLIST_HEAD(CattaProbeJob, jobs);
+    CATTA_LLIST_HEAD(CattaProbeJob, history);
 };
 
-static AvahiProbeJob* job_new(AvahiProbeScheduler *s, AvahiRecord *record, int done) {
-    AvahiProbeJob *pj;
+static CattaProbeJob* job_new(CattaProbeScheduler *s, CattaRecord *record, int done) {
+    CattaProbeJob *pj;
 
     assert(s);
     assert(record);
 
-    if (!(pj = avahi_new(AvahiProbeJob, 1))) {
-        avahi_log_error(__FILE__": Out of memory");
+    if (!(pj = catta_new(CattaProbeJob, 1))) {
+        catta_log_error(__FILE__": Out of memory");
         return NULL; /* OOM */
     }
 
     pj->scheduler = s;
-    pj->record = avahi_record_ref(record);
+    pj->record = catta_record_ref(record);
     pj->time_event = NULL;
     pj->chosen = 0;
 
     if ((pj->done = done))
-        AVAHI_LLIST_PREPEND(AvahiProbeJob, jobs, s->history, pj);
+        CATTA_LLIST_PREPEND(CattaProbeJob, jobs, s->history, pj);
     else
-        AVAHI_LLIST_PREPEND(AvahiProbeJob, jobs, s->jobs, pj);
+        CATTA_LLIST_PREPEND(CattaProbeJob, jobs, s->jobs, pj);
 
     return pj;
 }
 
-static void job_free(AvahiProbeScheduler *s, AvahiProbeJob *pj) {
+static void job_free(CattaProbeScheduler *s, CattaProbeJob *pj) {
     assert(pj);
 
     if (pj->time_event)
-        avahi_time_event_free(pj->time_event);
+        catta_time_event_free(pj->time_event);
 
     if (pj->done)
-        AVAHI_LLIST_REMOVE(AvahiProbeJob, jobs, s->history, pj);
+        CATTA_LLIST_REMOVE(CattaProbeJob, jobs, s->history, pj);
     else
-        AVAHI_LLIST_REMOVE(AvahiProbeJob, jobs, s->jobs, pj);
+        CATTA_LLIST_REMOVE(CattaProbeJob, jobs, s->jobs, pj);
 
-    avahi_record_unref(pj->record);
-    avahi_free(pj);
+    catta_record_unref(pj->record);
+    catta_free(pj);
 }
 
-static void elapse_callback(AvahiTimeEvent *e, void* data);
+static void elapse_callback(CattaTimeEvent *e, void* data);
 
-static void job_set_elapse_time(AvahiProbeScheduler *s, AvahiProbeJob *pj, unsigned msec, unsigned jitter) {
+static void job_set_elapse_time(CattaProbeScheduler *s, CattaProbeJob *pj, unsigned msec, unsigned jitter) {
     struct timeval tv;
 
     assert(s);
     assert(pj);
 
-    avahi_elapse_time(&tv, msec, jitter);
+    catta_elapse_time(&tv, msec, jitter);
 
     if (pj->time_event)
-        avahi_time_event_update(pj->time_event, &tv);
+        catta_time_event_update(pj->time_event, &tv);
     else
-        pj->time_event = avahi_time_event_new(s->time_event_queue, &tv, elapse_callback, pj);
+        pj->time_event = catta_time_event_new(s->time_event_queue, &tv, elapse_callback, pj);
 }
 
-static void job_mark_done(AvahiProbeScheduler *s, AvahiProbeJob *pj) {
+static void job_mark_done(CattaProbeScheduler *s, CattaProbeJob *pj) {
     assert(s);
     assert(pj);
 
     assert(!pj->done);
 
-    AVAHI_LLIST_REMOVE(AvahiProbeJob, jobs, s->jobs, pj);
-    AVAHI_LLIST_PREPEND(AvahiProbeJob, jobs, s->history, pj);
+    CATTA_LLIST_REMOVE(CattaProbeJob, jobs, s->jobs, pj);
+    CATTA_LLIST_PREPEND(CattaProbeJob, jobs, s->history, pj);
 
     pj->done = 1;
 
-    job_set_elapse_time(s, pj, AVAHI_PROBE_HISTORY_MSEC, 0);
+    job_set_elapse_time(s, pj, CATTA_PROBE_HISTORY_MSEC, 0);
     gettimeofday(&pj->delivery, NULL);
 }
 
-AvahiProbeScheduler *avahi_probe_scheduler_new(AvahiInterface *i) {
-    AvahiProbeScheduler *s;
+CattaProbeScheduler *catta_probe_scheduler_new(CattaInterface *i) {
+    CattaProbeScheduler *s;
 
     assert(i);
 
-    if (!(s = avahi_new(AvahiProbeScheduler, 1))) {
-        avahi_log_error(__FILE__": Out of memory");
+    if (!(s = catta_new(CattaProbeScheduler, 1))) {
+        catta_log_error(__FILE__": Out of memory");
         return NULL;
     }
 
     s->interface = i;
     s->time_event_queue = i->monitor->server->time_event_queue;
 
-    AVAHI_LLIST_HEAD_INIT(AvahiProbeJob, s->jobs);
-    AVAHI_LLIST_HEAD_INIT(AvahiProbeJob, s->history);
+    CATTA_LLIST_HEAD_INIT(CattaProbeJob, s->jobs);
+    CATTA_LLIST_HEAD_INIT(CattaProbeJob, s->history);
 
     return s;
 }
 
-void avahi_probe_scheduler_free(AvahiProbeScheduler *s) {
+void catta_probe_scheduler_free(CattaProbeScheduler *s) {
     assert(s);
 
-    avahi_probe_scheduler_clear(s);
-    avahi_free(s);
+    catta_probe_scheduler_clear(s);
+    catta_free(s);
 }
 
-void avahi_probe_scheduler_clear(AvahiProbeScheduler *s) {
+void catta_probe_scheduler_clear(CattaProbeScheduler *s) {
     assert(s);
 
     while (s->jobs)
@@ -162,9 +162,9 @@ void avahi_probe_scheduler_clear(AvahiProbeScheduler *s) {
         job_free(s, s->history);
 }
 
-static int packet_add_probe_query(AvahiProbeScheduler *s, AvahiDnsPacket *p, AvahiProbeJob *pj) {
+static int packet_add_probe_query(CattaProbeScheduler *s, CattaDnsPacket *p, CattaProbeJob *pj) {
     size_t size;
-    AvahiKey *k;
+    CattaKey *k;
     int b;
 
     assert(s);
@@ -175,18 +175,18 @@ static int packet_add_probe_query(AvahiProbeScheduler *s, AvahiDnsPacket *p, Ava
 
     /* Estimate the size for this record */
     size =
-        avahi_key_get_estimate_size(pj->record->key) +
-        avahi_record_get_estimate_size(pj->record);
+        catta_key_get_estimate_size(pj->record->key) +
+        catta_record_get_estimate_size(pj->record);
 
     /* Too large */
-    if (size > avahi_dns_packet_space(p))
+    if (size > catta_dns_packet_space(p))
         return 0;
 
     /* Create the probe query */
-    if (!(k = avahi_key_new(pj->record->key->name, pj->record->key->clazz, AVAHI_DNS_TYPE_ANY)))
+    if (!(k = catta_key_new(pj->record->key->name, pj->record->key->clazz, CATTA_DNS_TYPE_ANY)))
         return 0; /* OOM */
 
-    b = !!avahi_dns_packet_append_key(p, k, 0);
+    b = !!catta_dns_packet_append_key(p, k, 0);
     assert(b);
 
     /* Mark this job for addition to the packet */
@@ -198,26 +198,26 @@ static int packet_add_probe_query(AvahiProbeScheduler *s, AvahiDnsPacket *p, Ava
             continue;
 
         /* Does the record match the probe? */
-        if (k->clazz != pj->record->key->clazz || !avahi_domain_equal(k->name, pj->record->key->name))
+        if (k->clazz != pj->record->key->clazz || !catta_domain_equal(k->name, pj->record->key->name))
             continue;
 
         /* This job wouldn't fit in */
-        if (avahi_record_get_estimate_size(pj->record) > avahi_dns_packet_space(p))
+        if (catta_record_get_estimate_size(pj->record) > catta_dns_packet_space(p))
             break;
 
         /* Mark this job for addition to the packet */
         pj->chosen = 1;
     }
 
-    avahi_key_unref(k);
+    catta_key_unref(k);
 
     return 1;
 }
 
-static void elapse_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void* data) {
-    AvahiProbeJob *pj = data, *next;
-    AvahiProbeScheduler *s;
-    AvahiDnsPacket *p;
+static void elapse_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void* data) {
+    CattaProbeJob *pj = data, *next;
+    CattaProbeScheduler *s;
+    CattaDnsPacket *p;
     unsigned n;
 
     assert(pj);
@@ -229,44 +229,44 @@ static void elapse_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void* data) {
         return;
     }
 
-    if (!(p = avahi_dns_packet_new_query(s->interface->hardware->mtu)))
+    if (!(p = catta_dns_packet_new_query(s->interface->hardware->mtu)))
         return; /* OOM */
     n = 1;
 
     /* Add the import probe */
     if (!packet_add_probe_query(s, p, pj)) {
         size_t size;
-        AvahiKey *k;
+        CattaKey *k;
         int b;
 
-        avahi_dns_packet_free(p);
+        catta_dns_packet_free(p);
 
         /* The probe didn't fit in the package, so let's allocate a larger one */
 
         size =
-            avahi_key_get_estimate_size(pj->record->key) +
-            avahi_record_get_estimate_size(pj->record) +
-            AVAHI_DNS_PACKET_HEADER_SIZE;
+            catta_key_get_estimate_size(pj->record->key) +
+            catta_record_get_estimate_size(pj->record) +
+            CATTA_DNS_PACKET_HEADER_SIZE;
 
-        if (!(p = avahi_dns_packet_new_query(size + AVAHI_DNS_PACKET_EXTRA_SIZE)))
+        if (!(p = catta_dns_packet_new_query(size + CATTA_DNS_PACKET_EXTRA_SIZE)))
             return; /* OOM */
 
-        if (!(k = avahi_key_new(pj->record->key->name, pj->record->key->clazz, AVAHI_DNS_TYPE_ANY))) {
-            avahi_dns_packet_free(p);
+        if (!(k = catta_key_new(pj->record->key->name, pj->record->key->clazz, CATTA_DNS_TYPE_ANY))) {
+            catta_dns_packet_free(p);
             return;  /* OOM */
         }
 
-        b = avahi_dns_packet_append_key(p, k, 0) && avahi_dns_packet_append_record(p, pj->record, 0, 0);
-        avahi_key_unref(k);
+        b = catta_dns_packet_append_key(p, k, 0) && catta_dns_packet_append_record(p, pj->record, 0, 0);
+        catta_key_unref(k);
 
         if (b) {
-            avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_NSCOUNT, 1);
-            avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_QDCOUNT, 1);
-            avahi_interface_send_packet(s->interface, p);
+            catta_dns_packet_set_field(p, CATTA_DNS_FIELD_NSCOUNT, 1);
+            catta_dns_packet_set_field(p, CATTA_DNS_FIELD_QDCOUNT, 1);
+            catta_interface_send_packet(s->interface, p);
         } else
-            avahi_log_warn("Probe record too large, cannot send");
+            catta_log_warn("Probe record too large, cannot send");
 
-        avahi_dns_packet_free(p);
+        catta_dns_packet_free(p);
         job_mark_done(s, pj);
 
         return;
@@ -284,7 +284,7 @@ static void elapse_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void* data) {
         n++;
     }
 
-    avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_QDCOUNT, n);
+    catta_dns_packet_set_field(p, CATTA_DNS_FIELD_QDCOUNT, n);
 
     n = 0;
 
@@ -296,8 +296,8 @@ static void elapse_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void* data) {
         if (!pj->chosen)
             continue;
 
-        if (!avahi_dns_packet_append_record(p, pj->record, 0, 0)) {
-/*             avahi_log_warn("Bad probe size estimate!"); */
+        if (!catta_dns_packet_append_record(p, pj->record, 0, 0)) {
+/*             catta_log_warn("Bad probe size estimate!"); */
 
             /* Unmark all following jobs */
             for (; pj; pj = pj->jobs_next)
@@ -311,15 +311,15 @@ static void elapse_callback(AVAHI_GCC_UNUSED AvahiTimeEvent *e, void* data) {
         n ++;
     }
 
-    avahi_dns_packet_set_field(p, AVAHI_DNS_FIELD_NSCOUNT, n);
+    catta_dns_packet_set_field(p, CATTA_DNS_FIELD_NSCOUNT, n);
 
     /* Send it now */
-    avahi_interface_send_packet(s->interface, p);
-    avahi_dns_packet_free(p);
+    catta_interface_send_packet(s->interface, p);
+    catta_dns_packet_free(p);
 }
 
-static AvahiProbeJob* find_scheduled_job(AvahiProbeScheduler *s, AvahiRecord *record) {
-    AvahiProbeJob *pj;
+static CattaProbeJob* find_scheduled_job(CattaProbeScheduler *s, CattaRecord *record) {
+    CattaProbeJob *pj;
 
     assert(s);
     assert(record);
@@ -327,15 +327,15 @@ static AvahiProbeJob* find_scheduled_job(AvahiProbeScheduler *s, AvahiRecord *re
     for (pj = s->jobs; pj; pj = pj->jobs_next) {
         assert(!pj->done);
 
-        if (avahi_record_equal_no_ttl(pj->record, record))
+        if (catta_record_equal_no_ttl(pj->record, record))
             return pj;
     }
 
     return NULL;
 }
 
-static AvahiProbeJob* find_history_job(AvahiProbeScheduler *s, AvahiRecord *record) {
-    AvahiProbeJob *pj;
+static CattaProbeJob* find_history_job(CattaProbeScheduler *s, CattaRecord *record) {
+    CattaProbeJob *pj;
 
     assert(s);
     assert(record);
@@ -343,10 +343,10 @@ static AvahiProbeJob* find_history_job(AvahiProbeScheduler *s, AvahiRecord *reco
     for (pj = s->history; pj; pj = pj->jobs_next) {
         assert(pj->done);
 
-        if (avahi_record_equal_no_ttl(pj->record, record)) {
+        if (catta_record_equal_no_ttl(pj->record, record)) {
             /* Check whether this entry is outdated */
 
-            if (avahi_age(&pj->delivery) > AVAHI_PROBE_HISTORY_MSEC*1000) {
+            if (catta_age(&pj->delivery) > CATTA_PROBE_HISTORY_MSEC*1000) {
                 /* it is outdated, so let's remove it */
                 job_free(s, pj);
                 return NULL;
@@ -359,25 +359,25 @@ static AvahiProbeJob* find_history_job(AvahiProbeScheduler *s, AvahiRecord *reco
     return NULL;
 }
 
-int avahi_probe_scheduler_post(AvahiProbeScheduler *s, AvahiRecord *record, int immediately) {
-    AvahiProbeJob *pj;
+int catta_probe_scheduler_post(CattaProbeScheduler *s, CattaRecord *record, int immediately) {
+    CattaProbeJob *pj;
     struct timeval tv;
 
     assert(s);
     assert(record);
-    assert(!avahi_key_is_pattern(record->key));
+    assert(!catta_key_is_pattern(record->key));
 
     if ((pj = find_history_job(s, record)))
         return 0;
 
-    avahi_elapse_time(&tv, immediately ? 0 : AVAHI_PROBE_DEFER_MSEC, 0);
+    catta_elapse_time(&tv, immediately ? 0 : CATTA_PROBE_DEFER_MSEC, 0);
 
     if ((pj = find_scheduled_job(s, record))) {
 
-        if (avahi_timeval_compare(&tv, &pj->delivery) < 0) {
+        if (catta_timeval_compare(&tv, &pj->delivery) < 0) {
             /* If the new entry should be scheduled earlier, update the old entry */
             pj->delivery = tv;
-            avahi_time_event_update(pj->time_event, &pj->delivery);
+            catta_time_event_update(pj->time_event, &pj->delivery);
         }
 
         return 1;
@@ -387,10 +387,10 @@ int avahi_probe_scheduler_post(AvahiProbeScheduler *s, AvahiRecord *record, int 
             return 0; /* OOM */
 
         pj->delivery = tv;
-        pj->time_event = avahi_time_event_new(s->time_event_queue, &pj->delivery, elapse_callback, pj);
+        pj->time_event = catta_time_event_new(s->time_event_queue, &pj->delivery, elapse_callback, pj);
 
 
-/*     avahi_log_debug("Accepted new probe job."); */
+/*     catta_log_debug("Accepted new probe job."); */
 
         return 1;
     }

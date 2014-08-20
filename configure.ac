@@ -1,33 +1,33 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-# This file is part of avahi.
+# This file is part of catta.
 #
-# avahi is free software; you can redistribute it and/or modify it
+# catta is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 2 of the
 # License, or (at your option) any later version.
 #
-# avahi is distributed in the hope that it will be useful, but WITHOUT
+# catta is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public
-# License along with avahi; if not, write to the Free Software
+# License along with catta; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
 AC_PREREQ(2.63)
-AC_INIT([avahi],[0.6.31],[avahi (at) lists (dot) freedesktop (dot) org])
+AC_INIT([catta],[0.1],[])
 AC_CONFIG_SRCDIR([src/server.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules tar-pax])
 
-AC_SUBST(PACKAGE_URL, [http://avahi.org/])
+AC_SUBST(PACKAGE_URL, [http://github.com/everbase/catta/])
 
-AC_SUBST(LIBAVAHI_VERSION_INFO, [7:2:0])
+AC_SUBST(LIBCATTA_VERSION_INFO, [0:0:0])
 
 AC_CANONICAL_HOST
 
@@ -198,14 +198,14 @@ AM_CONDITIONAL(HAVE_SYS_SYSCTL_H, [ test x"$HAVE_SYS_SYSCTL_H" = xyes ])
 # Check for lifconf struct; only present on Solaris
 #
 AC_MSG_CHECKING(for struct lifconf)
-AC_CACHE_VAL(avahi_cv_has_struct_lifconf,
+AC_CACHE_VAL(catta_cv_has_struct_lifconf,
 [AC_TRY_COMPILE(
 [#include <sys/socket.h>
 #include <net/if.h>
 ],[sizeof (struct lifconf);],
-avahi_cv_has_struct_lifconf=yes,avahi_cv_has_struct_lifconf=no)])
-AC_MSG_RESULT($avahi_cv_has_struct_lifconf)
-if test $avahi_cv_has_struct_lifconf = yes; then
+catta_cv_has_struct_lifconf=yes,catta_cv_has_struct_lifconf=no)])
+AC_MSG_RESULT($catta_cv_has_struct_lifconf)
+if test $catta_cv_has_struct_lifconf = yes; then
     AC_DEFINE(HAVE_STRUCT_LIFCONF,1,[Define if there is a struct lifconf.])
 fi
 
@@ -304,7 +304,7 @@ DX_RTF_FEATURE(OFF)
 DX_XML_FEATURE(ON)
 DX_PDF_FEATURE(OFF)
 DX_PS_FEATURE(OFF)
-DX_INIT_DOXYGEN(avahi, doxygen.cfg, doxygen)
+DX_INIT_DOXYGEN(catta, doxygen.cfg, doxygen)
 
 #
 # Conditionally compile test and example programs

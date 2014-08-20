@@ -2,39 +2,39 @@
 #define foorrlisthfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
 
-#include <avahi/rr.h>
+#include <catta/rr.h>
 
-typedef struct AvahiRecordList AvahiRecordList;
+typedef struct CattaRecordList CattaRecordList;
 
-AvahiRecordList *avahi_record_list_new(void);
-void avahi_record_list_free(AvahiRecordList *l);
-void avahi_record_list_flush(AvahiRecordList *l);
+CattaRecordList *catta_record_list_new(void);
+void catta_record_list_free(CattaRecordList *l);
+void catta_record_list_flush(CattaRecordList *l);
 
-AvahiRecord* avahi_record_list_next(AvahiRecordList *l, int *ret_flush_cache, int *ret_unicast_response, int *ret_auxiliary);
-void avahi_record_list_push(AvahiRecordList *l, AvahiRecord *r, int flush_cache, int unicast_response, int auxiliary);
-void avahi_record_list_drop(AvahiRecordList *l, AvahiRecord *r);
+CattaRecord* catta_record_list_next(CattaRecordList *l, int *ret_flush_cache, int *ret_unicast_response, int *ret_auxiliary);
+void catta_record_list_push(CattaRecordList *l, CattaRecord *r, int flush_cache, int unicast_response, int auxiliary);
+void catta_record_list_drop(CattaRecordList *l, CattaRecord *r);
 
-int avahi_record_list_all_flush_cache(AvahiRecordList *l);
+int catta_record_list_all_flush_cache(CattaRecordList *l);
 
-int avahi_record_list_is_empty(AvahiRecordList *l);
+int catta_record_list_is_empty(CattaRecordList *l);
 
 #endif

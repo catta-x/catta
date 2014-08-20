@@ -1,17 +1,17 @@
-# This file is part of avahi.
+# This file is part of catta.
 #
-# avahi is free software; you can redistribute it and/or modify it
+# catta is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 2 of the
 # License, or (at your option) any later version.
 #
-# avahi is distributed in the hope that it will be useful, but WITHOUT
+# catta is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public
-# License along with avahi; if not, write to the Free Software
+# License along with catta; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
@@ -35,7 +35,7 @@ EXTRA_DIST = \
 	docs/overview.dia \
 	docs/server-states.dia \
 	docs/avahi-poll.dia \
-	avahi.pc.in \
+	catta.pc.in \
 	doxygen_to_devhelp.xsl
 
 SUBDIRS = \
@@ -46,21 +46,21 @@ SUBDIRS = \
 	examples
 
 DX_INPUT = \
-	$(srcdir)/include/avahi/address.h \
-	$(srcdir)/include/avahi/malloc.h \
-	$(srcdir)/include/avahi/strlst.h \
-	$(srcdir)/include/avahi/alternative.h \
-	$(srcdir)/include/avahi/defs.h \
-	$(srcdir)/include/avahi/error.h \
-	$(srcdir)/include/avahi/domain.h \
-	$(srcdir)/include/avahi/watch.h \
-	$(srcdir)/include/avahi/simple-watch.h \
-	$(srcdir)/include/avahi/thread-watch.h \
-	$(srcdir)/include/avahi/core.h \
-	$(srcdir)/include/avahi/lookup.h \
-	$(srcdir)/include/avahi/publish.h \
-	$(srcdir)/include/avahi/rr.h \
-	$(srcdir)/include/avahi/log.h
+	$(srcdir)/include/catta/address.h \
+	$(srcdir)/include/catta/malloc.h \
+	$(srcdir)/include/catta/strlst.h \
+	$(srcdir)/include/catta/alternative.h \
+	$(srcdir)/include/catta/defs.h \
+	$(srcdir)/include/catta/error.h \
+	$(srcdir)/include/catta/domain.h \
+	$(srcdir)/include/catta/watch.h \
+	$(srcdir)/include/catta/simple-watch.h \
+	$(srcdir)/include/catta/thread-watch.h \
+	$(srcdir)/include/catta/core.h \
+	$(srcdir)/include/catta/lookup.h \
+	$(srcdir)/include/catta/publish.h \
+	$(srcdir)/include/catta/rr.h \
+	$(srcdir)/include/catta/log.h
 
 DX_EXAMPLE_PATH = $(srcdir)/examples
 DX_EXAMPLE_PATTERNS = *.c
@@ -72,11 +72,11 @@ pkgconfigdir = $(libdir)/pkgconfig
 	    -e 's,@libdir\@,$(libdir),g' \
 	    -e 's,@PACKAGE_VERSION\@,$(PACKAGE_VERSION),g' $< > $@
 
-pkgconfig_DATA = avahi.pc
-CLEANFILES = avahi.pc
-CLEANFILES += avahi.devhelp
+pkgconfig_DATA = catta.pc
+CLEANFILES = catta.pc
+CLEANFILES += catta.devhelp
 
-avahi.devhelp: doxygen-run
+catta.devhelp: doxygen-run
 	xsltproc -o $@ doxygen_to_devhelp.xsl doxygen/xml/index.xml
 
 MOSTLYCLEANFILES = $(DX_CLEANFILES)

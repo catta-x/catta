@@ -2,86 +2,86 @@
 #define foodnssrvhfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-/** \file avahi/dns-srv-rr.h Functions for announcing and browsing for unicast DNS servers via mDNS */
+/** \file catta/dns-srv-rr.h Functions for announcing and browsing for unicast DNS servers via mDNS */
 
 /** A domain service browser object. Use this to browse for
  * conventional unicast DNS servers which may be used to resolve
  * conventional domain names */
-typedef struct AvahiSDNSServerBrowser AvahiSDNSServerBrowser;
+typedef struct CattaSDNSServerBrowser CattaSDNSServerBrowser;
 
-#include <avahi/cdecl.h>
-#include <avahi/defs.h>
-#include <avahi/core.h>
-#include <avahi/publish.h>
+#include <catta/cdecl.h>
+#include <catta/defs.h>
+#include <catta/core.h>
+#include <catta/publish.h>
 
-AVAHI_C_DECL_BEGIN
+CATTA_C_DECL_BEGIN
 
 /** The type of DNS server */
 typedef enum {
-    AVAHI_DNS_SERVER_RESOLVE,         /**< Unicast DNS servers for normal resolves (_domain._udp)*/
-    AVAHI_DNS_SERVER_UPDATE,           /**< Unicast DNS servers for updates (_dns-update._udp)*/
-    AVAHI_DNS_SERVER_MAX
-} AvahiDNSServerType;
+    CATTA_DNS_SERVER_RESOLVE,         /**< Unicast DNS servers for normal resolves (_domain._udp)*/
+    CATTA_DNS_SERVER_UPDATE,           /**< Unicast DNS servers for updates (_dns-update._udp)*/
+    CATTA_DNS_SERVER_MAX
+} CattaDNSServerType;
 
 /** Publish the specified unicast DNS server address via mDNS. You may
  * browse for records create this way wit
- * avahi_s_dns_server_browser_new(). */
-int avahi_server_add_dns_server_address(
-    AvahiServer *s,
-    AvahiSEntryGroup *g,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiPublishFlags flags,
+ * catta_s_dns_server_browser_new(). */
+int catta_server_add_dns_server_address(
+    CattaServer *s,
+    CattaSEntryGroup *g,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaPublishFlags flags,
     const char *domain,
-    AvahiDNSServerType type,
-    const AvahiAddress *address,
+    CattaDNSServerType type,
+    const CattaAddress *address,
     uint16_t port /** should be 53 */);
 
-/** Callback prototype for AvahiSDNSServerBrowser events */
-typedef void (*AvahiSDNSServerBrowserCallback)(
-    AvahiSDNSServerBrowser *b,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiBrowserEvent event,
+/** Callback prototype for CattaSDNSServerBrowser events */
+typedef void (*CattaSDNSServerBrowserCallback)(
+    CattaSDNSServerBrowser *b,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaBrowserEvent event,
     const char *host_name,       /**< Host name of the DNS server, probably useless */
-    const AvahiAddress *a,        /**< Address of the DNS server */
+    const CattaAddress *a,        /**< Address of the DNS server */
     uint16_t port,                 /**< Port number of the DNS servers, probably 53 */
-    AvahiLookupResultFlags flags,  /**< Lookup flags */
+    CattaLookupResultFlags flags,  /**< Lookup flags */
     void* userdata);
 
-/** Create a new AvahiSDNSServerBrowser object */
-AvahiSDNSServerBrowser *avahi_s_dns_server_browser_new(
-    AvahiServer *server,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
+/** Create a new CattaSDNSServerBrowser object */
+CattaSDNSServerBrowser *catta_s_dns_server_browser_new(
+    CattaServer *server,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
     const char *domain,
-    AvahiDNSServerType type,
-    AvahiProtocol aprotocol,  /**< Address protocol for the DNS server */
-    AvahiLookupFlags flags,                 /**< Lookup flags. */
-    AvahiSDNSServerBrowserCallback callback,
+    CattaDNSServerType type,
+    CattaProtocol aprotocol,  /**< Address protocol for the DNS server */
+    CattaLookupFlags flags,                 /**< Lookup flags. */
+    CattaSDNSServerBrowserCallback callback,
     void* userdata);
 
-/** Free an AvahiSDNSServerBrowser object */
-void avahi_s_dns_server_browser_free(AvahiSDNSServerBrowser *b);
+/** Free an CattaSDNSServerBrowser object */
+void catta_s_dns_server_browser_free(CattaSDNSServerBrowser *b);
 
-AVAHI_C_DECL_END
+CATTA_C_DECL_END
 
 #endif

@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -29,21 +29,21 @@
 #include <assert.h>
 #include <stdio.h>
 
-#include <avahi/address.h>
-#include <avahi/malloc.h>
+#include <catta/address.h>
+#include <catta/malloc.h>
 
-static size_t address_get_size(const AvahiAddress *a) {
+static size_t address_get_size(const CattaAddress *a) {
     assert(a);
 
-    if (a->proto == AVAHI_PROTO_INET)
+    if (a->proto == CATTA_PROTO_INET)
         return 4;
-    else if (a->proto == AVAHI_PROTO_INET6)
+    else if (a->proto == CATTA_PROTO_INET6)
         return 16;
 
     return 0;
 }
 
-int avahi_address_cmp(const AvahiAddress *a, const AvahiAddress *b) {
+int catta_address_cmp(const CattaAddress *a, const CattaAddress *b) {
     assert(a);
     assert(b);
 
@@ -53,30 +53,30 @@ int avahi_address_cmp(const AvahiAddress *a, const AvahiAddress *b) {
     return memcmp(a->data.data, b->data.data, address_get_size(a));
 }
 
-char *avahi_address_snprint(char *s, size_t length, const AvahiAddress *a) {
+char *catta_address_snprint(char *s, size_t length, const CattaAddress *a) {
     assert(s);
     assert(length);
     assert(a);
 
-    if (!(inet_ntop(avahi_proto_to_af(a->proto), a->data.data, s, length)))
+    if (!(inet_ntop(catta_proto_to_af(a->proto), a->data.data, s, length)))
         return NULL;
 
     return s;
 }
 
-char* avahi_reverse_lookup_name(const AvahiAddress *a, char *ret_s, size_t length) {
+char* catta_reverse_lookup_name(const CattaAddress *a, char *ret_s, size_t length) {
     assert(ret_s);
     assert(length > 0);
     assert(a);
 
-    if (a->proto == AVAHI_PROTO_INET) {
+    if (a->proto == CATTA_PROTO_INET) {
         uint32_t n = ntohl(a->data.ipv4.address);
         snprintf(
             ret_s, length,
             "%u.%u.%u.%u.in-addr.arpa",
             n & 0xFF, (n >> 8) & 0xFF, (n >> 16) & 0xFF, n >> 24);
     } else {
-        assert(a->proto == AVAHI_PROTO_INET6);
+        assert(a->proto == CATTA_PROTO_INET6);
 
         snprintf(
             ret_s, length,
@@ -102,20 +102,20 @@ char* avahi_reverse_lookup_name(const AvahiAddress *a, char *ret_s, size_t lengt
     return ret_s;
 }
 
-AvahiAddress *avahi_address_parse(const char *s, AvahiProtocol proto, AvahiAddress *ret_addr) {
+CattaAddress *catta_address_parse(const char *s, CattaProtocol proto, CattaAddress *ret_addr) {
     assert(ret_addr);
     assert(s);
 
-    if (proto == AVAHI_PROTO_UNSPEC) {
+    if (proto == CATTA_PROTO_UNSPEC) {
         if (inet_pton(AF_INET, s, ret_addr->data.data) <= 0) {
             if (inet_pton(AF_INET6, s, ret_addr->data.data) <= 0)
                 return NULL;
             else
-                ret_addr->proto = AVAHI_PROTO_INET6;
+                ret_addr->proto = CATTA_PROTO_INET6;
         } else
-            ret_addr->proto = AVAHI_PROTO_INET;
+            ret_addr->proto = CATTA_PROTO_INET;
     } else {
-        if (inet_pton(avahi_proto_to_af(proto), s, ret_addr->data.data) <= 0)
+        if (inet_pton(catta_proto_to_af(proto), s, ret_addr->data.data) <= 0)
             return NULL;
 
         ret_addr->proto = proto;
@@ -124,32 +124,32 @@ AvahiAddress *avahi_address_parse(const char *s, AvahiProtocol proto, AvahiAddre
     return ret_addr;
 }
 
-int avahi_proto_to_af(AvahiProtocol proto) {
-    if (proto == AVAHI_PROTO_INET)
+int catta_proto_to_af(CattaProtocol proto) {
+    if (proto == CATTA_PROTO_INET)
         return AF_INET;
-    if (proto == AVAHI_PROTO_INET6)
+    if (proto == CATTA_PROTO_INET6)
         return AF_INET6;
 
-    assert(proto == AVAHI_PROTO_UNSPEC);
+    assert(proto == CATTA_PROTO_UNSPEC);
     return AF_UNSPEC;
 }
 
-AvahiProtocol avahi_af_to_proto(int af) {
+CattaProtocol catta_af_to_proto(int af) {
     if (af == AF_INET)
-        return AVAHI_PROTO_INET;
+        return CATTA_PROTO_INET;
     if (af == AF_INET6)
-        return AVAHI_PROTO_INET6;
+        return CATTA_PROTO_INET6;
 
     assert(af == AF_UNSPEC);
-    return AVAHI_PROTO_UNSPEC;
+    return CATTA_PROTO_UNSPEC;
 }
 
-const char* avahi_proto_to_string(AvahiProtocol proto) {
-    if (proto == AVAHI_PROTO_INET)
+const char* catta_proto_to_string(CattaProtocol proto) {
+    if (proto == CATTA_PROTO_INET)
         return "IPv4";
-    if (proto == AVAHI_PROTO_INET6)
+    if (proto == CATTA_PROTO_INET6)
         return "IPv6";
 
-    assert(proto == AVAHI_PROTO_UNSPEC);
+    assert(proto == CATTA_PROTO_UNSPEC);
     return "UNSPEC";
 }

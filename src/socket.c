@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -45,7 +45,7 @@
 #include <net/if_dl.h>
 #endif
 
-#include <avahi/log.h>
+#include <catta/log.h>
 #include "dns.h"
 #include "fdutil.h"
 #include "socket.h"
@@ -69,8 +69,8 @@ static void mdns_mcast_group_ipv4(struct sockaddr_in *ret_sa) {
 
     memset(ret_sa, 0, sizeof(struct sockaddr_in));
     ret_sa->sin_family = AF_INET;
-    ret_sa->sin_port = htons(AVAHI_MDNS_PORT);
-    inet_pton(AF_INET, AVAHI_IPV4_MCAST_GROUP, &ret_sa->sin_addr);
+    ret_sa->sin_port = htons(CATTA_MDNS_PORT);
+    inet_pton(AF_INET, CATTA_IPV4_MCAST_GROUP, &ret_sa->sin_addr);
 }
 
 static void mdns_mcast_group_ipv6(struct sockaddr_in6 *ret_sa) {
@@ -78,11 +78,11 @@ static void mdns_mcast_group_ipv6(struct sockaddr_in6 *ret_sa) {
 
     memset(ret_sa, 0, sizeof(struct sockaddr_in6));
     ret_sa->sin6_family = AF_INET6;
-    ret_sa->sin6_port = htons(AVAHI_MDNS_PORT);
-    inet_pton(AF_INET6, AVAHI_IPV6_MCAST_GROUP, &ret_sa->sin6_addr);
+    ret_sa->sin6_port = htons(CATTA_MDNS_PORT);
+    inet_pton(AF_INET6, CATTA_IPV6_MCAST_GROUP, &ret_sa->sin6_addr);
 }
 
-static void ipv4_address_to_sockaddr(struct sockaddr_in *ret_sa, const AvahiIPv4Address *a, uint16_t port) {
+static void ipv4_address_to_sockaddr(struct sockaddr_in *ret_sa, const CattaIPv4Address *a, uint16_t port) {
     assert(ret_sa);
     assert(a);
     assert(port > 0);
@@ -90,10 +90,10 @@ static void ipv4_address_to_sockaddr(struct sockaddr_in *ret_sa, const AvahiIPv4
     memset(ret_sa, 0, sizeof(struct sockaddr_in));
     ret_sa->sin_family = AF_INET;
     ret_sa->sin_port = htons(port);
-    memcpy(&ret_sa->sin_addr, a, sizeof(AvahiIPv4Address));
+    memcpy(&ret_sa->sin_addr, a, sizeof(CattaIPv4Address));
 }
 
-static void ipv6_address_to_sockaddr(struct sockaddr_in6 *ret_sa, const AvahiIPv6Address *a, uint16_t port) {
+static void ipv6_address_to_sockaddr(struct sockaddr_in6 *ret_sa, const CattaIPv6Address *a, uint16_t port) {
     assert(ret_sa);
     assert(a);
     assert(port > 0);
@@ -101,10 +101,10 @@ static void ipv6_address_to_sockaddr(struct sockaddr_in6 *ret_sa, const AvahiIPv
     memset(ret_sa, 0, sizeof(struct sockaddr_in6));
     ret_sa->sin6_family = AF_INET6;
     ret_sa->sin6_port = htons(port);
-    memcpy(&ret_sa->sin6_addr, a, sizeof(AvahiIPv6Address));
+    memcpy(&ret_sa->sin6_addr, a, sizeof(CattaIPv6Address));
 }
 
-int avahi_mdns_mcast_join_ipv4(int fd, const AvahiIPv4Address *a, int idx, int join) {
+int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, int idx, int join) {
 #ifdef HAVE_STRUCT_IP_MREQN
     struct ip_mreqn mreq;
 #else
@@ -133,14 +133,14 @@ int avahi_mdns_mcast_join_ipv4(int fd, const AvahiIPv4Address *a, int idx, int j
         setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
 
     if (setsockopt(fd, IPPROTO_IP, join ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-        avahi_log_warn("%s failed: %s", join ? "IP_ADD_MEMBERSHIP" : "IP_DROP_MEMBERSHIP", strerror(errno));
+        catta_log_warn("%s failed: %s", join ? "IP_ADD_MEMBERSHIP" : "IP_DROP_MEMBERSHIP", strerror(errno));
         return -1;
     }
 
     return 0;
 }
 
-int avahi_mdns_mcast_join_ipv6(int fd, const AvahiIPv6Address *a, int idx, int join) {
+int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *a, int idx, int join) {
     struct ipv6_mreq mreq6;
     struct sockaddr_in6 sa6;
 
@@ -157,7 +157,7 @@ int avahi_mdns_mcast_join_ipv6(int fd, const AvahiIPv6Address *a, int idx, int j
         setsockopt(fd, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, &mreq6, sizeof(mreq6));
 
     if (setsockopt(fd, IPPROTO_IPV6, join ? IPV6_ADD_MEMBERSHIP : IPV6_DROP_MEMBERSHIP, &mreq6, sizeof(mreq6)) < 0) {
-        avahi_log_warn("%s failed: %s", join ? "IPV6_ADD_MEMBERSHIP" : "IPV6_DROP_MEMBERSHIP", strerror(errno));
+        catta_log_warn("%s failed: %s", join ? "IPV6_ADD_MEMBERSHIP" : "IPV6_DROP_MEMBERSHIP", strerror(errno));
         return -1;
     }
 
@@ -169,14 +169,14 @@ static int reuseaddr(int fd) {
 
     yes = 1;
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("SO_REUSEADDR failed: %s", strerror(errno));
+        catta_log_warn("SO_REUSEADDR failed: %s", strerror(errno));
         return -1;
     }
 
 #ifdef SO_REUSEPORT
     yes = 1;
     if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("SO_REUSEPORT failed: %s", strerror(errno));
+        catta_log_warn("SO_REUSEPORT failed: %s", strerror(errno));
         return -1;
     }
 #endif
@@ -193,11 +193,11 @@ static int bind_with_warn(int fd, const struct sockaddr *sa, socklen_t l) {
     if (bind(fd, sa, l) < 0) {
 
         if (errno != EADDRINUSE) {
-            avahi_log_warn("bind() failed: %s", strerror(errno));
+            catta_log_warn("bind() failed: %s", strerror(errno));
             return -1;
         }
 
-        avahi_log_warn("*** WARNING: Detected another %s mDNS stack running on this host. This makes mDNS unreliable and is thus not recommended. ***",
+        catta_log_warn("*** WARNING: Detected another %s mDNS stack running on this host. This makes mDNS unreliable and is thus not recommended. ***",
                        sa->sa_family == AF_INET ? "IPv4" : "IPv6");
 
         /* Try again, this time with SO_REUSEADDR set */
@@ -205,7 +205,7 @@ static int bind_with_warn(int fd, const struct sockaddr *sa, socklen_t l) {
             return -1;
 
         if (bind(fd, sa, l) < 0) {
-            avahi_log_warn("bind() failed: %s", strerror(errno));
+            catta_log_warn("bind() failed: %s", strerror(errno));
             return -1;
         }
     } else {
@@ -227,7 +227,7 @@ static int ipv4_pktinfo(int fd) {
 #ifdef IP_PKTINFO
     yes = 1;
     if (setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IP_PKTINFO failed: %s", strerror(errno));
+        catta_log_warn("IP_PKTINFO failed: %s", strerror(errno));
         return -1;
     }
 #else
@@ -235,13 +235,13 @@ static int ipv4_pktinfo(int fd) {
 #ifdef IP_RECVINTERFACE
     yes = 1;
     if (setsockopt (fd, IPPROTO_IP, IP_RECVINTERFACE, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IP_RECVINTERFACE failed: %s", strerror(errno));
+        catta_log_warn("IP_RECVINTERFACE failed: %s", strerror(errno));
         return -1;
     }
 #elif defined(IP_RECVIF)
     yes = 1;
     if (setsockopt (fd, IPPROTO_IP, IP_RECVIF, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IP_RECVIF failed: %s", strerror(errno));
+        catta_log_warn("IP_RECVIF failed: %s", strerror(errno));
         return -1;
     }
 #endif
@@ -249,7 +249,7 @@ static int ipv4_pktinfo(int fd) {
 #ifdef IP_RECVDSTADDR
     yes = 1;
     if (setsockopt (fd, IPPROTO_IP, IP_RECVDSTADDR, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IP_RECVDSTADDR failed: %s", strerror(errno));
+        catta_log_warn("IP_RECVDSTADDR failed: %s", strerror(errno));
         return -1;
     }
 #endif
@@ -259,7 +259,7 @@ static int ipv4_pktinfo(int fd) {
 #ifdef IP_RECVTTL
     yes = 1;
     if (setsockopt(fd, IPPROTO_IP, IP_RECVTTL, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IP_RECVTTL failed: %s", strerror(errno));
+        catta_log_warn("IP_RECVTTL failed: %s", strerror(errno));
         return -1;
     }
 #endif
@@ -273,13 +273,13 @@ static int ipv6_pktinfo(int fd) {
 #ifdef IPV6_RECVPKTINFO
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_RECVPKTINFO failed: %s", strerror(errno));
+        catta_log_warn("IPV6_RECVPKTINFO failed: %s", strerror(errno));
         return -1;
     }
 #elif defined(IPV6_PKTINFO)
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_PKTINFO failed: %s", strerror(errno));
+        catta_log_warn("IPV6_PKTINFO failed: %s", strerror(errno));
         return -1;
     }
 #endif
@@ -287,19 +287,19 @@ static int ipv6_pktinfo(int fd) {
 #ifdef IPV6_RECVHOPS
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPS, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_RECVHOPS failed: %s", strerror(errno));
+        catta_log_warn("IPV6_RECVHOPS failed: %s", strerror(errno));
         return -1;
     }
 #elif defined(IPV6_RECVHOPLIMIT)
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_RECVHOPLIMIT failed: %s", strerror(errno));
+        catta_log_warn("IPV6_RECVHOPLIMIT failed: %s", strerror(errno));
         return -1;
     }
 #elif defined(IPV6_HOPLIMIT)
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_HOPLIMIT failed: %s", strerror(errno));
+        catta_log_warn("IPV6_HOPLIMIT failed: %s", strerror(errno));
         return -1;
     }
 #endif
@@ -307,37 +307,37 @@ static int ipv6_pktinfo(int fd) {
     return 0;
 }
 
-int avahi_open_socket_ipv4(int no_reuse) {
+int catta_open_socket_ipv4(int no_reuse) {
     struct sockaddr_in local;
     int fd = -1, r, ittl;
     uint8_t ttl, cyes;
 
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        avahi_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", strerror(errno));
         goto fail;
     }
 
     ttl = 255;
     if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
-        avahi_log_warn("IP_MULTICAST_TTL failed: %s", strerror(errno));
+        catta_log_warn("IP_MULTICAST_TTL failed: %s", strerror(errno));
         goto fail;
     }
 
     ittl = 255;
     if (setsockopt(fd, IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0) {
-        avahi_log_warn("IP_TTL failed: %s", strerror(errno));
+        catta_log_warn("IP_TTL failed: %s", strerror(errno));
         goto fail;
     }
 
     cyes = 1;
     if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &cyes, sizeof(cyes)) < 0) {
-        avahi_log_warn("IP_MULTICAST_LOOP failed: %s", strerror(errno));
+        catta_log_warn("IP_MULTICAST_LOOP failed: %s", strerror(errno));
         goto fail;
     }
 
     memset(&local, 0, sizeof(local));
     local.sin_family = AF_INET;
-    local.sin_port = htons(AVAHI_MDNS_PORT);
+    local.sin_port = htons(CATTA_MDNS_PORT);
 
     if (no_reuse)
         r = bind(fd, (struct sockaddr*) &local, sizeof(local));
@@ -350,13 +350,13 @@ int avahi_open_socket_ipv4(int no_reuse) {
     if (ipv4_pktinfo (fd) < 0)
          goto fail;
 
-    if (avahi_set_cloexec(fd) < 0) {
-        avahi_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+    if (catta_set_cloexec(fd) < 0) {
+        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
         goto fail;
     }
 
-    if (avahi_set_nonblock(fd) < 0) {
-        avahi_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+    if (catta_set_nonblock(fd) < 0) {
+        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
         goto fail;
     }
 
@@ -369,7 +369,7 @@ fail:
     return -1;
 }
 
-int avahi_open_socket_ipv6(int no_reuse) {
+int catta_open_socket_ipv6(int no_reuse) {
     struct sockaddr_in6 sa, local;
     int fd = -1, yes, r;
     int ttl;
@@ -377,37 +377,37 @@ int avahi_open_socket_ipv6(int no_reuse) {
     mdns_mcast_group_ipv6(&sa);
 
     if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-        avahi_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", strerror(errno));
         goto fail;
     }
 
     ttl = 255;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0) {
-        avahi_log_warn("IPV6_MULTICAST_HOPS failed: %s", strerror(errno));
+        catta_log_warn("IPV6_MULTICAST_HOPS failed: %s", strerror(errno));
         goto fail;
     }
 
     ttl = 255;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl)) < 0) {
-        avahi_log_warn("IPV6_UNICAST_HOPS failed: %s", strerror(errno));
+        catta_log_warn("IPV6_UNICAST_HOPS failed: %s", strerror(errno));
         goto fail;
     }
 
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_V6ONLY failed: %s", strerror(errno));
+        catta_log_warn("IPV6_V6ONLY failed: %s", strerror(errno));
         goto fail;
     }
 
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_MULTICAST_LOOP failed: %s", strerror(errno));
+        catta_log_warn("IPV6_MULTICAST_LOOP failed: %s", strerror(errno));
         goto fail;
     }
 
     memset(&local, 0, sizeof(local));
     local.sin6_family = AF_INET6;
-    local.sin6_port = htons(AVAHI_MDNS_PORT);
+    local.sin6_port = htons(CATTA_MDNS_PORT);
 
     if (no_reuse)
         r = bind(fd, (struct sockaddr*) &local, sizeof(local));
@@ -420,13 +420,13 @@ int avahi_open_socket_ipv6(int no_reuse) {
     if (ipv6_pktinfo(fd) < 0)
         goto fail;
 
-    if (avahi_set_cloexec(fd) < 0) {
-        avahi_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+    if (catta_set_cloexec(fd) < 0) {
+        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
         goto fail;
     }
 
-    if (avahi_set_nonblock(fd) < 0) {
-        avahi_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+    if (catta_set_nonblock(fd) < 0) {
+        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
         goto fail;
     }
 
@@ -456,23 +456,23 @@ static int sendmsg_loop(int fd, struct msghdr *msg, int flags) {
             struct sockaddr_in *sin = msg->msg_name;
 
             inet_ntop(sin->sin_family, &sin->sin_addr, where, sizeof(where));
-            avahi_log_debug("sendmsg() to %s failed: %s", where, strerror(errno));
+            catta_log_debug("sendmsg() to %s failed: %s", where, strerror(errno));
             return -1;
         }
 
-        if (avahi_wait_for_write(fd) < 0)
+        if (catta_wait_for_write(fd) < 0)
             return -1;
     }
 
     return 0;
 }
 
-int avahi_send_dns_packet_ipv4(
+int catta_send_dns_packet_ipv4(
         int fd,
-        AvahiIfIndex interface,
-        AvahiDnsPacket *p,
-        const AvahiIPv4Address *src_address,
-        const AvahiIPv4Address *dst_address,
+        CattaIfIndex interface,
+        CattaDnsPacket *p,
+        const CattaIPv4Address *src_address,
+        const CattaIPv4Address *dst_address,
         uint16_t dst_port) {
 
     struct sockaddr_in sa;
@@ -488,7 +488,7 @@ int avahi_send_dns_packet_ipv4(
 
     assert(fd >= 0);
     assert(p);
-    assert(avahi_dns_packet_check_valid(p) >= 0);
+    assert(catta_dns_packet_check_valid(p) >= 0);
     assert(!dst_address || dst_port > 0);
 
     if (!dst_address)
@@ -497,7 +497,7 @@ int avahi_send_dns_packet_ipv4(
         ipv4_address_to_sockaddr(&sa, dst_address, dst_port);
 
     memset(&io, 0, sizeof(io));
-    io.iov_base = AVAHI_DNS_PACKET_DATA(p);
+    io.iov_base = CATTA_DNS_PACKET_DATA(p);
     io.iov_len = p->size;
 
     memset(&msg, 0, sizeof(msg));
@@ -534,7 +534,7 @@ int avahi_send_dns_packet_ipv4(
     if (src_address) {
         struct in_addr any = { INADDR_ANY };
         if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, src_address ? &src_address->address : &any, sizeof(struct in_addr)) < 0) {
-            avahi_log_warn("IP_MULTICAST_IF failed: %s", strerror(errno));
+            catta_log_warn("IP_MULTICAST_IF failed: %s", strerror(errno));
             return -1;
         }
     }
@@ -561,12 +561,12 @@ int avahi_send_dns_packet_ipv4(
     return sendmsg_loop(fd, &msg, 0);
 }
 
-int avahi_send_dns_packet_ipv6(
+int catta_send_dns_packet_ipv6(
         int fd,
-        AvahiIfIndex interface,
-        AvahiDnsPacket *p,
-        const AvahiIPv6Address *src_address,
-        const AvahiIPv6Address *dst_address,
+        CattaIfIndex interface,
+        CattaDnsPacket *p,
+        const CattaIPv6Address *src_address,
+        const CattaIPv6Address *dst_address,
         uint16_t dst_port) {
 
     struct sockaddr_in6 sa;
@@ -577,7 +577,7 @@ int avahi_send_dns_packet_ipv6(
 
     assert(fd >= 0);
     assert(p);
-    assert(avahi_dns_packet_check_valid(p) >= 0);
+    assert(catta_dns_packet_check_valid(p) >= 0);
     assert(!dst_address || dst_port > 0);
 
     if (!dst_address)
@@ -586,7 +586,7 @@ int avahi_send_dns_packet_ipv6(
         ipv6_address_to_sockaddr(&sa, dst_address, dst_port);
 
     memset(&io, 0, sizeof(io));
-    io.iov_base = AVAHI_DNS_PACKET_DATA(p);
+    io.iov_base = CATTA_DNS_PACKET_DATA(p);
     io.iov_len = p->size;
 
     memset(&msg, 0, sizeof(msg));
@@ -623,15 +623,15 @@ int avahi_send_dns_packet_ipv6(
     return sendmsg_loop(fd, &msg, 0);
 }
 
-AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
+CattaDnsPacket *catta_recv_dns_packet_ipv4(
         int fd,
-        AvahiIPv4Address *ret_src_address,
+        CattaIPv4Address *ret_src_address,
         uint16_t *ret_src_port,
-        AvahiIPv4Address *ret_dst_address,
-        AvahiIfIndex *ret_iface,
+        CattaIPv4Address *ret_dst_address,
+        CattaIfIndex *ret_iface,
         uint8_t *ret_ttl) {
 
-    AvahiDnsPacket *p= NULL;
+    CattaDnsPacket *p= NULL;
     struct msghdr msg;
     struct iovec io;
     size_t aux[1024 / sizeof(size_t)]; /* for alignment on ia64 ! */
@@ -644,18 +644,18 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
     assert(fd >= 0);
 
     if (ioctl(fd, FIONREAD, &ms) < 0) {
-        avahi_log_warn("ioctl(): %s", strerror(errno));
+        catta_log_warn("ioctl(): %s", strerror(errno));
         goto fail;
     }
 
     if (ms < 0) {
-        avahi_log_warn("FIONREAD returned negative value.");
+        catta_log_warn("FIONREAD returned negative value.");
         goto fail;
     }
 
-    p = avahi_dns_packet_new(ms + AVAHI_DNS_PACKET_EXTRA_SIZE);
+    p = catta_dns_packet_new(ms + CATTA_DNS_PACKET_EXTRA_SIZE);
 
-    io.iov_base = AVAHI_DNS_PACKET_DATA(p);
+    io.iov_base = CATTA_DNS_PACKET_DATA(p);
     io.iov_len = p->max_size;
 
     memset(&msg, 0, sizeof(msg));
@@ -674,7 +674,7 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
         links. (See #60) */
 
         if (errno != EAGAIN)
-            avahi_log_warn("recvmsg(): %s", strerror(errno));
+            catta_log_warn("recvmsg(): %s", strerror(errno));
 
         goto fail;
     }
@@ -694,11 +694,11 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
     p->size = (size_t) l;
 
     if (ret_src_port)
-        *ret_src_port = avahi_port_from_sockaddr((struct sockaddr*) &sa);
+        *ret_src_port = catta_port_from_sockaddr((struct sockaddr*) &sa);
 
     if (ret_src_address) {
-        AvahiAddress a;
-        avahi_address_from_sockaddr((struct sockaddr*) &sa, &a);
+        CattaAddress a;
+        catta_address_from_sockaddr((struct sockaddr*) &sa, &a);
         *ret_src_address = a.data.ipv4;
     }
 
@@ -706,7 +706,7 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
         *ret_ttl = 255;
 
     if (ret_iface)
-        *ret_iface = AVAHI_IF_UNSPEC;
+        *ret_iface = CATTA_IF_UNSPEC;
 
     for (cmsg = CMSG_FIRSTHDR(&msg); cmsg != NULL; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
 
@@ -767,7 +767,7 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
 #endif
 
                 default:
-                    avahi_log_warn("Unhandled cmsg_type: %d", cmsg->cmsg_type);
+                    catta_log_warn("Unhandled cmsg_type: %d", cmsg->cmsg_type);
                     break;
             }
         }
@@ -779,20 +779,20 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv4(
 
 fail:
     if (p)
-        avahi_dns_packet_free(p);
+        catta_dns_packet_free(p);
 
     return NULL;
 }
 
-AvahiDnsPacket *avahi_recv_dns_packet_ipv6(
+CattaDnsPacket *catta_recv_dns_packet_ipv6(
         int fd,
-        AvahiIPv6Address *ret_src_address,
+        CattaIPv6Address *ret_src_address,
         uint16_t *ret_src_port,
-        AvahiIPv6Address *ret_dst_address,
-        AvahiIfIndex *ret_iface,
+        CattaIPv6Address *ret_dst_address,
+        CattaIfIndex *ret_iface,
         uint8_t *ret_ttl) {
 
-    AvahiDnsPacket *p = NULL;
+    CattaDnsPacket *p = NULL;
     struct msghdr msg;
     struct iovec io;
     size_t aux[1024 / sizeof(size_t)];
@@ -805,18 +805,18 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv6(
     assert(fd >= 0);
 
     if (ioctl(fd, FIONREAD, &ms) < 0) {
-        avahi_log_warn("ioctl(): %s", strerror(errno));
+        catta_log_warn("ioctl(): %s", strerror(errno));
         goto fail;
     }
 
     if (ms < 0) {
-        avahi_log_warn("FIONREAD returned negative value.");
+        catta_log_warn("FIONREAD returned negative value.");
         goto fail;
     }
 
-    p = avahi_dns_packet_new(ms + AVAHI_DNS_PACKET_EXTRA_SIZE);
+    p = catta_dns_packet_new(ms + CATTA_DNS_PACKET_EXTRA_SIZE);
 
-    io.iov_base = AVAHI_DNS_PACKET_DATA(p);
+    io.iov_base = CATTA_DNS_PACKET_DATA(p);
     io.iov_len = p->max_size;
 
     memset(&msg, 0, sizeof(msg));
@@ -836,7 +836,7 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv6(
         links. (See #60) */
 
         if (errno != EAGAIN)
-            avahi_log_warn("recvmsg(): %s", strerror(errno));
+            catta_log_warn("recvmsg(): %s", strerror(errno));
 
         goto fail;
     }
@@ -852,11 +852,11 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv6(
     p->size = (size_t) l;
 
     if (ret_src_port)
-        *ret_src_port = avahi_port_from_sockaddr((struct sockaddr*) &sa);
+        *ret_src_port = catta_port_from_sockaddr((struct sockaddr*) &sa);
 
     if (ret_src_address) {
-        AvahiAddress a;
-        avahi_address_from_sockaddr((struct sockaddr*) &sa, &a);
+        CattaAddress a;
+        catta_address_from_sockaddr((struct sockaddr*) &sa, &a);
         *ret_src_address = a.data.ipv6;
     }
 
@@ -889,7 +889,7 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv6(
                 }
 
                 default:
-                    avahi_log_warn("Unhandled cmsg_type: %d", cmsg->cmsg_type);
+                    catta_log_warn("Unhandled cmsg_type: %d", cmsg->cmsg_type);
                     break;
             }
         }
@@ -902,17 +902,17 @@ AvahiDnsPacket *avahi_recv_dns_packet_ipv6(
 
 fail:
     if (p)
-        avahi_dns_packet_free(p);
+        catta_dns_packet_free(p);
 
     return NULL;
 }
 
-int avahi_open_unicast_socket_ipv4(void) {
+int catta_open_unicast_socket_ipv4(void) {
     struct sockaddr_in local;
     int fd = -1;
 
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        avahi_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", strerror(errno));
         goto fail;
     }
 
@@ -920,7 +920,7 @@ int avahi_open_unicast_socket_ipv4(void) {
     local.sin_family = AF_INET;
 
     if (bind(fd, (struct sockaddr*) &local, sizeof(local)) < 0) {
-        avahi_log_warn("bind() failed: %s", strerror(errno));
+        catta_log_warn("bind() failed: %s", strerror(errno));
         goto fail;
     }
 
@@ -928,13 +928,13 @@ int avahi_open_unicast_socket_ipv4(void) {
          goto fail;
     }
 
-    if (avahi_set_cloexec(fd) < 0) {
-        avahi_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+    if (catta_set_cloexec(fd) < 0) {
+        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
         goto fail;
     }
 
-    if (avahi_set_nonblock(fd) < 0) {
-        avahi_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+    if (catta_set_nonblock(fd) < 0) {
+        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
         goto fail;
     }
 
@@ -947,18 +947,18 @@ fail:
     return -1;
 }
 
-int avahi_open_unicast_socket_ipv6(void) {
+int catta_open_unicast_socket_ipv6(void) {
     struct sockaddr_in6 local;
     int fd = -1, yes;
 
     if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-        avahi_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", strerror(errno));
         goto fail;
     }
 
     yes = 1;
     if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(yes)) < 0) {
-        avahi_log_warn("IPV6_V6ONLY failed: %s", strerror(errno));
+        catta_log_warn("IPV6_V6ONLY failed: %s", strerror(errno));
         goto fail;
     }
 
@@ -966,20 +966,20 @@ int avahi_open_unicast_socket_ipv6(void) {
     local.sin6_family = AF_INET6;
 
     if (bind(fd, (struct sockaddr*) &local, sizeof(local)) < 0) {
-        avahi_log_warn("bind() failed: %s", strerror(errno));
+        catta_log_warn("bind() failed: %s", strerror(errno));
         goto fail;
     }
 
     if (ipv6_pktinfo(fd) < 0)
         goto fail;
 
-    if (avahi_set_cloexec(fd) < 0) {
-        avahi_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+    if (catta_set_cloexec(fd) < 0) {
+        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
         goto fail;
     }
 
-    if (avahi_set_nonblock(fd) < 0) {
-        avahi_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+    if (catta_set_nonblock(fd) < 0) {
+        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
         goto fail;
     }
 

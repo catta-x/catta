@@ -1,17 +1,17 @@
-# This file is part of avahi.
+# This file is part of catta.
 #
-# avahi is free software; you can redistribute it and/or modify it
+# catta is free software; you can redistribute it and/or modify it
 # under the terms of the GNU Lesser General Public License as
 # published by the Free Software Foundation; either version 2 of the
 # License, or (at your option) any later version.
 #
-# avahi is distributed in the hope that it will be useful, but WITHOUT
+# catta is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
 # or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public
 # License for more details.
 #
 # You should have received a copy of the GNU Lesser General Public
-# License along with avahi; if not, write to the Free Software
+# License along with catta; if not, write to the Free Software
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
@@ -20,9 +20,9 @@ AM_CFLAGS=-I$(top_srcdir)/include
 # This cool debug trap works on i386/gcc only
 AM_CFLAGS+='-DDEBUG_TRAP=__asm__("int $$3")'
 
-lib_LTLIBRARIES = libavahi.la
+lib_LTLIBRARIES = libcatta.la
 
-libavahi_la_SOURCES = \
+libcatta_la_SOURCES = \
 	malloc.c \
 	address.c \
 	alternative.c \
@@ -67,19 +67,19 @@ libavahi_la_SOURCES = \
 	dns-srv-rr.h
 
 if HAVE_NETLINK
-libavahi_la_SOURCES += \
+libcatta_la_SOURCES += \
        iface-linux.c iface-linux.h \
        netlink.c netlink.h
 else
 if HAVE_PF_ROUTE
-libavahi_la_SOURCES += \
+libcatta_la_SOURCES += \
 	iface-pfroute.c iface-pfroute.h
 else
-libavahi_la_SOURCES += \
+libcatta_la_SOURCES += \
 	iface-none.c
 endif
 endif
 
-libavahi_la_CFLAGS = $(AM_CFLAGS) $(PTHREAD_CFLAGS)
-libavahi_la_LIBADD = $(AM_LDADD) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(INTLLIBS)
-libavahi_la_LDFLAGS = $(AM_LDFLAGS)  -version-info $(LIBAVAHI_VERSION_INFO)
+libcatta_la_CFLAGS = $(AM_CFLAGS) $(PTHREAD_CFLAGS)
+libcatta_la_LIBADD = $(AM_LDADD) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(INTLLIBS)
+libcatta_la_LDFLAGS = $(AM_LDFLAGS)  -version-info $(LIBCATTA_VERSION_INFO)

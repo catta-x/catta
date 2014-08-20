@@ -2,31 +2,31 @@
 #define fooifacehfoo
 
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
 
-typedef struct AvahiInterfaceMonitor AvahiInterfaceMonitor;
-typedef struct AvahiInterfaceAddress AvahiInterfaceAddress;
-typedef struct AvahiInterface AvahiInterface;
-typedef struct AvahiHwInterface AvahiHwInterface;
+typedef struct CattaInterfaceMonitor CattaInterfaceMonitor;
+typedef struct CattaInterfaceAddress CattaInterfaceAddress;
+typedef struct CattaInterface CattaInterface;
+typedef struct CattaHwInterface CattaHwInterface;
 
-#include <avahi/llist.h>
-#include <avahi/address.h>
+#include <catta/llist.h>
+#include <catta/address.h>
 
 #include "internal.h"
 #include "cache.h"
@@ -43,8 +43,8 @@ typedef struct AvahiHwInterface AvahiHwInterface;
 #elif defined(HAVE_PF_ROUTE)
 #include "iface-pfroute.h"
 #else
-typedef struct AvahiInterfaceMonitorOSDep AvahiInterfaceMonitorOSDep;
-struct AvahiInterfaceMonitorOSDep {
+typedef struct CattaInterfaceMonitorOSDep CattaInterfaceMonitorOSDep;
+struct CattaInterfaceMonitorOSDep {
 
     unsigned query_addr_seq, query_link_seq;
 
@@ -56,140 +56,140 @@ struct AvahiInterfaceMonitorOSDep {
 };
 #endif
 
-#define AVAHI_MAC_ADDRESS_MAX 32
+#define CATTA_MAC_ADDRESS_MAX 32
 
-struct AvahiInterfaceMonitor {
-    AvahiServer *server;
-    AvahiHashmap *hashmap;
+struct CattaInterfaceMonitor {
+    CattaServer *server;
+    CattaHashmap *hashmap;
 
-    AVAHI_LLIST_HEAD(AvahiInterface, interfaces);
-    AVAHI_LLIST_HEAD(AvahiHwInterface, hw_interfaces);
+    CATTA_LLIST_HEAD(CattaInterface, interfaces);
+    CATTA_LLIST_HEAD(CattaHwInterface, hw_interfaces);
 
     int list_complete;
-    AvahiInterfaceMonitorOSDep osdep;
+    CattaInterfaceMonitorOSDep osdep;
 };
 
-struct AvahiHwInterface {
-    AvahiInterfaceMonitor *monitor;
+struct CattaHwInterface {
+    CattaInterfaceMonitor *monitor;
 
-    AVAHI_LLIST_FIELDS(AvahiHwInterface, hardware);
+    CATTA_LLIST_FIELDS(CattaHwInterface, hardware);
 
     char *name;
-    AvahiIfIndex index;
+    CattaIfIndex index;
     int flags_ok;
 
     unsigned mtu;
 
-    uint8_t mac_address[AVAHI_MAC_ADDRESS_MAX];
+    uint8_t mac_address[CATTA_MAC_ADDRESS_MAX];
     size_t mac_address_size;
 
-    AvahiSEntryGroup *entry_group;
+    CattaSEntryGroup *entry_group;
 
     /* Packet rate limiting */
     struct timeval ratelimit_begin;
     unsigned ratelimit_counter;
 
-    AVAHI_LLIST_HEAD(AvahiInterface, interfaces);
+    CATTA_LLIST_HEAD(CattaInterface, interfaces);
 };
 
-struct AvahiInterface {
-    AvahiInterfaceMonitor *monitor;
-    AvahiHwInterface *hardware;
+struct CattaInterface {
+    CattaInterfaceMonitor *monitor;
+    CattaHwInterface *hardware;
 
-    AVAHI_LLIST_FIELDS(AvahiInterface, interface);
-    AVAHI_LLIST_FIELDS(AvahiInterface, by_hardware);
+    CATTA_LLIST_FIELDS(CattaInterface, interface);
+    CATTA_LLIST_FIELDS(CattaInterface, by_hardware);
 
-    AvahiProtocol protocol;
+    CattaProtocol protocol;
     int announcing;
-    AvahiAddress local_mcast_address;
+    CattaAddress local_mcast_address;
     int mcast_joined;
 
-    AvahiCache *cache;
+    CattaCache *cache;
 
-    AvahiQueryScheduler *query_scheduler;
-    AvahiResponseScheduler * response_scheduler;
-    AvahiProbeScheduler *probe_scheduler;
+    CattaQueryScheduler *query_scheduler;
+    CattaResponseScheduler * response_scheduler;
+    CattaProbeScheduler *probe_scheduler;
 
-    AVAHI_LLIST_HEAD(AvahiInterfaceAddress, addresses);
-    AVAHI_LLIST_HEAD(AvahiAnnouncer, announcers);
+    CATTA_LLIST_HEAD(CattaInterfaceAddress, addresses);
+    CATTA_LLIST_HEAD(CattaAnnouncer, announcers);
 
-    AvahiHashmap *queriers_by_key;
-    AVAHI_LLIST_HEAD(AvahiQuerier, queriers);
+    CattaHashmap *queriers_by_key;
+    CATTA_LLIST_HEAD(CattaQuerier, queriers);
 };
 
-struct AvahiInterfaceAddress {
-    AvahiInterfaceMonitor *monitor;
-    AvahiInterface *interface;
+struct CattaInterfaceAddress {
+    CattaInterfaceMonitor *monitor;
+    CattaInterface *interface;
 
-    AVAHI_LLIST_FIELDS(AvahiInterfaceAddress, address);
+    CATTA_LLIST_FIELDS(CattaInterfaceAddress, address);
 
-    AvahiAddress address;
+    CattaAddress address;
     unsigned prefix_len;
 
     int global_scope;
     int deprecated;
 
-    AvahiSEntryGroup *entry_group;
+    CattaSEntryGroup *entry_group;
 };
 
-AvahiInterfaceMonitor *avahi_interface_monitor_new(AvahiServer *server);
-void avahi_interface_monitor_free(AvahiInterfaceMonitor *m);
+CattaInterfaceMonitor *catta_interface_monitor_new(CattaServer *server);
+void catta_interface_monitor_free(CattaInterfaceMonitor *m);
 
-int avahi_interface_monitor_init_osdep(AvahiInterfaceMonitor *m);
-void avahi_interface_monitor_free_osdep(AvahiInterfaceMonitor *m);
-void avahi_interface_monitor_sync(AvahiInterfaceMonitor *m);
+int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m);
+void catta_interface_monitor_free_osdep(CattaInterfaceMonitor *m);
+void catta_interface_monitor_sync(CattaInterfaceMonitor *m);
 
-typedef void (*AvahiInterfaceMonitorWalkCallback)(AvahiInterfaceMonitor *m, AvahiInterface *i, void* userdata);
-void avahi_interface_monitor_walk(AvahiInterfaceMonitor *m, AvahiIfIndex idx, AvahiProtocol protocol, AvahiInterfaceMonitorWalkCallback callback, void* userdata);
-int avahi_dump_caches(AvahiInterfaceMonitor *m, AvahiDumpCallback callback, void* userdata);
+typedef void (*CattaInterfaceMonitorWalkCallback)(CattaInterfaceMonitor *m, CattaInterface *i, void* userdata);
+void catta_interface_monitor_walk(CattaInterfaceMonitor *m, CattaIfIndex idx, CattaProtocol protocol, CattaInterfaceMonitorWalkCallback callback, void* userdata);
+int catta_dump_caches(CattaInterfaceMonitor *m, CattaDumpCallback callback, void* userdata);
 
-void avahi_interface_monitor_update_rrs(AvahiInterfaceMonitor *m, int remove_rrs);
-int avahi_address_is_local(AvahiInterfaceMonitor *m, const AvahiAddress *a);
-void avahi_interface_monitor_check_relevant(AvahiInterfaceMonitor *m);
+void catta_interface_monitor_update_rrs(CattaInterfaceMonitor *m, int remove_rrs);
+int catta_address_is_local(CattaInterfaceMonitor *m, const CattaAddress *a);
+void catta_interface_monitor_check_relevant(CattaInterfaceMonitor *m);
 
-/* AvahiHwInterface */
+/* CattaHwInterface */
 
-AvahiHwInterface *avahi_hw_interface_new(AvahiInterfaceMonitor *m, AvahiIfIndex idx);
-void avahi_hw_interface_free(AvahiHwInterface *hw, int send_goodbye);
+CattaHwInterface *catta_hw_interface_new(CattaInterfaceMonitor *m, CattaIfIndex idx);
+void catta_hw_interface_free(CattaHwInterface *hw, int send_goodbye);
 
-void avahi_hw_interface_update_rrs(AvahiHwInterface *hw, int remove_rrs);
-void avahi_hw_interface_check_relevant(AvahiHwInterface *hw);
+void catta_hw_interface_update_rrs(CattaHwInterface *hw, int remove_rrs);
+void catta_hw_interface_check_relevant(CattaHwInterface *hw);
 
-AvahiHwInterface* avahi_interface_monitor_get_hw_interface(AvahiInterfaceMonitor *m, int idx);
+CattaHwInterface* catta_interface_monitor_get_hw_interface(CattaInterfaceMonitor *m, int idx);
 
-/* AvahiInterface */
+/* CattaInterface */
 
-AvahiInterface* avahi_interface_new(AvahiInterfaceMonitor *m, AvahiHwInterface *hw, AvahiProtocol protocol);
-void avahi_interface_free(AvahiInterface *i, int send_goodbye);
+CattaInterface* catta_interface_new(CattaInterfaceMonitor *m, CattaHwInterface *hw, CattaProtocol protocol);
+void catta_interface_free(CattaInterface *i, int send_goodbye);
 
-void avahi_interface_update_rrs(AvahiInterface *i, int remove_rrs);
-void avahi_interface_check_relevant(AvahiInterface *i);
-int avahi_interface_is_relevant(AvahiInterface *i);
+void catta_interface_update_rrs(CattaInterface *i, int remove_rrs);
+void catta_interface_check_relevant(CattaInterface *i);
+int catta_interface_is_relevant(CattaInterface *i);
 
-void avahi_interface_send_packet(AvahiInterface *i, AvahiDnsPacket *p);
-void avahi_interface_send_packet_unicast(AvahiInterface *i, AvahiDnsPacket *p, const AvahiAddress *a, uint16_t port);
+void catta_interface_send_packet(CattaInterface *i, CattaDnsPacket *p);
+void catta_interface_send_packet_unicast(CattaInterface *i, CattaDnsPacket *p, const CattaAddress *a, uint16_t port);
 
-int avahi_interface_post_query(AvahiInterface *i, AvahiKey *k, int immediately, unsigned *ret_id);
-int avahi_interface_withraw_query(AvahiInterface *i, unsigned id);
-int avahi_interface_post_response(AvahiInterface *i, AvahiRecord *record, int flush_cache, const AvahiAddress *querier, int immediately);
-int avahi_interface_post_probe(AvahiInterface *i, AvahiRecord *p, int immediately);
+int catta_interface_post_query(CattaInterface *i, CattaKey *k, int immediately, unsigned *ret_id);
+int catta_interface_withraw_query(CattaInterface *i, unsigned id);
+int catta_interface_post_response(CattaInterface *i, CattaRecord *record, int flush_cache, const CattaAddress *querier, int immediately);
+int catta_interface_post_probe(CattaInterface *i, CattaRecord *p, int immediately);
 
-int avahi_interface_match(AvahiInterface *i, AvahiIfIndex idx, AvahiProtocol protocol);
-int avahi_interface_address_on_link(AvahiInterface *i, const AvahiAddress *a);
-int avahi_interface_has_address(AvahiInterfaceMonitor *m, AvahiIfIndex iface, const AvahiAddress *a);
+int catta_interface_match(CattaInterface *i, CattaIfIndex idx, CattaProtocol protocol);
+int catta_interface_address_on_link(CattaInterface *i, const CattaAddress *a);
+int catta_interface_has_address(CattaInterfaceMonitor *m, CattaIfIndex iface, const CattaAddress *a);
 
-AvahiInterface* avahi_interface_monitor_get_interface(AvahiInterfaceMonitor *m, AvahiIfIndex idx, AvahiProtocol protocol);
+CattaInterface* catta_interface_monitor_get_interface(CattaInterfaceMonitor *m, CattaIfIndex idx, CattaProtocol protocol);
 
-/* AvahiInterfaceAddress */
+/* CattaInterfaceAddress */
 
-AvahiInterfaceAddress *avahi_interface_address_new(AvahiInterfaceMonitor *m, AvahiInterface *i, const AvahiAddress *addr, unsigned prefix_len);
-void avahi_interface_address_free(AvahiInterfaceAddress *a);
+CattaInterfaceAddress *catta_interface_address_new(CattaInterfaceMonitor *m, CattaInterface *i, const CattaAddress *addr, unsigned prefix_len);
+void catta_interface_address_free(CattaInterfaceAddress *a);
 
-void avahi_interface_address_update_rrs(AvahiInterfaceAddress *a, int remove_rrs);
-int avahi_interface_address_is_relevant(AvahiInterfaceAddress *a);
+void catta_interface_address_update_rrs(CattaInterfaceAddress *a, int remove_rrs);
+int catta_interface_address_is_relevant(CattaInterfaceAddress *a);
 
-AvahiInterfaceAddress* avahi_interface_monitor_get_address(AvahiInterfaceMonitor *m, AvahiInterface *i, const AvahiAddress *raddr);
+CattaInterfaceAddress* catta_interface_monitor_get_address(CattaInterfaceMonitor *m, CattaInterface *i, const CattaAddress *raddr);
 
-AvahiIfIndex avahi_find_interface_for_address(AvahiInterfaceMonitor *m, const AvahiAddress *a);
+CattaIfIndex catta_find_interface_for_address(CattaInterfaceMonitor *m, const CattaAddress *a);
 
 #endif

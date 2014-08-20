@@ -1,18 +1,18 @@
 /***
-  This file is part of avahi.
+  This file is part of catta.
 
-  avahi is free software; you can redistribute it and/or modify it
+  catta is free software; you can redistribute it and/or modify it
   under the terms of the GNU Lesser General Public License as
   published by the Free Software Foundation; either version 2.1 of the
   License, or (at your option) any later version.
 
-  avahi is distributed in the hope that it will be useful, but WITHOUT
+  catta is distributed in the hope that it will be useful, but WITHOUT
   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
   or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General
   Public License for more details.
 
   You should have received a copy of the GNU Lesser General Public
-  License along with avahi; if not, write to the Free Software
+  License along with catta; if not, write to the Free Software
   Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
   USA.
 ***/
@@ -23,58 +23,58 @@
 
 #include <stdlib.h>
 
-#include <avahi/domain.h>
-#include <avahi/timeval.h>
-#include <avahi/malloc.h>
-#include <avahi/error.h>
+#include <catta/domain.h>
+#include <catta/timeval.h>
+#include <catta/malloc.h>
+#include <catta/error.h>
 
 #include "browse.h"
-#include <avahi/log.h>
+#include <catta/log.h>
 
 #define TIMEOUT_MSEC 5000
 
-struct AvahiSHostNameResolver {
-    AvahiServer *server;
+struct CattaSHostNameResolver {
+    CattaServer *server;
     char *host_name;
 
-    AvahiSRecordBrowser *record_browser_a;
-    AvahiSRecordBrowser *record_browser_aaaa;
+    CattaSRecordBrowser *record_browser_a;
+    CattaSRecordBrowser *record_browser_aaaa;
 
-    AvahiSHostNameResolverCallback callback;
+    CattaSHostNameResolverCallback callback;
     void* userdata;
 
-    AvahiRecord *address_record;
-    AvahiIfIndex interface;
-    AvahiProtocol protocol;
-    AvahiLookupResultFlags flags;
+    CattaRecord *address_record;
+    CattaIfIndex interface;
+    CattaProtocol protocol;
+    CattaLookupResultFlags flags;
 
-    AvahiTimeEvent *time_event;
+    CattaTimeEvent *time_event;
 
-    AVAHI_LLIST_FIELDS(AvahiSHostNameResolver, resolver);
+    CATTA_LLIST_FIELDS(CattaSHostNameResolver, resolver);
 };
 
-static void finish(AvahiSHostNameResolver *r, AvahiResolverEvent event) {
+static void finish(CattaSHostNameResolver *r, CattaResolverEvent event) {
     assert(r);
 
     if (r->time_event) {
-        avahi_time_event_free(r->time_event);
+        catta_time_event_free(r->time_event);
         r->time_event = NULL;
     }
 
     switch (event) {
-        case AVAHI_RESOLVER_FOUND: {
-            AvahiAddress a;
+        case CATTA_RESOLVER_FOUND: {
+            CattaAddress a;
 
             assert(r->address_record);
 
             switch (r->address_record->key->type) {
-                case AVAHI_DNS_TYPE_A:
-                    a.proto = AVAHI_PROTO_INET;
+                case CATTA_DNS_TYPE_A:
+                    a.proto = CATTA_PROTO_INET;
                     a.data.ipv4 = r->address_record->data.a.address;
                     break;
 
-                case AVAHI_DNS_TYPE_AAAA:
-                    a.proto = AVAHI_PROTO_INET6;
+                case CATTA_DNS_TYPE_AAAA:
+                    a.proto = CATTA_PROTO_INET6;
                     a.data.ipv6 = r->address_record->data.aaaa.address;
                     break;
 
@@ -82,87 +82,87 @@ static void finish(AvahiSHostNameResolver *r, AvahiResolverEvent event) {
                     abort();
             }
 
-            r->callback(r, r->interface, r->protocol, AVAHI_RESOLVER_FOUND, r->address_record->key->name, &a, r->flags, r->userdata);
+            r->callback(r, r->interface, r->protocol, CATTA_RESOLVER_FOUND, r->address_record->key->name, &a, r->flags, r->userdata);
             break;
 
         }
 
-        case AVAHI_RESOLVER_FAILURE:
+        case CATTA_RESOLVER_FAILURE:
 
             r->callback(r, r->interface, r->protocol, event, r->host_name, NULL, r->flags, r->userdata);
             break;
     }
 }
 
-static void time_event_callback(AvahiTimeEvent *e, void *userdata) {
-    AvahiSHostNameResolver *r = userdata;
+static void time_event_callback(CattaTimeEvent *e, void *userdata) {
+    CattaSHostNameResolver *r = userdata;
 
     assert(e);
     assert(r);
 
-    avahi_server_set_errno(r->server, AVAHI_ERR_TIMEOUT);
-    finish(r, AVAHI_RESOLVER_FAILURE);
+    catta_server_set_errno(r->server, CATTA_ERR_TIMEOUT);
+    finish(r, CATTA_RESOLVER_FAILURE);
 }
 
-static void start_timeout(AvahiSHostNameResolver *r) {
+static void start_timeout(CattaSHostNameResolver *r) {
     struct timeval tv;
     assert(r);
 
     if (r->time_event)
         return;
 
-    avahi_elapse_time(&tv, TIMEOUT_MSEC, 0);
+    catta_elapse_time(&tv, TIMEOUT_MSEC, 0);
 
-    r->time_event = avahi_time_event_new(r->server->time_event_queue, &tv, time_event_callback, r);
+    r->time_event = catta_time_event_new(r->server->time_event_queue, &tv, time_event_callback, r);
 }
 
 static void record_browser_callback(
-    AvahiSRecordBrowser*rr,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
-    AvahiBrowserEvent event,
-    AvahiRecord *record,
-    AvahiLookupResultFlags flags,
+    CattaSRecordBrowser*rr,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
+    CattaBrowserEvent event,
+    CattaRecord *record,
+    CattaLookupResultFlags flags,
     void* userdata) {
 
-    AvahiSHostNameResolver *r = userdata;
+    CattaSHostNameResolver *r = userdata;
 
     assert(rr);
     assert(r);
 
 
     switch (event) {
-        case AVAHI_BROWSER_NEW:
+        case CATTA_BROWSER_NEW:
             assert(record);
-            assert(record->key->type == AVAHI_DNS_TYPE_A || record->key->type == AVAHI_DNS_TYPE_AAAA);
+            assert(record->key->type == CATTA_DNS_TYPE_A || record->key->type == CATTA_DNS_TYPE_AAAA);
 
             if (r->interface > 0 && interface != r->interface)
                 return;
 
-            if (r->protocol != AVAHI_PROTO_UNSPEC && protocol != r->protocol)
+            if (r->protocol != CATTA_PROTO_UNSPEC && protocol != r->protocol)
                 return;
 
             if (r->interface <= 0)
                 r->interface = interface;
 
-            if (r->protocol == AVAHI_PROTO_UNSPEC)
+            if (r->protocol == CATTA_PROTO_UNSPEC)
                 r->protocol = protocol;
 
             if (!r->address_record) {
-                r->address_record = avahi_record_ref(record);
+                r->address_record = catta_record_ref(record);
                 r->flags = flags;
 
-                finish(r, AVAHI_RESOLVER_FOUND);
+                finish(r, CATTA_RESOLVER_FOUND);
             }
 
             break;
 
-        case AVAHI_BROWSER_REMOVE:
+        case CATTA_BROWSER_REMOVE:
             assert(record);
-            assert(record->key->type == AVAHI_DNS_TYPE_A || record->key->type == AVAHI_DNS_TYPE_AAAA);
+            assert(record->key->type == CATTA_DNS_TYPE_A || record->key->type == CATTA_DNS_TYPE_AAAA);
 
-            if (r->address_record && avahi_record_equal_no_ttl(record, r->address_record)) {
-                avahi_record_unref(r->address_record);
+            if (r->address_record && catta_record_equal_no_ttl(record, r->address_record)) {
+                catta_record_unref(r->address_record);
                 r->address_record = NULL;
 
                 r->flags = flags;
@@ -170,67 +170,67 @@ static void record_browser_callback(
 
                 /** Look for a replacement */
                 if (r->record_browser_aaaa)
-                    avahi_s_record_browser_restart(r->record_browser_aaaa);
+                    catta_s_record_browser_restart(r->record_browser_aaaa);
                 if (r->record_browser_a)
-                    avahi_s_record_browser_restart(r->record_browser_a);
+                    catta_s_record_browser_restart(r->record_browser_a);
 
                 start_timeout(r);
             }
 
             break;
 
-        case AVAHI_BROWSER_CACHE_EXHAUSTED:
-        case AVAHI_BROWSER_ALL_FOR_NOW:
+        case CATTA_BROWSER_CACHE_EXHAUSTED:
+        case CATTA_BROWSER_ALL_FOR_NOW:
             /* Ignore */
             break;
 
-        case AVAHI_BROWSER_FAILURE:
+        case CATTA_BROWSER_FAILURE:
 
             /* Stop browsers */
 
             if (r->record_browser_aaaa)
-                avahi_s_record_browser_free(r->record_browser_aaaa);
+                catta_s_record_browser_free(r->record_browser_aaaa);
             if (r->record_browser_a)
-                avahi_s_record_browser_free(r->record_browser_a);
+                catta_s_record_browser_free(r->record_browser_a);
 
             r->record_browser_a = r->record_browser_aaaa = NULL;
             r->flags = flags;
 
-            finish(r, AVAHI_RESOLVER_FAILURE);
+            finish(r, CATTA_RESOLVER_FAILURE);
             break;
     }
 }
 
-AvahiSHostNameResolver *avahi_s_host_name_resolver_new(
-    AvahiServer *server,
-    AvahiIfIndex interface,
-    AvahiProtocol protocol,
+CattaSHostNameResolver *catta_s_host_name_resolver_new(
+    CattaServer *server,
+    CattaIfIndex interface,
+    CattaProtocol protocol,
     const char *host_name,
-    AvahiProtocol aprotocol,
-    AvahiLookupFlags flags,
-    AvahiSHostNameResolverCallback callback,
+    CattaProtocol aprotocol,
+    CattaLookupFlags flags,
+    CattaSHostNameResolverCallback callback,
     void* userdata) {
 
-    AvahiSHostNameResolver *r;
-    AvahiKey *k;
+    CattaSHostNameResolver *r;
+    CattaKey *k;
 
     assert(server);
     assert(host_name);
     assert(callback);
 
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_IF_VALID(interface), AVAHI_ERR_INVALID_INTERFACE);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_PROTO_VALID(protocol), AVAHI_ERR_INVALID_PROTOCOL);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, avahi_is_valid_fqdn(host_name), AVAHI_ERR_INVALID_HOST_NAME);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_PROTO_VALID(aprotocol), AVAHI_ERR_INVALID_PROTOCOL);
-    AVAHI_CHECK_VALIDITY_RETURN_NULL(server, AVAHI_FLAGS_VALID(flags, AVAHI_LOOKUP_USE_WIDE_AREA|AVAHI_LOOKUP_USE_MULTICAST), AVAHI_ERR_INVALID_FLAGS);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, catta_is_valid_fqdn(host_name), CATTA_ERR_INVALID_HOST_NAME);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(aprotocol), CATTA_ERR_INVALID_PROTOCOL);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_FLAGS_VALID(flags, CATTA_LOOKUP_USE_WIDE_AREA|CATTA_LOOKUP_USE_MULTICAST), CATTA_ERR_INVALID_FLAGS);
 
-    if (!(r = avahi_new(AvahiSHostNameResolver, 1))) {
-        avahi_server_set_errno(server, AVAHI_ERR_NO_MEMORY);
+    if (!(r = catta_new(CattaSHostNameResolver, 1))) {
+        catta_server_set_errno(server, CATTA_ERR_NO_MEMORY);
         return NULL;
     }
 
     r->server = server;
-    r->host_name = avahi_normalize_name_strdup(host_name);
+    r->host_name = catta_normalize_name_strdup(host_name);
     r->callback = callback;
     r->userdata = userdata;
     r->address_record = NULL;
@@ -242,23 +242,23 @@ AvahiSHostNameResolver *avahi_s_host_name_resolver_new(
 
     r->time_event = NULL;
 
-    AVAHI_LLIST_PREPEND(AvahiSHostNameResolver, resolver, server->host_name_resolvers, r);
+    CATTA_LLIST_PREPEND(CattaSHostNameResolver, resolver, server->host_name_resolvers, r);
 
     r->record_browser_aaaa = r->record_browser_a = NULL;
 
-    if (aprotocol == AVAHI_PROTO_INET || aprotocol == AVAHI_PROTO_UNSPEC) {
-        k = avahi_key_new(host_name, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_A);
-        r->record_browser_a = avahi_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
-        avahi_key_unref(k);
+    if (aprotocol == CATTA_PROTO_INET || aprotocol == CATTA_PROTO_UNSPEC) {
+        k = catta_key_new(host_name, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_A);
+        r->record_browser_a = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
+        catta_key_unref(k);
 
         if (!r->record_browser_a)
             goto fail;
     }
 
-    if (aprotocol == AVAHI_PROTO_INET6 || aprotocol == AVAHI_PROTO_UNSPEC) {
-        k = avahi_key_new(host_name, AVAHI_DNS_CLASS_IN, AVAHI_DNS_TYPE_AAAA);
-        r->record_browser_aaaa = avahi_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
-        avahi_key_unref(k);
+    if (aprotocol == CATTA_PROTO_INET6 || aprotocol == CATTA_PROTO_UNSPEC) {
+        k = catta_key_new(host_name, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_AAAA);
+        r->record_browser_aaaa = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
+        catta_key_unref(k);
 
         if (!r->record_browser_aaaa)
             goto fail;
@@ -271,27 +271,27 @@ AvahiSHostNameResolver *avahi_s_host_name_resolver_new(
     return r;
 
 fail:
-    avahi_s_host_name_resolver_free(r);
+    catta_s_host_name_resolver_free(r);
     return NULL;
 }
 
-void avahi_s_host_name_resolver_free(AvahiSHostNameResolver *r) {
+void catta_s_host_name_resolver_free(CattaSHostNameResolver *r) {
     assert(r);
 
-    AVAHI_LLIST_REMOVE(AvahiSHostNameResolver, resolver, r->server->host_name_resolvers, r);
+    CATTA_LLIST_REMOVE(CattaSHostNameResolver, resolver, r->server->host_name_resolvers, r);
 
     if (r->record_browser_a)
-        avahi_s_record_browser_free(r->record_browser_a);
+        catta_s_record_browser_free(r->record_browser_a);
 
     if (r->record_browser_aaaa)
-        avahi_s_record_browser_free(r->record_browser_aaaa);
+        catta_s_record_browser_free(r->record_browser_aaaa);
 
     if (r->time_event)
-        avahi_time_event_free(r->time_event);
+        catta_time_event_free(r->time_event);
 
     if (r->address_record)
-        avahi_record_unref(r->address_record);
+        catta_record_unref(r->address_record);
 
-    avahi_free(r->host_name);
-    avahi_free(r);
+    catta_free(r->host_name);
+    catta_free(r);
 }
