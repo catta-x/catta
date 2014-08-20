@@ -15,9 +15,9 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
-ACLOCAL_AMFLAGS = -I common
+ACLOCAL_AMFLAGS = -I m4
 
-include $(srcdir)/common/doxygen.mk
+include $(srcdir)/m4/doxygen.mk
 
 EXTRA_DIST = \
 	LICENSE \
@@ -39,7 +39,7 @@ EXTRA_DIST = \
 	doxygen_to_devhelp.xsl
 
 SUBDIRS = \
-	common \
+	m4 \
 	avahi \
 	tests \
 	examples
