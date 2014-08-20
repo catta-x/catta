@@ -22,6 +22,3 @@ CONFIGURE SWITCHES:
 
 --enable-tests
 build some test programs, including those for 'make check'.
-
---enable-core-docs
-include files from 'avahi-core' when building the doxygen docs.

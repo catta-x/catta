@@ -37,11 +37,11 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include <avahi-core/core.h>
-#include <avahi-core/lookup.h>
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
-#include <avahi-common/error.h>
+#include <avahi/core.h>
+#include <avahi/lookup.h>
+#include <avahi/simple-watch.h>
+#include <avahi/malloc.h>
+#include <avahi/error.h>
 
 static AvahiSimplePoll *simple_poll = NULL;
 static AvahiServer *server = NULL;

@@ -37,31 +37,30 @@ EXTRA_DIST = \
 	docs/overview.dia \
 	docs/server-states.dia \
 	docs/avahi-poll.dia \
-	avahi-core.pc.in \
+	avahi.pc.in \
 	doxygen_to_devhelp.xsl
 
 SUBDIRS = \
 	common \
-	avahi-common \
-	avahi-core \
+	avahi \
 	examples
 
 DX_INPUT = \
-	$(srcdir)/avahi-common/address.h \
-	$(srcdir)/avahi-common/malloc.h \
-	$(srcdir)/avahi-common/strlst.h \
-	$(srcdir)/avahi-common/alternative.h \
-	$(srcdir)/avahi-common/defs.h \
-	$(srcdir)/avahi-common/error.h \
-	$(srcdir)/avahi-common/domain.h \
-	$(srcdir)/avahi-common/watch.h \
-	$(srcdir)/avahi-common/simple-watch.h \
-	$(srcdir)/avahi-common/thread-watch.h \
-	$(srcdir)/avahi-core/core.h \
-	$(srcdir)/avahi-core/lookup.h \
-	$(srcdir)/avahi-core/publish.h \
-	$(srcdir)/avahi-core/rr.h \
-	$(srcdir)/avahi-core/log.h
+	$(srcdir)/avahi/address.h \
+	$(srcdir)/avahi/malloc.h \
+	$(srcdir)/avahi/strlst.h \
+	$(srcdir)/avahi/alternative.h \
+	$(srcdir)/avahi/defs.h \
+	$(srcdir)/avahi/error.h \
+	$(srcdir)/avahi/domain.h \
+	$(srcdir)/avahi/watch.h \
+	$(srcdir)/avahi/simple-watch.h \
+	$(srcdir)/avahi/thread-watch.h \
+	$(srcdir)/avahi/core.h \
+	$(srcdir)/avahi/lookup.h \
+	$(srcdir)/avahi/publish.h \
+	$(srcdir)/avahi/rr.h \
+	$(srcdir)/avahi/log.h
 
 DX_EXAMPLE_PATH = $(srcdir)/examples
 DX_EXAMPLE_PATTERNS = *.c
@@ -73,8 +72,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 	    -e 's,@libdir\@,$(libdir),g' \
 	    -e 's,@PACKAGE_VERSION\@,$(PACKAGE_VERSION),g' $< > $@
 
-pkgconfig_DATA = avahi-core.pc
-CLEANFILES = avahi-core.pc
+pkgconfig_DATA = avahi.pc
+CLEANFILES = avahi.pc
 CLEANFILES += avahi.devhelp
 
 avahi.devhelp: doxygen-run

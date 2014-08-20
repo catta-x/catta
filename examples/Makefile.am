@@ -25,8 +25,8 @@ endif
 
 core_publish_service_SOURCES = core-publish-service.c
 core_publish_service_CFLAGS = $(AM_CFLAGS)
-core_publish_service_LDADD = $(AM_LDADD) ../avahi-core/libavahi-core.la ../avahi-common/libavahi-common.la
+core_publish_service_LDADD = $(AM_LDADD) ../avahi/libavahi.la
 
 core_browse_services_SOURCES = core-browse-services.c
 core_browse_services_CFLAGS = $(AM_CFLAGS)
-core_browse_services_LDADD = $(AM_LDADD) ../avahi-core/libavahi-core.la ../avahi-common/libavahi-common.la
+core_browse_services_LDADD = $(AM_LDADD) ../avahi/libavahi.la

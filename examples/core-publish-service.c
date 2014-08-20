@@ -26,12 +26,12 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <avahi-core/core.h>
-#include <avahi-core/publish.h>
-#include <avahi-common/simple-watch.h>
-#include <avahi-common/malloc.h>
-#include <avahi-common/alternative.h>
-#include <avahi-common/error.h>
+#include <avahi/core.h>
+#include <avahi/publish.h>
+#include <avahi/simple-watch.h>
+#include <avahi/malloc.h>
+#include <avahi/alternative.h>
+#include <avahi/error.h>
 
 static AvahiSEntryGroup *group = NULL;
 static AvahiSimplePoll *simple_poll = NULL;
