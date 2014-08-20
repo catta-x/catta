@@ -40,26 +40,27 @@ EXTRA_DIST = \
 
 SUBDIRS = \
 	m4 \
-	avahi \
+	src \
+    include \
 	tests \
 	examples
 
 DX_INPUT = \
-	$(srcdir)/avahi/address.h \
-	$(srcdir)/avahi/malloc.h \
-	$(srcdir)/avahi/strlst.h \
-	$(srcdir)/avahi/alternative.h \
-	$(srcdir)/avahi/defs.h \
-	$(srcdir)/avahi/error.h \
-	$(srcdir)/avahi/domain.h \
-	$(srcdir)/avahi/watch.h \
-	$(srcdir)/avahi/simple-watch.h \
-	$(srcdir)/avahi/thread-watch.h \
-	$(srcdir)/avahi/core.h \
-	$(srcdir)/avahi/lookup.h \
-	$(srcdir)/avahi/publish.h \
-	$(srcdir)/avahi/rr.h \
-	$(srcdir)/avahi/log.h
+	$(srcdir)/include/avahi/address.h \
+	$(srcdir)/include/avahi/malloc.h \
+	$(srcdir)/include/avahi/strlst.h \
+	$(srcdir)/include/avahi/alternative.h \
+	$(srcdir)/include/avahi/defs.h \
+	$(srcdir)/include/avahi/error.h \
+	$(srcdir)/include/avahi/domain.h \
+	$(srcdir)/include/avahi/watch.h \
+	$(srcdir)/include/avahi/simple-watch.h \
+	$(srcdir)/include/avahi/thread-watch.h \
+	$(srcdir)/include/avahi/core.h \
+	$(srcdir)/include/avahi/lookup.h \
+	$(srcdir)/include/avahi/publish.h \
+	$(srcdir)/include/avahi/rr.h \
+	$(srcdir)/include/avahi/log.h
 
 DX_EXAMPLE_PATH = $(srcdir)/examples
 DX_EXAMPLE_PATTERNS = *.c

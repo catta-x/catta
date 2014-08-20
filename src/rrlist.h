@@ -1,3 +1,6 @@
+#ifndef foorrlisthfoo
+#define foorrlisthfoo
+
 /***
   This file is part of avahi.
 
@@ -17,21 +20,21 @@
   USA.
 ***/
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
+
+#include <avahi/rr.h>
+
+typedef struct AvahiRecordList AvahiRecordList;
+
+AvahiRecordList *avahi_record_list_new(void);
+void avahi_record_list_free(AvahiRecordList *l);
+void avahi_record_list_flush(AvahiRecordList *l);
+
+AvahiRecord* avahi_record_list_next(AvahiRecordList *l, int *ret_flush_cache, int *ret_unicast_response, int *ret_auxiliary);
+void avahi_record_list_push(AvahiRecordList *l, AvahiRecord *r, int flush_cache, int unicast_response, int auxiliary);
+void avahi_record_list_drop(AvahiRecordList *l, AvahiRecord *r);
+
+int avahi_record_list_all_flush_cache(AvahiRecordList *l);
+
+int avahi_record_list_is_empty(AvahiRecordList *l);
+
 #endif
-
-#include <assert.h>
-
-#include <avahi/gccmacro.h>
-
-#include "../src/utf8.h"
-
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
-
-    assert(avahi_utf8_valid("hallo"));
-    assert(!avahi_utf8_valid("üxknürz"));
-    assert(avahi_utf8_valid("Ã¼xknÃ¼rz"));
-
-    return 0;
-}

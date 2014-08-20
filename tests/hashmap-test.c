@@ -26,8 +26,8 @@
 #include <avahi/domain.h>
 #include <avahi/malloc.h>
 
-#include <avahi/hashmap.h>
-#include <avahi/util.h>
+#include "../src/hashmap.h"
+#include "../src/util.h"
 
 int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
     unsigned n;

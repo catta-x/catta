@@ -20,7 +20,7 @@
 
 AC_PREREQ(2.63)
 AC_INIT([avahi],[0.6.31],[avahi (at) lists (dot) freedesktop (dot) org])
-AC_CONFIG_SRCDIR([avahi/server.c])
+AC_CONFIG_SRCDIR([src/server.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
 AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules tar-pax])
@@ -323,7 +323,8 @@ AM_CONDITIONAL([ENABLE_TESTS], [test "x$ENABLE_TESTS" = "xyes"])
 # ==========================================================================
 AC_CONFIG_FILES([
 Makefile
-avahi/Makefile
+src/Makefile
+include/Makefile
 tests/Makefile
 examples/Makefile
 m4/Makefile

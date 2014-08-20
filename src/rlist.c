@@ -21,17 +21,42 @@
 #include <config.h>
 #endif
 
-#include <assert.h>
+#include <stdlib.h>
 
-#include <avahi/gccmacro.h>
+#include <avahi/rlist.h>
+#include <avahi/malloc.h>
 
-#include "../src/utf8.h"
+AvahiRList* avahi_rlist_prepend(AvahiRList *r, void *data) {
+    AvahiRList *n;
 
-int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
+    if (!(n = avahi_new(AvahiRList, 1)))
+        return NULL;
 
-    assert(avahi_utf8_valid("hallo"));
-    assert(!avahi_utf8_valid("üxknürz"));
-    assert(avahi_utf8_valid("Ã¼xknÃ¼rz"));
+    n->data = data;
 
-    return 0;
+    AVAHI_LLIST_PREPEND(AvahiRList, rlist, r, n);
+    return r;
+}
+
+AvahiRList* avahi_rlist_remove(AvahiRList *r, void *data) {
+    AvahiRList *n;
+
+    for (n = r; n; n = n->rlist_next)
+
+        if (n->data == data) {
+            AVAHI_LLIST_REMOVE(AvahiRList, rlist, r, n);
+            avahi_free(n);
+            break;
+        }
+
+    return r;
+}
+
+AvahiRList* avahi_rlist_remove_by_link(AvahiRList *r, AvahiRList *n) {
+    assert(n);
+
+    AVAHI_LLIST_REMOVE(AvahiRList, rlist, r, n);
+    avahi_free(n);
+
+    return r;
 }

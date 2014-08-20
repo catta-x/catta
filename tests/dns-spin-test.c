@@ -34,7 +34,7 @@
 #include <signal.h>
 #include <sys/time.h>
 
-#include <avahi/dns.h>
+#include "../src/dns.h"
 
 #define MAX_CPU_SECONDS 1
 

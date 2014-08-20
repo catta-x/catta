@@ -15,18 +15,24 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA.
 
-AM_CFLAGS=-I$(top_srcdir)/include
-
-if ENABLE_TESTS
-noinst_PROGRAMS = \
-	core-publish-service \
-	core-browse-services
-endif
-
-core_publish_service_SOURCES = core-publish-service.c
-core_publish_service_CFLAGS = $(AM_CFLAGS)
-core_publish_service_LDADD = $(AM_LDADD) ../src/libavahi.la
-
-core_browse_services_SOURCES = core-browse-services.c
-core_browse_services_CFLAGS = $(AM_CFLAGS)
-core_browse_services_LDADD = $(AM_LDADD) ../src/libavahi.la
+nobase_include_HEADERS = \
+	avahi/strlst.h \
+	avahi/address.h \
+	avahi/alternative.h \
+	avahi/domain.h \
+	avahi/cdecl.h \
+	avahi/defs.h \
+	avahi/malloc.h \
+	avahi/watch.h \
+	avahi/timeval.h \
+	avahi/simple-watch.h \
+	avahi/thread-watch.h \
+	avahi/gccmacro.h \
+	avahi/error.h \
+	avahi/llist.h \
+	avahi/rlist.h \
+	avahi/core.h \
+	avahi/log.h \
+	avahi/rr.h \
+	avahi/publish.h \
+	avahi/lookup.h

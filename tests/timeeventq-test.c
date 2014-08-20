@@ -26,9 +26,9 @@
 
 #include <avahi/timeval.h>
 #include <avahi/simple-watch.h>
-
-#include <avahi/timeeventq.h>
 #include <avahi/log.h>
+
+#include "../src/timeeventq.h"
 
 #define POINTER_TO_INT(p) ((int) (long) (p))
 #define INT_TO_POINTER(i) ((void*) (long) (i))
