@@ -1,6 +1,3 @@
-intltool-extract.in
-intltool-merge.in
-intltool-update.in
 *.tar.gz
 doxygen
 Makefile
@@ -12,8 +9,6 @@ Makefile.in
 *.la
 .deps/
 .libs/
-ABOUT-NLS
-ChangeLog
 aclocal.m4
 *.cache
 compile
@@ -21,7 +16,6 @@ config.guess
 config.h
 config.h.in
 config.log
-config.rpath
 config.status
 config.sub
 configure
@@ -30,7 +24,6 @@ install-sh
 libtool
 ltmain.sh
 missing
-py-compile
 stamp-h1
 .*.swp
 test-driver

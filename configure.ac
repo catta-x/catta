@@ -324,6 +324,7 @@ AM_CONDITIONAL([ENABLE_TESTS], [test "x$ENABLE_TESTS" = "xyes"])
 AC_CONFIG_FILES([
 Makefile
 avahi/Makefile
+tests/Makefile
 examples/Makefile
 common/Makefile
 ])

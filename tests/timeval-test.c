@@ -23,8 +23,8 @@
 
 #include <stdio.h>
 
-#include "gccmacro.h"
-#include "timeval.h"
+#include <avahi/gccmacro.h>
+#include <avahi/timeval.h>
 
 int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
 

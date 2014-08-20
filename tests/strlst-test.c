@@ -24,8 +24,8 @@
 #include <stdio.h>
 #include <assert.h>
 
-#include "strlst.h"
-#include "malloc.h"
+#include <avahi/strlst.h>
+#include <avahi/malloc.h>
 
 int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
     char *t, *v;

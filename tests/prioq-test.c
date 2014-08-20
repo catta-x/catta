@@ -28,7 +28,7 @@
 
 #include <avahi/gccmacro.h>
 
-#include "prioq.h"
+#include <avahi/prioq.h>
 
 #define POINTER_TO_INT(p) ((int) (long) (p))
 #define INT_TO_POINTER(i) ((void*) (long) (i))

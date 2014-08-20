@@ -27,17 +27,17 @@
 #include <errno.h>
 #include <string.h>
 
-#include "watch.h"
-#include "timeval.h"
-#include "gccmacro.h"
+#include <avahi/watch.h>
+#include <avahi/timeval.h>
+#include <avahi/gccmacro.h>
 
 static const AvahiPoll *api = NULL;
 
 #ifndef USE_THREAD
-#include "simple-watch.h"
+#include <avahi/simple-watch.h>
 static AvahiSimplePoll *simple_poll = NULL;
 #else
-#include "thread-watch.h"
+#include <avahi/thread-watch.h>
 static AvahiThreadedPoll *threaded_poll = NULL;
 #endif
 

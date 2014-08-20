@@ -23,9 +23,9 @@
 
 #include <stdio.h>
 
-#include "alternative.h"
-#include "malloc.h"
-#include "domain.h"
+#include <avahi/alternative.h>
+#include <avahi/malloc.h>
+#include <avahi/domain.h>
 
 int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
     const char* const test_strings[] = {

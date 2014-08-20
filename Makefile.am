@@ -41,6 +41,7 @@ EXTRA_DIST = \
 SUBDIRS = \
 	common \
 	avahi \
+	tests \
 	examples
 
 DX_INPUT = \

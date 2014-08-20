@@ -25,7 +25,7 @@
 
 #include <avahi/gccmacro.h>
 
-#include "utf8.h"
+#include <avahi/utf8.h>
 
 int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
 

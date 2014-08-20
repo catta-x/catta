@@ -31,9 +31,9 @@
 #include <avahi/defs.h>
 #include <avahi/malloc.h>
 
-#include "dns.h"
-#include "log.h"
-#include "util.h"
+#include <avahi/dns.h>
+#include <avahi/log.h>
+#include <avahi/util.h>
 
 int main(AVAHI_GCC_UNUSED int argc, AVAHI_GCC_UNUSED char *argv[]) {
     char t[AVAHI_DOMAIN_NAME_MAX], *m;
