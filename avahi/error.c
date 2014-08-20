@@ -22,76 +22,73 @@
 #endif
 
 #include "error.h"
-#include "i18n.h"
 
 const char *avahi_strerror(int error) {
 
     const char * const msg[- AVAHI_ERR_MAX] = {
-        N_("OK"),
-        N_("Operation failed"),
-        N_("Bad state"),
-        N_("Invalid host name"),
-        N_("Invalid domain name"),
-        N_("No suitable network protocol available"),
-        N_("Invalid DNS TTL"),
-        N_("Resource record key is pattern"),
-        N_("Local name collision"),
-        N_("Invalid record"),
+        "OK",
+        "Operation failed",
+        "Bad state",
+        "Invalid host name",
+        "Invalid domain name",
+        "No suitable network protocol available",
+        "Invalid DNS TTL",
+        "Resource record key is pattern",
+        "Local name collision",
+        "Invalid record",
 
-        N_("Invalid service name"),
-        N_("Invalid service type"),
-        N_("Invalid port number"),
-        N_("Invalid record key"),
-        N_("Invalid address"),
-        N_("Timeout reached"),
-        N_("Too many clients"),
-        N_("Too many objects"),
-        N_("Too many entries"),
-        N_("OS Error"),
+        "Invalid service name",
+        "Invalid service type",
+        "Invalid port number",
+        "Invalid record key",
+        "Invalid address",
+        "Timeout reached",
+        "Too many clients",
+        "Too many objects",
+        "Too many entries",
+        "OS Error",
 
-        N_("Access denied"),
-        N_("Invalid operation"),
-        N_("An unexpected D-Bus error occurred"),
-        N_("Daemon connection failed"),
-        N_("Memory exhausted"),
-        N_("The object passed in was not valid"),
-        N_("Daemon not running"),
-        N_("Invalid interface index"),
-        N_("Invalid protocol specification"),
-        N_("Invalid flags"),
+        "Access denied",
+        "Invalid operation",
+        "An unexpected D-Bus error occurred",
+        "Daemon connection failed",
+        "Memory exhausted",
+        "The object passed in was not valid",
+        "Daemon not running",
+        "Invalid interface index",
+        "Invalid protocol specification",
+        "Invalid flags",
 
-        N_("Not found"),
-        N_("Invalid configuration"),
-        N_("Version mismatch"),
-        N_("Invalid service subtype"),
-        N_("Invalid packet"),
-        N_("Invalid DNS return code"),
-        N_("DNS failure: FORMERR"),
-        N_("DNS failure: SERVFAIL"),
-        N_("DNS failure: NXDOMAIN"),
-        N_("DNS failure: NOTIMP"),
+        "Not found",
+        "Invalid configuration",
+        "Version mismatch",
+        "Invalid service subtype",
+        "Invalid packet",
+        "Invalid DNS return code",
+        "DNS failure: FORMERR",
+        "DNS failure: SERVFAIL",
+        "DNS failure: NXDOMAIN",
+        "DNS failure: NOTIMP",
 
-        N_("DNS failure: REFUSED"),
-        N_("DNS failure: YXDOMAIN"),
-        N_("DNS failure: YXRRSET"),
-        N_("DNS failure: NXRRSET"),
-        N_("DNS failure: NOTAUTH"),
-        N_("DNS failure: NOTZONE"),
-        N_("Invalid RDATA"),
-        N_("Invalid DNS type"),
-        N_("Invalid DNS class"),
-        N_("Not supported"),
+        "DNS failure: REFUSED",
+        "DNS failure: YXDOMAIN",
+        "DNS failure: YXRRSET",
+        "DNS failure: NXRRSET",
+        "DNS failure: NOTAUTH",
+        "DNS failure: NOTZONE",
+        "Invalid RDATA",
+        "Invalid DNS type",
+        "Invalid DNS class",
+        "Not supported",
 
-        N_("Not permitted"),
-        N_("Invalid argument"),
-        N_("Is empty"),
-        N_("The requested operation is invalid because redundant")
+        "Not permitted",
+        "Invalid argument",
+        "Is empty",
+        "The requested operation is invalid because redundant"
     };
 
-    avahi_init_i18n();
-
     if (-error < 0 || -error >= -AVAHI_ERR_MAX)
-        return _("Invalid Error Code");
+        return "Invalid Error Code";
 
-    return _(msg[-error]);
+    return msg[-error];
 }

@@ -59,7 +59,6 @@ libavahi_la_SOURCES = \
 	watch.h gccmacro.h \
 	rlist.h rlist.c \
 	utf8.c utf8.h \
-	i18n.c i18n.h \
 	timeeventq.c timeeventq.h\
 	iface.c iface.h \
 	server.c internal.h entry.c \
@@ -107,6 +106,6 @@ libavahi_la_SOURCES += \
 endif
 endif
 
-libavahi_la_CFLAGS = $(AM_CFLAGS) $(PTHREAD_CFLAGS) -DAVAHI_LOCALEDIR=\"$(avahilocaledir)\"
+libavahi_la_CFLAGS = $(AM_CFLAGS) $(PTHREAD_CFLAGS)
 libavahi_la_LIBADD = $(AM_LDADD) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS) $(INTLLIBS)
 libavahi_la_LDFLAGS = $(AM_LDFLAGS)  -version-info $(LIBAVAHI_VERSION_INFO)
