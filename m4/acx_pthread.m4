@@ -256,11 +256,16 @@ if test "x$acx_pthread_ok" = xyes; then
       #
       # -Wl,-z,defs forces link-time symbol resolution, so that the
       # linking checks with -shared actually have any value
+      # The Mingw32 equivalent to -z defs seems to be --error-unresolved-symbols.
       #
       # FIXME: -fPIC is required for -shared on many architectures,
       # so we specify it here, but the right way would probably be to
       # properly detect whether it is actually required.
-      CFLAGS="-shared -fPIC -Wl,-z,defs $CFLAGS $PTHREAD_CFLAGS"
+      zdefs="-z,defs"
+      case "${host_os}" in
+        *mingw32*) zdefs="--unresolved-symbols=report-all,--error-unresolved-symbols"
+      esac
+      CFLAGS="-shared -fPIC -Wl,$zdefs $CFLAGS $PTHREAD_CFLAGS"
       LIBS="$PTHREAD_LIBS $LIBS"
       CC="$PTHREAD_CC"
 
