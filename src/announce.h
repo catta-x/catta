@@ -37,7 +37,7 @@ typedef enum {
 
 struct CattaAnnouncer {
     CattaServer *server;
-    CattaInterface *interface;
+    CattaInterface *iface;
     CattaEntry *entry;
 
     CattaTimeEvent *time_event;

@@ -469,7 +469,7 @@ static int sendmsg_loop(int fd, struct msghdr *msg, int flags) {
 
 int catta_send_dns_packet_ipv4(
         int fd,
-        CattaIfIndex interface,
+        CattaIfIndex iface,
         CattaDnsPacket *p,
         const CattaIPv4Address *src_address,
         const CattaIPv4Address *dst_address,
@@ -510,7 +510,7 @@ int catta_send_dns_packet_ipv4(
     msg.msg_controllen = 0;
 
 #ifdef IP_PKTINFO
-    if (interface > 0 || src_address) {
+    if (iface > 0 || src_address) {
         struct in_pktinfo *pkti;
 
         memset(cmsg_data, 0, sizeof(cmsg_data));
@@ -524,8 +524,8 @@ int catta_send_dns_packet_ipv4(
 
         pkti = (struct in_pktinfo*) CMSG_DATA(cmsg);
 
-        if (interface > 0)
-            pkti->ipi_ifindex = interface;
+        if (iface > 0)
+            pkti->ipi_ifindex = iface;
 
         if (src_address)
             pkti->ipi_spec_dst.s_addr = src_address->address;
@@ -563,7 +563,7 @@ int catta_send_dns_packet_ipv4(
 
 int catta_send_dns_packet_ipv6(
         int fd,
-        CattaIfIndex interface,
+        CattaIfIndex iface,
         CattaDnsPacket *p,
         const CattaIPv6Address *src_address,
         const CattaIPv6Address *dst_address,
@@ -596,7 +596,7 @@ int catta_send_dns_packet_ipv6(
     msg.msg_iovlen = 1;
     msg.msg_flags = 0;
 
-    if (interface > 0 || src_address) {
+    if (iface > 0 || src_address) {
         struct in6_pktinfo *pkti;
 
         memset(cmsg_data, 0, sizeof(cmsg_data));
@@ -610,8 +610,8 @@ int catta_send_dns_packet_ipv6(
 
         pkti = (struct in6_pktinfo*) CMSG_DATA(cmsg);
 
-        if (interface > 0)
-            pkti->ipi6_ifindex = interface;
+        if (iface > 0)
+            pkti->ipi6_ifindex = iface;
 
         if (src_address)
             memcpy(&pkti->ipi6_addr, src_address->address, sizeof(src_address->address));

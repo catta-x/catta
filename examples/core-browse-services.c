@@ -48,7 +48,7 @@ static CattaServer *server = NULL;
 
 static void resolve_callback(
     CattaSServiceResolver *r,
-    CATTA_GCC_UNUSED CattaIfIndex interface,
+    CATTA_GCC_UNUSED CattaIfIndex iface,
     CATTA_GCC_UNUSED CattaProtocol protocol,
     CattaResolverEvent event,
     const char *name,
@@ -101,7 +101,7 @@ static void resolve_callback(
 
 static void browse_callback(
     CattaSServiceBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     const char *name,
@@ -131,7 +131,7 @@ static void browse_callback(
                the callback function is called the server will free
                the resolver for us. */
 
-            if (!(catta_s_service_resolver_new(s, interface, protocol, name, type, domain, CATTA_PROTO_UNSPEC, 0, resolve_callback, s)))
+            if (!(catta_s_service_resolver_new(s, iface, protocol, name, type, domain, CATTA_PROTO_UNSPEC, 0, resolve_callback, s)))
                 fprintf(stderr, "Failed to resolve service '%s': %s\n", name, catta_strerror(catta_server_errno(s)));
 
             break;

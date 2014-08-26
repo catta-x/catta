@@ -36,7 +36,7 @@ typedef struct CattaDNSServerInfo CattaDNSServerInfo;
 struct CattaDNSServerInfo {
     CattaSDNSServerBrowser *browser;
 
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
     CattaRecord *srv_record;
     CattaSHostNameResolver *host_name_resolver;
@@ -61,14 +61,14 @@ struct CattaSDNSServerBrowser {
     CATTA_LLIST_HEAD(CattaDNSServerInfo, info);
 };
 
-static CattaDNSServerInfo* get_server_info(CattaSDNSServerBrowser *b, CattaIfIndex interface, CattaProtocol protocol, CattaRecord *r) {
+static CattaDNSServerInfo* get_server_info(CattaSDNSServerBrowser *b, CattaIfIndex iface, CattaProtocol protocol, CattaRecord *r) {
     CattaDNSServerInfo *i;
 
     assert(b);
     assert(r);
 
     for (i = b->info; i; i = i->info_next)
-        if (i->interface == interface &&
+        if (i->iface == iface &&
             i->protocol == protocol &&
             catta_record_equal_no_ttl(r, i->srv_record))
             return i;
@@ -94,7 +94,7 @@ static void server_info_free(CattaSDNSServerBrowser *b, CattaDNSServerInfo *i) {
 
 static void host_name_resolver_callback(
     CattaSHostNameResolver *r,
-    CATTA_GCC_UNUSED CattaIfIndex interface,
+    CATTA_GCC_UNUSED CattaIfIndex iface,
     CATTA_GCC_UNUSED CattaProtocol protocol,
     CattaResolverEvent event,
     const char *host_name,
@@ -114,7 +114,7 @@ static void host_name_resolver_callback(
 
             i->browser->callback(
                 i->browser,
-                i->interface,
+                i->iface,
                 i->protocol,
                 CATTA_BROWSER_NEW,
                 i->srv_record->data.srv.name,
@@ -137,7 +137,7 @@ static void host_name_resolver_callback(
 
 static void record_browser_callback(
     CattaSRecordBrowser*rr,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -159,7 +159,7 @@ static void record_browser_callback(
             assert(record);
             assert(record->key->type == CATTA_DNS_TYPE_SRV);
 
-            if (get_server_info(b, interface, protocol, record))
+            if (get_server_info(b, iface, protocol, record))
                 return;
 
             if (b->n_info >= 10)
@@ -169,12 +169,12 @@ static void record_browser_callback(
                 return; /* OOM */
 
             i->browser = b;
-            i->interface = interface;
+            i->iface = iface;
             i->protocol = protocol;
             i->srv_record = catta_record_ref(record);
             i->host_name_resolver = catta_s_host_name_resolver_new(
                 b->server,
-                interface, protocol,
+                iface, protocol,
                 record->data.srv.name,
                 b->aprotocol,
                 b->user_flags,
@@ -193,13 +193,13 @@ static void record_browser_callback(
             assert(record);
             assert(record->key->type == CATTA_DNS_TYPE_SRV);
 
-            if (!(i = get_server_info(b, interface, protocol, record)))
+            if (!(i = get_server_info(b, iface, protocol, record)))
                 return;
 
             if (!i->host_name_resolver)
                 b->callback(
                     b,
-                    interface,
+                    iface,
                     protocol,
                     event,
                     i->srv_record->data.srv.name,
@@ -218,7 +218,7 @@ static void record_browser_callback(
 
             b->callback(
                 b,
-                interface,
+                iface,
                 protocol,
                 event,
                 NULL,
@@ -233,7 +233,7 @@ static void record_browser_callback(
 
 CattaSDNSServerBrowser *catta_s_dns_server_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *domain,
     CattaDNSServerType type,
@@ -255,7 +255,7 @@ CattaSDNSServerBrowser *catta_s_dns_server_browser_new(
     assert(server);
     assert(callback);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(aprotocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, !domain || catta_is_valid_domain_name(domain), CATTA_ERR_INVALID_DOMAIN_NAME);
@@ -290,7 +290,7 @@ CattaSDNSServerBrowser *catta_s_dns_server_browser_new(
         goto fail;
     }
 
-    if (!(b->record_browser = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, b)))
+    if (!(b->record_browser = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, b)))
         goto fail;
 
     catta_key_unref(k);

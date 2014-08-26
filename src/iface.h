@@ -96,7 +96,7 @@ struct CattaInterface {
     CattaInterfaceMonitor *monitor;
     CattaHwInterface *hardware;
 
-    CATTA_LLIST_FIELDS(CattaInterface, interface);
+    CATTA_LLIST_FIELDS(CattaInterface, iface);
     CATTA_LLIST_FIELDS(CattaInterface, by_hardware);
 
     CattaProtocol protocol;
@@ -119,7 +119,7 @@ struct CattaInterface {
 
 struct CattaInterfaceAddress {
     CattaInterfaceMonitor *monitor;
-    CattaInterface *interface;
+    CattaInterface *iface;
 
     CATTA_LLIST_FIELDS(CattaInterfaceAddress, address);
 

@@ -148,7 +148,7 @@ void catta_cleanup_dead_entries(CattaServer *s) {
     }
 }
 
-static int check_record_conflict(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, CattaRecord *r, CattaPublishFlags flags) {
+static int check_record_conflict(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, CattaRecord *r, CattaPublishFlags flags) {
     CattaEntry *e;
 
     assert(s);
@@ -169,9 +169,9 @@ static int check_record_conflict(CattaServer *s, CattaIfIndex interface, CattaPr
             continue;
         }
 
-        if ((interface <= 0 ||
-             e->interface <= 0 ||
-             e->interface == interface) &&
+        if ((iface <= 0 ||
+             e->iface <= 0 ||
+             e->iface == iface) &&
             (protocol == CATTA_PROTO_UNSPEC ||
              e->protocol == CATTA_PROTO_UNSPEC ||
              e->protocol == protocol))
@@ -185,7 +185,7 @@ static int check_record_conflict(CattaServer *s, CattaIfIndex interface, CattaPr
 static CattaEntry * server_add_internal(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     CattaRecord *r) {
@@ -196,7 +196,7 @@ static CattaEntry * server_add_internal(
     assert(r);
 
     CATTA_CHECK_VALIDITY_RETURN_NULL(s, s->state != CATTA_SERVER_FAILURE && s->state != CATTA_SERVER_INVALID, CATTA_ERR_BAD_STATE);
-    CATTA_CHECK_VALIDITY_RETURN_NULL(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(s, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(s, CATTA_FLAGS_VALID(
                                          flags,
@@ -237,7 +237,7 @@ static CattaEntry * server_add_internal(
 
         /* Find the first matching entry */
         for (e = catta_hashmap_lookup(s->entries_by_key, r->key); e; e = e->by_key_next) {
-            if (!e->dead && e->group == g && e->interface == interface && e->protocol == protocol)
+            if (!e->dead && e->group == g && e->iface == iface && e->protocol == protocol)
                 break;
 
             is_first = 0;
@@ -276,7 +276,7 @@ static CattaEntry * server_add_internal(
 
         /* Add a new record */
 
-        if (check_record_conflict(s, interface, protocol, r, flags) < 0) {
+        if (check_record_conflict(s, iface, protocol, r, flags) < 0) {
             catta_server_set_errno(s, CATTA_ERR_COLLISION);
             return NULL;
         }
@@ -289,7 +289,7 @@ static CattaEntry * server_add_internal(
         e->server = s;
         e->record = catta_record_ref(r);
         e->group = g;
-        e->interface = interface;
+        e->iface = iface;
         e->protocol = protocol;
         e->flags = flags;
         e->dead = 0;
@@ -316,12 +316,12 @@ static CattaEntry * server_add_internal(
 int catta_server_add(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     CattaRecord *r) {
 
-    if (!server_add_internal(s, g, interface, protocol, flags, r))
+    if (!server_add_internal(s, g, iface, protocol, flags, r))
         return catta_server_errno(s);
 
     return CATTA_OK;
@@ -362,7 +362,7 @@ int catta_server_dump(CattaServer *s, CattaDumpCallback callback, void* userdata
         if (!(t = catta_record_to_string(e->record)))
             return catta_server_set_errno(s, CATTA_ERR_NO_MEMORY);
 
-        snprintf(ln, sizeof(ln), "%s ; iface=%i proto=%i", t, e->interface, e->protocol);
+        snprintf(ln, sizeof(ln), "%s ; iface=%i proto=%i", t, e->iface, e->protocol);
         catta_free(t);
 
         callback(ln, userdata);
@@ -378,7 +378,7 @@ int catta_server_dump(CattaServer *s, CattaDumpCallback callback, void* userdata
 static CattaEntry *server_add_ptr_internal(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     uint32_t ttl,
@@ -403,7 +403,7 @@ static CattaEntry *server_add_ptr_internal(
     }
 
     r->data.ptr.name = catta_normalize_name_strdup(dest);
-    e = server_add_internal(s, g, interface, protocol, flags, r);
+    e = server_add_internal(s, g, iface, protocol, flags, r);
     catta_record_unref(r);
     return e;
 }
@@ -411,7 +411,7 @@ static CattaEntry *server_add_ptr_internal(
 int catta_server_add_ptr(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     uint32_t ttl,
@@ -422,7 +422,7 @@ int catta_server_add_ptr(
 
     assert(s);
 
-    if (!(e = server_add_ptr_internal(s, g, interface, protocol, flags, ttl, name, dest)))
+    if (!(e = server_add_ptr_internal(s, g, iface, protocol, flags, ttl, name, dest)))
         return catta_server_errno(s);
 
     return CATTA_OK;
@@ -431,7 +431,7 @@ int catta_server_add_ptr(
 int catta_server_add_address(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -445,7 +445,7 @@ int catta_server_add_address(
     assert(s);
     assert(a);
 
-    CATTA_CHECK_VALIDITY(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY(s, CATTA_PROTO_VALID(protocol) && CATTA_PROTO_VALID(a->proto), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY(s, CATTA_FLAGS_VALID(flags,
                                               CATTA_PUBLISH_NO_REVERSE|
@@ -490,7 +490,7 @@ int catta_server_add_address(
         r->data.aaaa.address = a->data.ipv6;
     }
 
-    entry = server_add_internal(s, g, interface, protocol, (flags & ~ CATTA_PUBLISH_NO_REVERSE) | CATTA_PUBLISH_UNIQUE | CATTA_PUBLISH_ALLOW_MULTIPLE, r);
+    entry = server_add_internal(s, g, iface, protocol, (flags & ~ CATTA_PUBLISH_NO_REVERSE) | CATTA_PUBLISH_UNIQUE | CATTA_PUBLISH_ALLOW_MULTIPLE, r);
     catta_record_unref(r);
 
     if (!entry) {
@@ -504,7 +504,7 @@ int catta_server_add_address(
         char reverse_n[CATTA_DOMAIN_NAME_MAX];
         catta_reverse_lookup_name(a, reverse_n, sizeof(reverse_n));
 
-        if (!(reverse = server_add_ptr_internal(s, g, interface, protocol, flags | CATTA_PUBLISH_UNIQUE, CATTA_DEFAULT_TTL_HOST_NAME, reverse_n, name))) {
+        if (!(reverse = server_add_ptr_internal(s, g, iface, protocol, flags | CATTA_PUBLISH_UNIQUE, CATTA_DEFAULT_TTL_HOST_NAME, reverse_n, name))) {
             ret = catta_server_errno(s);
             goto finish;
         }
@@ -525,7 +525,7 @@ finish:
 static CattaEntry *server_add_txt_strlst_nocopy(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     uint32_t ttl,
@@ -544,7 +544,7 @@ static CattaEntry *server_add_txt_strlst_nocopy(
     }
 
     r->data.txt.string_list = strlst;
-    e = server_add_internal(s, g, interface, protocol, flags, r);
+    e = server_add_internal(s, g, iface, protocol, flags, r);
     catta_record_unref(r);
 
     return e;
@@ -569,7 +569,7 @@ static CattaStringList *add_magic_cookie(
 static int server_add_service_strlst_nocopy(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -588,7 +588,7 @@ static int server_add_service_strlst_nocopy(
     assert(type);
     assert(name);
 
-    CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_FLAGS_VALID(flags,
                                                                 CATTA_PUBLISH_NO_COOKIE|
@@ -623,7 +623,7 @@ static int server_add_service_strlst_nocopy(
 
     /* Add service enumeration PTR record */
 
-    if (!(ptr_entry = server_add_ptr_internal(s, g, interface, protocol, 0, CATTA_DEFAULT_TTL, ptr_name, svc_name))) {
+    if (!(ptr_entry = server_add_ptr_internal(s, g, iface, protocol, 0, CATTA_DEFAULT_TTL, ptr_name, svc_name))) {
         ret = catta_server_errno(s);
         goto fail;
     }
@@ -640,7 +640,7 @@ static int server_add_service_strlst_nocopy(
     r->data.srv.port = port;
     r->data.srv.name = h;
     h = NULL;
-    srv_entry = server_add_internal(s, g, interface, protocol, CATTA_PUBLISH_UNIQUE, r);
+    srv_entry = server_add_internal(s, g, iface, protocol, CATTA_PUBLISH_UNIQUE, r);
     catta_record_unref(r);
 
     if (!srv_entry) {
@@ -653,7 +653,7 @@ static int server_add_service_strlst_nocopy(
     if (!(flags & CATTA_PUBLISH_NO_COOKIE))
         strlst = add_magic_cookie(s, strlst);
 
-    txt_entry = server_add_txt_strlst_nocopy(s, g, interface, protocol, CATTA_PUBLISH_UNIQUE, CATTA_DEFAULT_TTL, svc_name, strlst);
+    txt_entry = server_add_txt_strlst_nocopy(s, g, iface, protocol, CATTA_PUBLISH_UNIQUE, CATTA_DEFAULT_TTL, svc_name, strlst);
     strlst = NULL;
 
     if (!txt_entry) {
@@ -663,7 +663,7 @@ static int server_add_service_strlst_nocopy(
 
     /* Add service type enumeration record */
 
-    if (!(enum_entry = server_add_ptr_internal(s, g, interface, protocol, 0, CATTA_DEFAULT_TTL, enum_ptr, ptr_name))) {
+    if (!(enum_entry = server_add_ptr_internal(s, g, iface, protocol, 0, CATTA_DEFAULT_TTL, enum_ptr, ptr_name))) {
         ret = catta_server_errno(s);
         goto fail;
     }
@@ -689,7 +689,7 @@ fail:
 int catta_server_add_service_strlst(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -703,13 +703,13 @@ int catta_server_add_service_strlst(
     assert(type);
     assert(name);
 
-    return server_add_service_strlst_nocopy(s, g, interface, protocol, flags, name, type, domain, host, port, catta_string_list_copy(strlst));
+    return server_add_service_strlst_nocopy(s, g, iface, protocol, flags, name, type, domain, host, port, catta_string_list_copy(strlst));
 }
 
 int catta_server_add_service(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -723,7 +723,7 @@ int catta_server_add_service(
     int ret;
 
     va_start(va, port);
-    ret = server_add_service_strlst_nocopy(s, g, interface, protocol, flags, name, type, domain, host, port, catta_string_list_new_va(va));
+    ret = server_add_service_strlst_nocopy(s, g, iface, protocol, flags, name, type, domain, host, port, catta_string_list_new_va(va));
     va_end(va);
 
     return ret;
@@ -732,7 +732,7 @@ int catta_server_add_service(
 static int server_update_service_txt_strlst_nocopy(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -748,7 +748,7 @@ static int server_update_service_txt_strlst_nocopy(
     assert(type);
     assert(name);
 
-    CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_FLAGS_VALID(flags,
                                                                 CATTA_PUBLISH_NO_COOKIE|
@@ -773,7 +773,7 @@ static int server_update_service_txt_strlst_nocopy(
     if (!(flags & CATTA_PUBLISH_NO_COOKIE))
         strlst = add_magic_cookie(s, strlst);
 
-    e = server_add_txt_strlst_nocopy(s, g, interface, protocol, CATTA_PUBLISH_UNIQUE | CATTA_PUBLISH_UPDATE, CATTA_DEFAULT_TTL, svc_name, strlst);
+    e = server_add_txt_strlst_nocopy(s, g, iface, protocol, CATTA_PUBLISH_UNIQUE | CATTA_PUBLISH_UPDATE, CATTA_DEFAULT_TTL, svc_name, strlst);
     strlst = NULL;
 
     if (!e)
@@ -789,7 +789,7 @@ fail:
 int catta_server_update_service_txt_strlst(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -797,14 +797,14 @@ int catta_server_update_service_txt_strlst(
     const char *domain,
     CattaStringList *strlst) {
 
-    return server_update_service_txt_strlst_nocopy(s, g, interface, protocol, flags, name, type, domain, catta_string_list_copy(strlst));
+    return server_update_service_txt_strlst_nocopy(s, g, iface, protocol, flags, name, type, domain, catta_string_list_copy(strlst));
 }
 
 /** Update the TXT record for a service with the NULL termonate list of strings */
 int catta_server_update_service_txt(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -816,7 +816,7 @@ int catta_server_update_service_txt(
     int ret;
 
     va_start(va, domain);
-    ret = server_update_service_txt_strlst_nocopy(s, g, interface, protocol, flags, name, type, domain, catta_string_list_new_va(va));
+    ret = server_update_service_txt_strlst_nocopy(s, g, iface, protocol, flags, name, type, domain, catta_string_list_new_va(va));
     va_end(va);
 
     return ret;
@@ -825,7 +825,7 @@ int catta_server_update_service_txt(
 int catta_server_add_service_subtype(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -840,7 +840,7 @@ int catta_server_add_service_subtype(
     assert(type);
     assert(subtype);
 
-    CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, CATTA_FLAGS_VALID(flags, CATTA_PUBLISH_USE_MULTICAST|CATTA_PUBLISH_USE_WIDE_AREA), CATTA_ERR_INVALID_FLAGS);
     CATTA_CHECK_VALIDITY_SET_RET_GOTO_FAIL(s, catta_is_valid_service_name(name), CATTA_ERR_INVALID_SERVICE_NAME);
@@ -860,7 +860,7 @@ int catta_server_add_service_subtype(
         goto fail;
     }
 
-    if ((ret = catta_server_add_ptr(s, g, interface, protocol, 0, CATTA_DEFAULT_TTL, ptr_name, svc_name)) < 0)
+    if ((ret = catta_server_add_ptr(s, g, iface, protocol, 0, CATTA_DEFAULT_TTL, ptr_name, svc_name)) < 0)
         goto fail;
 
 fail:
@@ -893,7 +893,7 @@ static void hexstring(char *s, size_t sl, const void *p, size_t pl) {
 static CattaEntry *server_add_dns_server_name(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *domain,
@@ -940,7 +940,7 @@ static CattaEntry *server_add_dns_server_name(
     r->data.srv.weight = 0;
     r->data.srv.port = port;
     r->data.srv.name = n;
-    e = server_add_internal(s, g, interface, protocol, 0, r);
+    e = server_add_internal(s, g, iface, protocol, 0, r);
     catta_record_unref(r);
 
     return e;
@@ -949,7 +949,7 @@ static CattaEntry *server_add_dns_server_name(
 int catta_server_add_dns_server_address(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *domain,
@@ -964,7 +964,7 @@ int catta_server_add_dns_server_address(
     assert(s);
     assert(address);
 
-    CATTA_CHECK_VALIDITY(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY(s, CATTA_PROTO_VALID(protocol) && CATTA_PROTO_VALID(address->proto), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY(s, CATTA_FLAGS_VALID(flags, CATTA_PUBLISH_USE_MULTICAST|CATTA_PUBLISH_USE_WIDE_AREA), CATTA_ERR_INVALID_FLAGS);
     CATTA_CHECK_VALIDITY(s, type == CATTA_DNS_SERVER_UPDATE || type == CATTA_DNS_SERVER_RESOLVE, CATTA_ERR_INVALID_FLAGS);
@@ -992,13 +992,13 @@ int catta_server_add_dns_server_address(
     if (!r)
         return catta_server_set_errno(s, CATTA_ERR_NO_MEMORY);
 
-    a_entry = server_add_internal(s, g, interface, protocol, CATTA_PUBLISH_UNIQUE | CATTA_PUBLISH_ALLOW_MULTIPLE, r);
+    a_entry = server_add_internal(s, g, iface, protocol, CATTA_PUBLISH_UNIQUE | CATTA_PUBLISH_ALLOW_MULTIPLE, r);
     catta_record_unref(r);
 
     if (!a_entry)
         return catta_server_errno(s);
 
-    if (!(s_entry = server_add_dns_server_name(s, g, interface, protocol, flags, domain, type, n, port))) {
+    if (!(s_entry = server_add_dns_server_name(s, g, iface, protocol, flags, domain, type, n, port))) {
         if (!(flags & CATTA_PUBLISH_UPDATE))
             catta_entry_free(s, a_entry);
         return catta_server_errno(s);

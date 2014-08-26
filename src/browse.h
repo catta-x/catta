@@ -36,7 +36,7 @@ struct CattaSRecordBrowser {
     CattaServer *server;
 
     CattaKey *key;
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
     CattaLookupFlags flags;
 

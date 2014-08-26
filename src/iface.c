@@ -50,7 +50,7 @@ void catta_interface_address_update_rrs(CattaInterfaceAddress *a, int remove_rrs
 
     if (m->list_complete &&
         catta_interface_address_is_relevant(a) &&
-        catta_interface_is_relevant(a->interface) &&
+        catta_interface_is_relevant(a->iface) &&
         !remove_rrs &&
         m->server->config.publish_addresses &&
         (m->server->state == CATTA_SERVER_RUNNING ||
@@ -67,13 +67,13 @@ void catta_interface_address_update_rrs(CattaInterfaceAddress *a, int remove_rrs
             char t[CATTA_ADDRESS_STR_MAX];
             CattaProtocol p;
 
-            p = (a->interface->protocol == CATTA_PROTO_INET && m->server->config.publish_a_on_ipv6) ||
-                (a->interface->protocol == CATTA_PROTO_INET6 && m->server->config.publish_aaaa_on_ipv4) ? CATTA_PROTO_UNSPEC : a->interface->protocol;
+            p = (a->iface->protocol == CATTA_PROTO_INET && m->server->config.publish_a_on_ipv6) ||
+                (a->iface->protocol == CATTA_PROTO_INET6 && m->server->config.publish_aaaa_on_ipv4) ? CATTA_PROTO_UNSPEC : a->iface->protocol;
 
             catta_address_snprint(t, sizeof(t), &a->address);
-            catta_log_info("Registering new address record for %s on %s.%s.", t, a->interface->hardware->name, p == CATTA_PROTO_UNSPEC ? "*" : catta_proto_to_string(p));
+            catta_log_info("Registering new address record for %s on %s.%s.", t, a->iface->hardware->name, p == CATTA_PROTO_UNSPEC ? "*" : catta_proto_to_string(p));
 
-            if (catta_server_add_address(m->server, a->entry_group, a->interface->hardware->index, p, m->server->config.publish_no_reverse ? CATTA_PUBLISH_NO_REVERSE : 0, NULL, &a->address) < 0) {
+            if (catta_server_add_address(m->server, a->entry_group, a->iface->hardware->index, p, m->server->config.publish_no_reverse ? CATTA_PUBLISH_NO_REVERSE : 0, NULL, &a->address) < 0) {
                 catta_log_warn(__FILE__": catta_server_add_address() failed: %s", catta_strerror(m->server->error));
                 catta_s_entry_group_free(a->entry_group);
                 a->entry_group = NULL;
@@ -90,7 +90,7 @@ void catta_interface_address_update_rrs(CattaInterfaceAddress *a, int remove_rrs
             char t[CATTA_ADDRESS_STR_MAX];
             catta_address_snprint(t, sizeof(t), &a->address);
 
-            catta_log_info("Withdrawing address record for %s on %s.", t, a->interface->hardware->name);
+            catta_log_info("Withdrawing address record for %s on %s.", t, a->iface->hardware->name);
 
             if (catta_s_entry_group_get_state(a->entry_group) == CATTA_ENTRY_GROUP_REGISTERING &&
                 m->server->state == CATTA_SERVER_REGISTERING)
@@ -260,15 +260,15 @@ static int interface_mdns_mcast_rejoin(CattaInterface *i) {
 
 void catta_interface_address_free(CattaInterfaceAddress *a) {
     assert(a);
-    assert(a->interface);
+    assert(a->iface);
 
     catta_interface_address_update_rrs(a, 1);
-    CATTA_LLIST_REMOVE(CattaInterfaceAddress, address, a->interface->addresses, a);
+    CATTA_LLIST_REMOVE(CattaInterfaceAddress, address, a->iface->addresses, a);
 
     if (a->entry_group)
         catta_s_entry_group_free(a->entry_group);
 
-    interface_mdns_mcast_rejoin(a->interface);
+    interface_mdns_mcast_rejoin(a->iface);
 
     catta_free(a);
 }
@@ -299,7 +299,7 @@ void catta_interface_free(CattaInterface *i, int send_goodbye) {
     catta_probe_scheduler_free(i->probe_scheduler);
     catta_cache_free(i->cache);
 
-    CATTA_LLIST_REMOVE(CattaInterface, interface, i->monitor->interfaces, i);
+    CATTA_LLIST_REMOVE(CattaInterface, iface, i->monitor->interfaces, i);
     CATTA_LLIST_REMOVE(CattaInterface, by_hardware, i->hardware->interfaces, i);
 
     catta_free(i);
@@ -354,7 +354,7 @@ CattaInterface* catta_interface_new(CattaInterfaceMonitor *m, CattaHwInterface *
         goto fail; /* OOM */
 
     CATTA_LLIST_PREPEND(CattaInterface, by_hardware, hw->interfaces, i);
-    CATTA_LLIST_PREPEND(CattaInterface, interface, m->interfaces, i);
+    CATTA_LLIST_PREPEND(CattaInterface, iface, m->interfaces, i);
 
     return i;
 
@@ -416,7 +416,7 @@ CattaInterfaceAddress *catta_interface_address_new(CattaInterfaceMonitor *m, Cat
     if (!(a = catta_new(CattaInterfaceAddress, 1)))
         return NULL;
 
-    a->interface = i;
+    a->iface = i;
     a->monitor = m;
     a->address = *addr;
     a->prefix_len = prefix_len;
@@ -482,7 +482,7 @@ void catta_interface_monitor_check_relevant(CattaInterfaceMonitor *m) {
 
     assert(m);
 
-    for (i = m->interfaces; i; i = i->interface_next)
+    for (i = m->interfaces; i; i = i->iface_next)
         catta_interface_check_relevant(i);
 }
 
@@ -647,7 +647,7 @@ int catta_dump_caches(CattaInterfaceMonitor *m, CattaDumpCallback callback, void
     CattaInterface *i;
     assert(m);
 
-    for (i = m->interfaces; i; i = i->interface_next) {
+    for (i = m->interfaces; i; i = i->iface_next) {
         if (catta_interface_is_relevant(i)) {
             char ln[256];
             snprintf(ln, sizeof(ln), ";;; INTERFACE %s.%s ;;;", i->hardware->name, catta_proto_to_string(i->protocol));
@@ -706,7 +706,7 @@ int catta_interface_address_is_relevant(CattaInterfaceAddress *a) {
 
     /* Publish link-local and deprecated IP addresses only if they are
      * the only ones on the link */
-    for (b = a->interface->addresses; b; b = b->address_next) {
+    for (b = a->iface->addresses; b; b = b->address_next) {
         if (b == a)
             continue;
 
@@ -729,32 +729,32 @@ int catta_interface_match(CattaInterface *i, CattaIfIndex idx, CattaProtocol pro
     return 1;
 }
 
-void catta_interface_monitor_walk(CattaInterfaceMonitor *m, CattaIfIndex interface, CattaProtocol protocol, CattaInterfaceMonitorWalkCallback callback, void* userdata) {
+void catta_interface_monitor_walk(CattaInterfaceMonitor *m, CattaIfIndex iface, CattaProtocol protocol, CattaInterfaceMonitorWalkCallback callback, void* userdata) {
     assert(m);
     assert(callback);
 
-    if (interface != CATTA_IF_UNSPEC) {
+    if (iface != CATTA_IF_UNSPEC) {
         if (protocol != CATTA_PROTO_UNSPEC) {
             CattaInterface *i;
 
-            if ((i = catta_interface_monitor_get_interface(m, interface, protocol)))
+            if ((i = catta_interface_monitor_get_interface(m, iface, protocol)))
                 callback(m, i, userdata);
 
         } else {
             CattaHwInterface *hw;
             CattaInterface *i;
 
-            if ((hw = catta_interface_monitor_get_hw_interface(m, interface)))
+            if ((hw = catta_interface_monitor_get_hw_interface(m, iface)))
                 for (i = hw->interfaces; i; i = i->by_hardware_next)
-                    if (catta_interface_match(i, interface, protocol))
+                    if (catta_interface_match(i, iface, protocol))
                         callback(m, i, userdata);
         }
 
     } else {
         CattaInterface *i;
 
-        for (i = m->interfaces; i; i = i->interface_next)
-            if (catta_interface_match(i, interface, protocol))
+        for (i = m->interfaces; i; i = i->iface_next)
+            if (catta_interface_match(i, iface, protocol))
                 callback(m, i, userdata);
     }
 }
@@ -766,7 +766,7 @@ int catta_address_is_local(CattaInterfaceMonitor *m, const CattaAddress *a) {
     assert(m);
     assert(a);
 
-    for (i = m->interfaces; i; i = i->interface_next)
+    for (i = m->interfaces; i; i = i->iface_next)
         for (ia = i->addresses; ia; ia = ia->address_next)
             if (catta_address_cmp(a, &ia->address) == 0)
                 return 1;
@@ -850,7 +850,7 @@ CattaIfIndex catta_find_interface_for_address(CattaInterfaceMonitor *m, const Ca
      * attached. This is sometimes ambiguous, but we have to live with
      * it. */
 
-    for (i = m->interfaces; i; i = i->interface_next) {
+    for (i = m->interfaces; i; i = i->iface_next) {
         CattaInterfaceAddress *ai;
 
         if (i->protocol != a->proto)

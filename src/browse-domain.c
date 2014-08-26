@@ -57,7 +57,7 @@ static void inc_ref(CattaSDomainBrowser *b) {
 
 static void record_browser_callback(
     CattaSRecordBrowser*rr,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -96,7 +96,7 @@ static void record_browser_callback(
 
     }
 
-    b->callback(b, interface, protocol, event, n, flags, b->userdata);
+    b->callback(b, iface, protocol, event, n, flags, b->userdata);
 }
 
 static void defer_callback(CattaTimeEvent *e, void *userdata) {
@@ -137,7 +137,7 @@ static void defer_callback(CattaTimeEvent *e, void *userdata) {
 
 CattaSDomainBrowser *catta_s_domain_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *domain,
     CattaDomainBrowserType type,
@@ -161,7 +161,7 @@ CattaSDomainBrowser *catta_s_domain_browser_new(
     assert(server);
     assert(callback);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, type < CATTA_DOMAIN_BROWSER_MAX, CATTA_ERR_INVALID_FLAGS);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, !domain || catta_is_valid_domain_name(domain), CATTA_ERR_INVALID_DOMAIN_NAME);
@@ -196,7 +196,7 @@ CattaSDomainBrowser *catta_s_domain_browser_new(
         goto fail;
     }
 
-    if (!(b->record_browser = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, b)))
+    if (!(b->record_browser = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, b)))
         goto fail;
 
     catta_key_unref(k);

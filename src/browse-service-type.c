@@ -44,7 +44,7 @@ struct CattaSServiceTypeBrowser {
 
 static void record_browser_callback(
     CattaSRecordBrowser*rr,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -69,14 +69,14 @@ static void record_browser_callback(
             return;
         }
 
-        b->callback(b, interface, protocol, event, type, domain, flags, b->userdata);
+        b->callback(b, iface, protocol, event, type, domain, flags, b->userdata);
     } else
-        b->callback(b, interface, protocol, event, NULL, b->domain_name, flags, b->userdata);
+        b->callback(b, iface, protocol, event, NULL, b->domain_name, flags, b->userdata);
 }
 
 CattaSServiceTypeBrowser *catta_s_service_type_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *domain,
     CattaLookupFlags flags,
@@ -91,7 +91,7 @@ CattaSServiceTypeBrowser *catta_s_service_type_browser_new(
     assert(server);
     assert(callback);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, !domain || catta_is_valid_domain_name(domain), CATTA_ERR_INVALID_DOMAIN_NAME);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_FLAGS_VALID(flags, CATTA_LOOKUP_USE_WIDE_AREA|CATTA_LOOKUP_USE_MULTICAST), CATTA_ERR_INVALID_FLAGS);
@@ -126,7 +126,7 @@ CattaSServiceTypeBrowser *catta_s_service_type_browser_new(
         goto fail;
     }
 
-    if (!(b->record_browser = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, b)))
+    if (!(b->record_browser = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, b)))
         goto fail;
 
     catta_key_unref(k);

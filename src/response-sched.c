@@ -66,7 +66,7 @@ struct CattaResponseJob {
 };
 
 struct CattaResponseScheduler {
-    CattaInterface *interface;
+    CattaInterface *iface;
     CattaTimeEventQueue *time_event_queue;
 
     CATTA_LLIST_HEAD(CattaResponseJob, jobs);
@@ -160,7 +160,7 @@ CattaResponseScheduler *catta_response_scheduler_new(CattaInterface *i) {
         return NULL;
     }
 
-    s->interface = i;
+    s->iface = i;
     s->time_event_queue = i->monitor->server->time_event_queue;
 
     CATTA_LLIST_HEAD_INIT(CattaResponseJob, s->jobs);
@@ -208,7 +208,7 @@ static int packet_add_response_job(CattaResponseScheduler *s, CattaDnsPacket *p,
 
     /* Ok, this record will definitely be sent, so schedule the
      * auxilliary packets, too */
-    catta_server_enumerate_aux_records(s->interface->monitor->server, s->interface, rj->record, enumerate_aux_records_callback, rj);
+    catta_server_enumerate_aux_records(s->iface->monitor->server, s->iface, rj->record, enumerate_aux_records_callback, rj);
     job_mark_done(s, rj);
 
     return 1;
@@ -221,7 +221,7 @@ static void send_response_packet(CattaResponseScheduler *s, CattaResponseJob *rj
     assert(s);
     assert(rj);
 
-    if (!(p = catta_dns_packet_new_response(s->interface->hardware->mtu, 1)))
+    if (!(p = catta_dns_packet_new_response(s->iface->hardware->mtu, 1)))
         return; /* OOM */
     n = 1;
 
@@ -258,7 +258,7 @@ static void send_response_packet(CattaResponseScheduler *s, CattaResponseJob *rj
     }
 
     catta_dns_packet_set_field(p, CATTA_DNS_FIELD_ANCOUNT, n);
-    catta_interface_send_packet(s->interface, p);
+    catta_interface_send_packet(s->iface, p);
     catta_dns_packet_free(p);
 }
 

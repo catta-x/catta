@@ -55,7 +55,7 @@ CATTA_C_DECL_BEGIN
 /** Callback prototype for CattaSRecordBrowser events */
 typedef void (*CattaSRecordBrowserCallback)(
     CattaSRecordBrowser *b,          /**< The CattaSRecordBrowser object that is emitting this callback */
-    CattaIfIndex interface,          /**< Logical OS network interface number the record was found on */
+    CattaIfIndex iface,          /**< Logical OS network interface number the record was found on */
     CattaProtocol protocol,          /**< Protocol number the record was found. */
     CattaBrowserEvent event,         /**< Browsing event, either CATTA_BROWSER_NEW or CATTA_BROWSER_REMOVE */
     CattaRecord *record,             /**< The record that was found */
@@ -65,7 +65,7 @@ typedef void (*CattaSRecordBrowserCallback)(
 /** Create a new browsing object for arbitrary RRs */
 CattaSRecordBrowser *catta_s_record_browser_new(
     CattaServer *server,                    /**< The server object to which attach this query */
-    CattaIfIndex interface,                 /**< Logical OS interface number where to look for the records, or CATTA_IF_UNSPEC to look on interfaces */
+    CattaIfIndex iface,                 /**< Logical OS interface number where to look for the records, or CATTA_IF_UNSPEC to look on interfaces */
     CattaProtocol protocol,                 /**< Protocol number to use when looking for the record, or CATTA_PROTO_UNSPEC to look on all protocols */
     CattaKey *key,                          /**< The search key */
     CattaLookupFlags flags,                 /**< Lookup flags. Must have set either CATTA_LOOKUP_FORCE_WIDE_AREA or CATTA_LOOKUP_FORCE_MULTICAST, since domain based detection is not available here. */
@@ -78,7 +78,7 @@ void catta_s_record_browser_free(CattaSRecordBrowser *b);
 /** Callback prototype for CattaSHostNameResolver events */
 typedef void (*CattaSHostNameResolverCallback)(
     CattaSHostNameResolver *r,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaResolverEvent event, /**< Resolving event */
     const char *host_name,   /**< Host name which should be resolved. May differ in case from the query */
@@ -89,7 +89,7 @@ typedef void (*CattaSHostNameResolverCallback)(
 /** Create an CattaSHostNameResolver object for resolving a host name to an adddress. See CattaSRecordBrowser for more info on the paramters. */
 CattaSHostNameResolver *catta_s_host_name_resolver_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *host_name,                  /**< The host name to look for */
     CattaProtocol aprotocol,                /**< The address family of the desired address or CATTA_PROTO_UNSPEC if doesn't matter. */
@@ -103,7 +103,7 @@ void catta_s_host_name_resolver_free(CattaSHostNameResolver *r);
 /** Callback prototype for CattaSAddressResolver events */
 typedef void (*CattaSAddressResolverCallback)(
     CattaSAddressResolver *r,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaResolverEvent event,
     const CattaAddress *a,
@@ -114,7 +114,7 @@ typedef void (*CattaSAddressResolverCallback)(
 /** Create an CattaSAddressResolver object. See CattaSRecordBrowser for more info on the paramters. */
 CattaSAddressResolver *catta_s_address_resolver_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const CattaAddress *address,
     CattaLookupFlags flags,                 /**< Lookup flags. */
@@ -127,7 +127,7 @@ void catta_s_address_resolver_free(CattaSAddressResolver *r);
 /** Callback prototype for CattaSDomainBrowser events */
 typedef void (*CattaSDomainBrowserCallback)(
     CattaSDomainBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     const char *domain,
@@ -137,7 +137,7 @@ typedef void (*CattaSDomainBrowserCallback)(
 /** Create a new CattaSDomainBrowser object */
 CattaSDomainBrowser *catta_s_domain_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *domain,
     CattaDomainBrowserType type,
@@ -151,7 +151,7 @@ void catta_s_domain_browser_free(CattaSDomainBrowser *b);
 /** Callback prototype for CattaSServiceTypeBrowser events */
 typedef void (*CattaSServiceTypeBrowserCallback)(
     CattaSServiceTypeBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     const char *type,
@@ -162,7 +162,7 @@ typedef void (*CattaSServiceTypeBrowserCallback)(
 /** Create a new CattaSServiceTypeBrowser object. */
 CattaSServiceTypeBrowser *catta_s_service_type_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *domain,
     CattaLookupFlags flags,                 /**< Lookup flags. */
@@ -175,7 +175,7 @@ void catta_s_service_type_browser_free(CattaSServiceTypeBrowser *b);
 /** Callback prototype for CattaSServiceBrowser events */
 typedef void (*CattaSServiceBrowserCallback)(
     CattaSServiceBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     const char *name     /**< Service name, e.g. "Lennart's Files" */,
@@ -187,7 +187,7 @@ typedef void (*CattaSServiceBrowserCallback)(
 /** Create a new CattaSServiceBrowser object. */
 CattaSServiceBrowser *catta_s_service_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *service_type /** DNS-SD service type, e.g. "_http._tcp" */,
     const char *domain,
@@ -201,7 +201,7 @@ void catta_s_service_browser_free(CattaSServiceBrowser *b);
 /** Callback prototype for CattaSServiceResolver events */
 typedef void (*CattaSServiceResolverCallback)(
     CattaSServiceResolver *r,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaResolverEvent event,  /**< Is CATTA_RESOLVER_FOUND when the service was resolved successfully, and everytime it changes. Is CATTA_RESOLVER_TIMOUT when the service failed to resolve or disappeared. */
     const char *name,       /**< Service name */
@@ -217,7 +217,7 @@ typedef void (*CattaSServiceResolverCallback)(
 /** Create a new CattaSServiceResolver object. The specified callback function will be called with the resolved service data. */
 CattaSServiceResolver *catta_s_service_resolver_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *name,
     const char *type,

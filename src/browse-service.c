@@ -45,7 +45,7 @@ struct CattaSServiceBrowser {
 
 static void record_browser_callback(
     CattaSRecordBrowser*rr,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -65,7 +65,7 @@ static void record_browser_callback(
 
         assert(record->key->type == CATTA_DNS_TYPE_PTR);
 
-        if (event == CATTA_BROWSER_NEW && catta_server_is_service_local(b->server, interface, protocol, record->data.ptr.name))
+        if (event == CATTA_BROWSER_NEW && catta_server_is_service_local(b->server, iface, protocol, record->data.ptr.name))
             flags |= CATTA_LOOKUP_RESULT_LOCAL;
 
         if (catta_service_name_split(record->data.ptr.name, service, sizeof(service), type, sizeof(type), domain, sizeof(domain)) < 0) {
@@ -73,16 +73,16 @@ static void record_browser_callback(
             return;
         }
 
-        b->callback(b, interface, protocol, event, service, type, domain, flags, b->userdata);
+        b->callback(b, iface, protocol, event, service, type, domain, flags, b->userdata);
 
     } else
-        b->callback(b, interface, protocol, event, NULL, b->service_type, b->domain_name, flags, b->userdata);
+        b->callback(b, iface, protocol, event, NULL, b->service_type, b->domain_name, flags, b->userdata);
 
 }
 
 CattaSServiceBrowser *catta_s_service_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *service_type,
     const char *domain,
@@ -99,7 +99,7 @@ CattaSServiceBrowser *catta_s_service_browser_new(
     assert(callback);
     assert(service_type);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, !domain || catta_is_valid_domain_name(domain), CATTA_ERR_INVALID_DOMAIN_NAME);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_FLAGS_VALID(flags, CATTA_LOOKUP_USE_WIDE_AREA|CATTA_LOOKUP_USE_MULTICAST), CATTA_ERR_INVALID_FLAGS);
@@ -137,7 +137,7 @@ CattaSServiceBrowser *catta_s_service_browser_new(
         goto fail;
     }
 
-    if (!(b->record_browser = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, b)))
+    if (!(b->record_browser = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, b)))
         goto fail;
 
     catta_key_unref(k);

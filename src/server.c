@@ -506,7 +506,7 @@ static void reflect_response(CattaServer *s, CattaInterface *i, CattaRecord *r, 
     if (!s->config.enable_reflector)
         return;
 
-    for (j = s->monitor->interfaces; j; j = j->interface_next)
+    for (j = s->monitor->interfaces; j; j = j->iface_next)
         if (j != i && (s->config.reflect_ipv || j->protocol == i->protocol))
             catta_interface_post_response(j, r, flush_cache, NULL, 1);
 }
@@ -541,7 +541,7 @@ static void reflect_query(CattaServer *s, CattaInterface *i, CattaKey *k) {
     if (!s->config.enable_reflector)
         return;
 
-    for (j = s->monitor->interfaces; j; j = j->interface_next)
+    for (j = s->monitor->interfaces; j; j = j->iface_next)
         if (j != i && (s->config.reflect_ipv || j->protocol == i->protocol)) {
             /* Post the query to other networks */
             catta_interface_post_query(j, k, 1, NULL);
@@ -563,7 +563,7 @@ static void reflect_probe(CattaServer *s, CattaInterface *i, CattaRecord *r) {
     if (!s->config.enable_reflector)
         return;
 
-    for (j = s->monitor->interfaces; j; j = j->interface_next)
+    for (j = s->monitor->interfaces; j; j = j->iface_next)
         if (j != i && (s->config.reflect_ipv || j->protocol == i->protocol))
             catta_interface_post_probe(j, r, 1);
 }
@@ -810,7 +810,7 @@ static void reflect_legacy_unicast_query_packet(CattaServer *s, CattaDnsPacket *
     slot->original_id = catta_dns_packet_get_field(p, CATTA_DNS_FIELD_ID);
     slot->address = *a;
     slot->port = port;
-    slot->interface = i->hardware->index;
+    slot->iface = i->hardware->index;
 
     catta_elapse_time(&slot->elapse_time, 2000, 0);
     slot->time_event = catta_time_event_new(s->time_event_queue, &slot->elapse_time, legacy_unicast_reflect_slot_timeout, slot);
@@ -818,7 +818,7 @@ static void reflect_legacy_unicast_query_packet(CattaServer *s, CattaDnsPacket *
     /* Patch the packet with our new locally generatet id */
     catta_dns_packet_set_field(p, CATTA_DNS_FIELD_ID, slot->id);
 
-    for (j = s->monitor->interfaces; j; j = j->interface_next)
+    for (j = s->monitor->interfaces; j; j = j->iface_next)
         if (j->announcing &&
             j != i &&
             (s->config.reflect_ipv || j->protocol == i->protocol)) {
@@ -1001,7 +1001,7 @@ static void dispatch_legacy_unicast_packet(CattaServer *s, CattaDnsPacket *p) {
         return;
     }
 
-    if (!(j = catta_interface_monitor_get_interface(s->monitor, slot->interface, slot->address.proto)) ||
+    if (!(j = catta_interface_monitor_get_interface(s->monitor, slot->iface, slot->address.proto)) ||
         !j->announcing)
         return;
 
@@ -1682,7 +1682,7 @@ uint32_t catta_server_get_local_service_cookie(CattaServer *s) {
     return s->local_service_cookie;
 }
 
-static CattaEntry *find_entry(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, CattaKey *key) {
+static CattaEntry *find_entry(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, CattaKey *key) {
     CattaEntry *e;
 
     assert(s);
@@ -1690,7 +1690,7 @@ static CattaEntry *find_entry(CattaServer *s, CattaIfIndex interface, CattaProto
 
     for (e = catta_hashmap_lookup(s->entries_by_key, key); e; e = e->by_key_next)
 
-        if ((e->interface == interface || e->interface <= 0 || interface <= 0) &&
+        if ((e->iface == iface || e->iface <= 0 || iface <= 0) &&
             (e->protocol == protocol || e->protocol == CATTA_PROTO_UNSPEC || protocol == CATTA_PROTO_UNSPEC) &&
             (!e->group || e->group->state == CATTA_ENTRY_GROUP_ESTABLISHED || e->group->state == CATTA_ENTRY_GROUP_REGISTERING))
 
@@ -1699,7 +1699,7 @@ static CattaEntry *find_entry(CattaServer *s, CattaIfIndex interface, CattaProto
     return NULL;
 }
 
-int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, const char *name, const char *type, const char *domain, CattaSEntryGroup** ret_group) {
+int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, const char *name, const char *type, const char *domain, CattaSEntryGroup** ret_group) {
     CattaKey *key = NULL;
     CattaEntry *e;
     int ret;
@@ -1710,7 +1710,7 @@ int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex interface, Ca
     assert(type);
     assert(ret_group);
 
-    CATTA_CHECK_VALIDITY(s, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY(s, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY(s, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY(s, catta_is_valid_service_name(name), CATTA_ERR_INVALID_SERVICE_NAME);
     CATTA_CHECK_VALIDITY(s, catta_is_valid_service_type_strict(type), CATTA_ERR_INVALID_SERVICE_TYPE);
@@ -1722,7 +1722,7 @@ int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex interface, Ca
     if (!(key = catta_key_new(n, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_SRV)))
         return catta_server_set_errno(s, CATTA_ERR_NO_MEMORY);
 
-    e = find_entry(s, interface, protocol, key);
+    e = find_entry(s, iface, protocol, key);
     catta_key_unref(key);
 
     if (e) {
@@ -1733,7 +1733,7 @@ int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex interface, Ca
     return catta_server_set_errno(s, CATTA_ERR_NOT_FOUND);
 }
 
-int catta_server_is_service_local(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, const char *name) {
+int catta_server_is_service_local(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, const char *name) {
     CattaKey *key = NULL;
     CattaEntry *e;
 
@@ -1746,7 +1746,7 @@ int catta_server_is_service_local(CattaServer *s, CattaIfIndex interface, CattaP
     if (!(key = catta_key_new(name, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_SRV)))
         return 0;
 
-    e = find_entry(s, interface, protocol, key);
+    e = find_entry(s, iface, protocol, key);
     catta_key_unref(key);
 
     if (!e)
@@ -1755,7 +1755,7 @@ int catta_server_is_service_local(CattaServer *s, CattaIfIndex interface, CattaP
     return catta_domain_equal(s->host_name_fqdn, e->record->data.srv.name);
 }
 
-int catta_server_is_record_local(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, CattaRecord *record) {
+int catta_server_is_record_local(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, CattaRecord *record) {
     CattaEntry *e;
 
     assert(s);
@@ -1763,7 +1763,7 @@ int catta_server_is_record_local(CattaServer *s, CattaIfIndex interface, CattaPr
 
     for (e = catta_hashmap_lookup(s->entries_by_key, record->key); e; e = e->by_key_next)
 
-        if ((e->interface == interface || e->interface <= 0 || interface <= 0) &&
+        if ((e->iface == iface || e->iface <= 0 || iface <= 0) &&
             (e->protocol == protocol || e->protocol == CATTA_PROTO_UNSPEC || protocol == CATTA_PROTO_UNSPEC) &&
             (!e->group || e->group->state == CATTA_ENTRY_GROUP_ESTABLISHED || e->group->state == CATTA_ENTRY_GROUP_REGISTERING) &&
             catta_record_equal_no_ttl(record, e->record))

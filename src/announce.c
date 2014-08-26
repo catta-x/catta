@@ -41,7 +41,7 @@ static void remove_announcer(CattaServer *s, CattaAnnouncer *a) {
     if (a->time_event)
         catta_time_event_free(a->time_event);
 
-    CATTA_LLIST_REMOVE(CattaAnnouncer, by_interface, a->interface->announcers, a);
+    CATTA_LLIST_REMOVE(CattaAnnouncer, by_interface, a->iface->announcers, a);
     CATTA_LLIST_REMOVE(CattaAnnouncer, by_entry, a->entry->announcers, a);
 
     catta_free(a);
@@ -139,7 +139,7 @@ static void next_state(CattaAnnouncer *a) {
         } else {
             struct timeval tv;
 
-            catta_interface_post_probe(a->interface, a->entry->record, 0);
+            catta_interface_post_probe(a->iface, a->entry->record, 0);
 
             catta_elapse_time(&tv, CATTA_PROBE_INTERVAL_MSEC, 0);
             set_timeout(a, &tv);
@@ -151,11 +151,11 @@ static void next_state(CattaAnnouncer *a) {
 
         if (a->entry->flags & CATTA_PUBLISH_UNIQUE)
             /* Send the whole rrset at once */
-            catta_server_prepare_matching_responses(a->server, a->interface, a->entry->record->key, 0);
+            catta_server_prepare_matching_responses(a->server, a->iface, a->entry->record->key, 0);
         else
-            catta_server_prepare_response(a->server, a->interface, a->entry, 0, 0);
+            catta_server_prepare_response(a->server, a->iface, a->entry, 0, 0);
 
-        catta_server_generate_response(a->server, a->interface, NULL, NULL, 0, 0, 0);
+        catta_server_generate_response(a->server, a->iface, NULL, NULL, 0, 0, 0);
 
         if (++a->n_iteration >= 4) {
             /* Announcing done */
@@ -189,7 +189,7 @@ static CattaAnnouncer *get_announcer(CattaServer *s, CattaEntry *e, CattaInterfa
     assert(i);
 
     for (a = e->announcers; a; a = a->by_entry_next)
-        if (a->interface == i)
+        if (a->iface == i)
             return a;
 
     return NULL;
@@ -236,7 +236,7 @@ static void new_announcer(CattaServer *s, CattaInterface *i, CattaEntry *e) {
     assert(e);
     assert(!e->dead);
 
-    if (!catta_interface_match(i, e->interface, e->protocol) || !i->announcing || !catta_entry_is_commited(e))
+    if (!catta_interface_match(i, e->iface, e->protocol) || !i->announcing || !catta_entry_is_commited(e))
         return;
 
     /* We don't want duplicate announcers */
@@ -249,7 +249,7 @@ static void new_announcer(CattaServer *s, CattaInterface *i, CattaEntry *e) {
     }
 
     a->server = s;
-    a->interface = i;
+    a->iface = i;
     a->entry = e;
     a->time_event = NULL;
 
@@ -289,7 +289,7 @@ void catta_announce_entry(CattaServer *s, CattaEntry *e) {
     assert(e);
     assert(!e->dead);
 
-    catta_interface_monitor_walk(s->monitor, e->interface, e->protocol, announce_walk_callback, e);
+    catta_interface_monitor_walk(s->monitor, e->iface, e->protocol, announce_walk_callback, e);
 }
 
 void catta_announce_group(CattaServer *s, CattaSEntryGroup *g) {
@@ -395,7 +395,7 @@ static void send_goodbye_callback(CattaInterfaceMonitor *m, CattaInterface *i, v
     assert(e);
     assert(!e->dead);
 
-    if (!catta_interface_match(i, e->interface, e->protocol))
+    if (!catta_interface_match(i, e->iface, e->protocol))
         return;
 
     if (e->flags & CATTA_PUBLISH_NO_ANNOUNCE)
@@ -488,7 +488,7 @@ void catta_reannounce_entry(CattaServer *s, CattaEntry *e) {
     assert(e);
     assert(!e->dead);
 
-    catta_interface_monitor_walk(s->monitor, e->interface, e->protocol, reannounce_walk_callback, e);
+    catta_interface_monitor_walk(s->monitor, e->iface, e->protocol, reannounce_walk_callback, e);
 }
 
 void catta_goodbye_interface(CattaServer *s, CattaInterface *i, int send_goodbye, int remove) {
