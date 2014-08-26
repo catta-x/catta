@@ -23,7 +23,7 @@ AC_INIT([catta],[0.1],[])
 AC_CONFIG_SRCDIR([src/server.c])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([config.h])
-AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules tar-pax])
+AM_INIT_AUTOMAKE([foreign 1.11 -Wall -Wno-portability silent-rules tar-pax subdir-objects])
 
 AC_SUBST(PACKAGE_URL, [http://github.com/everbase/catta/])
 

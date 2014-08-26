@@ -18,7 +18,7 @@
 AM_CFLAGS=-I$(top_srcdir)/include
 
 if WINDOWS
-AM_CFLAGS += -I$(top_srcdir)/compat/windows/include
+AM_CFLAGS += -Icompat/windows/include
 endif
 
 # This cool debug trap works on i386/gcc only
@@ -82,6 +82,12 @@ else
 libcatta_la_SOURCES += \
 	iface-none.c
 endif
+endif
+
+if WINDOWS
+libcatta_la_SOURCES += \
+	compat/windows/wincompat.c \
+	compat/windows/wincompat.h
 endif
 
 libcatta_la_CFLAGS = $(AM_CFLAGS) $(PTHREAD_CFLAGS)

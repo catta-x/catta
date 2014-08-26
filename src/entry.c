@@ -30,7 +30,6 @@
 
 #include <arpa/inet.h>
 
-#include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
