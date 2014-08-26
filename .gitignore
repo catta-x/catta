@@ -26,4 +26,6 @@ ltmain.sh
 missing
 stamp-h1
 .*.swp
+.*.swo
 test-driver
+*.exe
