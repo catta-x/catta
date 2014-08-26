@@ -364,7 +364,7 @@ int catta_open_socket_ipv4(int no_reuse) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }
@@ -434,7 +434,7 @@ int catta_open_socket_ipv6(int no_reuse) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }
@@ -942,7 +942,7 @@ int catta_open_unicast_socket_ipv4(void) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }
@@ -987,7 +987,7 @@ int catta_open_unicast_socket_ipv6(void) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }

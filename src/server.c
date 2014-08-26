@@ -1515,14 +1515,14 @@ void catta_server_free(CattaServer* s) {
     /* Free sockets */
 
     if (s->fd_ipv4 >= 0)
-        close(s->fd_ipv4);
+        closesocket(s->fd_ipv4);
     if (s->fd_ipv6 >= 0)
-        close(s->fd_ipv6);
+        closesocket(s->fd_ipv6);
 
     if (s->fd_legacy_unicast_ipv4 >= 0)
-        close(s->fd_legacy_unicast_ipv4);
+        closesocket(s->fd_legacy_unicast_ipv4);
     if (s->fd_legacy_unicast_ipv6 >= 0)
-        close(s->fd_legacy_unicast_ipv6);
+        closesocket(s->fd_legacy_unicast_ipv6);
 
     /* Free other stuff */
 

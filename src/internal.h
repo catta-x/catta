@@ -48,6 +48,10 @@ typedef struct CattaEntry CattaEntry;
 #define CATTA_RR_HOLDOFF_MSEC_RATE_LIMIT 20000
 #define CATTA_RR_RATE_LIMIT_COUNT 15
 
+#ifndef _WIN32
+#define closesocket close
+#endif
+
 typedef struct CattaLegacyUnicastReflectSlot CattaLegacyUnicastReflectSlot;
 
 struct CattaLegacyUnicastReflectSlot {
