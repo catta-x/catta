@@ -17,6 +17,10 @@
 
 AM_CFLAGS=-I$(top_srcdir)/include
 
+if WINDOWS
+AM_CFLAGS += -I$(top_srcdir)/compat/windows/include
+endif
+
 # This cool debug trap works on i386/gcc only
 AM_CFLAGS+='-DDEBUG_TRAP=__asm__("int $$3")'
 

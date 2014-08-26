@@ -55,6 +55,10 @@ if test x"$ac_cv_prog_cc_c99" = x"no"; then
     AC_MSG_ERROR([C99 support is required])
 fi
 
+# Windows stuff
+AC_CHECK_DECL(_WIN32)
+AM_CONDITIONAL([WINDOWS], [ test "x$ac_cv_have_decl__WIN32" = "xyes" ])
+
 # -fstack-protector
 AC_ARG_ENABLE([stack-protector],
     [AS_HELP_STRING([--disable-stack-protector],
