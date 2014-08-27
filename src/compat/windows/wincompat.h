@@ -11,9 +11,6 @@
 #include <ws2tcpip.h>
 
 
-typedef int socklen_t;
-
-
 struct utsname {
    char sysname[9];    /* Operating system name (e.g., "Linux") */
    char nodename[MAX_COMPUTERNAME_LENGTH+1];
