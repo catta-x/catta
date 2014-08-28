@@ -339,14 +339,11 @@ AC_OUTPUT
 echo "
  ---{ $PACKAGE_NAME $VERSION }---
 
-    prefix:                                    ${prefix}
-    sysconfdir:                                ${sysconfdir}
-    localstatedir:                             ${localstatedir}
-    C Compiler:                                ${CC}
-    CFLAGS:                                    ${CFLAGS}
-    Enable stack-smashing protection:          ${enable_ssp}
-"
-
-echo "\
+    prefix:                             ${prefix}
+    sysconfdir:                         ${sysconfdir}
+    localstatedir:                      ${localstatedir}
+    C Compiler:                         ${CC}
+    CFLAGS:                             ${CFLAGS}
+    Enable stack-smashing protection:   ${enable_ssp}
     Building tests:                     ${ENABLE_TESTS}
 "
