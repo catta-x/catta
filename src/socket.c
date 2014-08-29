@@ -50,6 +50,7 @@
 #include "fdutil.h"
 #include "socket.h"
 #include "addr-util.h"
+#include "internal.h"
 
 /* this is a portability hack */
 #ifndef IPV6_ADD_MEMBERSHIP
