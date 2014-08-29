@@ -58,6 +58,10 @@ fi
 # Windows stuff
 AC_CHECK_DECL(_WIN32)
 AM_CONDITIONAL([WINDOWS], [ test "x$ac_cv_have_decl__WIN32" = "xyes" ])
+AC_CHECK_MEMBER([struct in_pktinfo.ipi_spec_dst],
+    AC_DEFINE([HAVE_IPI_SPEC_DST], [], [struct in_pktinfo has ipi_spec_dst member]),
+    [],
+    [[#include <ws2tcpip.h>]])
 
 # -fstack-protector
 AC_ARG_ENABLE([stack-protector],
