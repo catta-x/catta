@@ -20,11 +20,15 @@
 #include "iface.h"
 
 int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m) {
+    (void)m;    // silence "unused parameter" warning
+
     return 0;
 }
 
 void catta_interface_monitor_free_osdep(CattaInterfaceMonitor *m) {
+    (void)m;    // silence "unused parameter" warning
 }
 
 void catta_interface_monitor_sync(CattaInterfaceMonitor *m) {
+    (void)m;    // silence "unused parameter" warning
 }
