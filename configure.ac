@@ -282,7 +282,7 @@ AC_CHECK_HEADERS([arpa/inet.h fcntl.h netinet/in.h sys/ioctl.h sys/socket.h sys/
 
 # Checks for library functions.
 AC_FUNC_SELECT_ARGTYPES
-AC_CHECK_FUNCS([gethostname select socket uname strcasecmp gettimeofday strncasecmp strlcpy])
+AC_CHECK_FUNCS([gethostname select socket uname strcasecmp gettimeofday strncasecmp strlcpy fcntl])
 
 AC_FUNC_CHOWN
 AC_FUNC_STAT
