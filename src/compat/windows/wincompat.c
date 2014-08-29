@@ -190,6 +190,24 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
     return bytessent;
 }
 
+int ioctl(int d, unsigned long request, int *p)
+{
+    u_long arg = 0;
+
+    if(ioctlsocket(d, request, &arg) == SOCKET_ERROR) {
+        errno = wsa_errno();
+        return -1;
+    }
+
+    if(arg > INT_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    *p = arg;
+    return 0;
+}
+
 int uname(struct utsname *buf)
 {
     SYSTEM_INFO si;

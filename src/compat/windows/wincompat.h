@@ -77,6 +77,12 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
 #endif
 
 
+// Windows doesn't have ioctl but offers ioctlsocket for some socket-related
+// functions. Unfortunately, argument types differ, so we implement a
+// (restricted) wrapper.
+int ioctl(int d, unsigned long request, int *p);
+
+
 // Windows logically doesn't have uname, so we supply a replacement.
 
 struct utsname {
