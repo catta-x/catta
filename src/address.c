@@ -58,7 +58,7 @@ char *catta_address_snprint(char *s, size_t length, const CattaAddress *a) {
     assert(length);
     assert(a);
 
-    if (!(inet_ntop(catta_proto_to_af(a->proto), a->data.data, s, length)))
+    if (!(inet_ntop(catta_proto_to_af(a->proto), (void *)a->data.data, s, length)))
         return NULL;
 
     return s;
