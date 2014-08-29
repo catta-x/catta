@@ -69,6 +69,13 @@ static inline struct cmsghdr *CMSG_NXTHDR(struct msghdr *m, struct cmsghdr *c) {
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);
 ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
 
+// ESHUTDOWN does not seem to exist on Windows, even though WSAESHUTDOWN does.
+// MingW doesn't define it and MSDN doesn't list it, so we alias it to EBADF.
+// cf. http://msdn.microsoft.com/en-us/library/5814770t.aspx
+#ifndef ESHUTDOWN
+#define ESHUTDOWN EBADF
+#endif
+
 
 // Windows logically doesn't have uname, so we supply a replacement.
 

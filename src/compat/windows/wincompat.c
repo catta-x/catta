@@ -8,6 +8,7 @@
 static int wsa_errno(void)
 {
     switch(WSAGetLastError()) {
+        case WSAEACCES:         return EACCES;
         case WSAECONNRESET:     return ECONNRESET;
         case WSAEFAULT:         return EFAULT;
         case WSAEINPROGRESS:    return EINPROGRESS;
@@ -16,9 +17,12 @@ static int wsa_errno(void)
         case WSAEMSGSIZE:       return EMSGSIZE;
         case WSAENETDOWN:       return ENETDOWN;
         case WSAENETRESET:      return ENETRESET;
+        case WSAENOBUFS:        return ENOBUFS;
         case WSAENOTCONN:       return ENOTCONN;
         case WSAENOTSOCK:       return ENOTSOCK;
         case WSAEOPNOTSUPP:     return EOPNOTSUPP;
+        case WSAESHUTDOWN:      return ESHUTDOWN;
+        case WSAETIMEDOUT:      return ETIMEDOUT;
         case WSAEWOULDBLOCK:    return EWOULDBLOCK;
         default:
             return EINVAL;
@@ -95,6 +99,7 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)
     }
 
     // DWORD has one bit more than ssize_t on 32bit
+    // XXX check for this condition before the WSARecvMsg call
     if(bytesrcvd > SSIZE_MAX) {
         errno = EINVAL;
         return -1;
@@ -107,6 +112,82 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)
         // all flags that fit into dwFlags also fit into msg_flags (see above)
 
     return bytesrcvd;
+}
+
+ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
+{
+    LPFN_WSASENDMSG WSASendMsg = NULL;
+    GUID wsaid = WSAID_WSASENDMSG;
+    DWORD b;
+
+    DWORD bytessent;
+    WSAMSG wsamsg;
+    size_t i;
+    int r;
+
+    // size_t is larger than DWORD on 64bit
+    if(msg->msg_iovlen > UINT32_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    // obtain the function pointer to WSASendMsg
+    r = WSAIoctl(sockfd, SIO_GET_EXTENSION_FUNCTION_POINTER,
+                 &wsaid, sizeof(wsaid), &WSASendMsg, sizeof(WSASendMsg),
+                 &b, NULL, NULL);
+    if(r == SOCKET_ERROR) {
+        errno = wsa_errno();
+        return -1;
+    }
+    assert(b == sizeof(WSASendMsg));
+    assert(WSASendMsg != NULL);
+
+    // convert msghdr to WSAMSG structure
+    wsamsg.name = msg->msg_name;
+    wsamsg.namelen = msg->msg_namelen;
+    wsamsg.lpBuffers = malloc(msg->msg_iovlen * sizeof(WSABUF));
+    wsamsg.dwBufferCount = msg->msg_iovlen;
+    wsamsg.Control.len = msg->msg_controllen;
+    wsamsg.Control.buf = msg->msg_control;
+    wsamsg.dwFlags = 0; // ignored
+
+    if(wsamsg.lpBuffers == NULL) {
+        // malloc will have set errno
+        return -1;
+    }
+
+    // re-wrap iovecs as WSABUFs
+    for(i=0; i<msg->msg_iovlen; i++) {
+        // size_t vs. u_long
+        if(msg->msg_iov[i].iov_len > ULONG_MAX) {
+            free(wsamsg.lpBuffers);
+            errno = EINVAL;
+            return -1;
+        }
+
+        wsamsg.lpBuffers[i].len = msg->msg_iov[i].iov_len;
+        wsamsg.lpBuffers[i].buf = msg->msg_iov[i].iov_base;
+    }
+
+    r = WSASendMsg(sockfd, &wsamsg, flags, &bytessent, NULL, NULL);
+
+    // the allocated WSABUF wrappers are no longer needed
+    free(wsamsg.lpBuffers);
+
+    if(r == SOCKET_ERROR) {
+        // XXX do we need special handling for ENETRESET, ETIMEDOUT?
+        errno = wsa_errno();
+        return -1;
+    }
+
+    // DWORD has one bit more than ssize_t on 32bit
+    // XXX check for this condition before sending anything
+    if(bytessent > SSIZE_MAX) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    return bytessent;
 }
 
 int uname(struct utsname *buf)
