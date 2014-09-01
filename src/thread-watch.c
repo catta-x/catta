@@ -61,11 +61,14 @@ static int poll_func(struct pollfd *ufds, unsigned int nfds, int timeout, void *
 
 static void* thread(void *userdata){
     CattaThreadedPoll *p = userdata;
+
+#ifndef _WIN32
     sigset_t mask;
 
     /* Make sure that signals are delivered to the main thread */
     sigfillset(&mask);
     pthread_sigmask(SIG_BLOCK, &mask, NULL);
+#endif
 
     pthread_mutex_lock(&p->mutex);
     p->retval = catta_simple_poll_loop(p->simple_poll);
