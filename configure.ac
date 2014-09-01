@@ -135,7 +135,7 @@ if test x"$enable_ssp" = x"yes"; then
 fi
 
 # libtool stuff
-AC_PROG_LIBTOOL
+LT_INIT([win32-dll])
 
 ACX_PTHREAD(,AC_MSG_ERROR([Missing POSIX Threads support]))
 

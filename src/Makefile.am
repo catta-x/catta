@@ -89,5 +89,6 @@ libcatta_la_SOURCES += \
 	compat/windows/wincompat.c \
 	compat/windows/wincompat.h
 libcatta_la_LIBADD += -lws2_32
+libcatta_la_LDFLAGS += -no-undefined
 endif
 
