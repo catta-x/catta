@@ -132,11 +132,6 @@ fi
 if test x"$enable_ssp" = x"yes"; then
     # Do this the long way so we don't call GCC_STACK_PROTECT_LIB twice
     GCC_STACK_PROTECT_CC
-
-    AC_LANG_PUSH([C++])
-    GCC_STACK_PROTECT_CXX
-    AC_LANG_POP([C++])
-    # XXX: Update the enable_ssp value now for output later?
 fi
 
 # libtool stuff
