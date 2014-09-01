@@ -33,6 +33,8 @@
 #include <catta/malloc.h>
 #include <catta/timeval.h>
 #include <catta/simple-watch.h>
+#include "fdutil.h"                 // catta_set_nonblock
+#include "internal.h"               // closesocket
 
 struct CattaWatch {
     CattaSimplePoll *simple_poll;
@@ -113,20 +115,6 @@ static void clear_wakeup(CattaSimplePoll *s) {
     for(;;)
         if (read(s->wakeup_pipe[0], &c, sizeof(c)) != sizeof(c))
             break;
-}
-
-static int set_nonblock(int fd) {
-    int n;
-
-    assert(fd >= 0);
-
-    if ((n = fcntl(fd, F_GETFL)) < 0)
-        return -1;
-
-    if (n & O_NONBLOCK)
-        return 0;
-
-    return fcntl(fd, F_SETFL, n|O_NONBLOCK);
 }
 
 static CattaWatch* watch_new(const CattaPoll *api, int fd, CattaWatchEvent event, CattaWatchCallback callback, void *userdata) {
@@ -326,8 +314,8 @@ CattaSimplePoll *catta_simple_poll_new(void) {
         return NULL;
     }
 
-    set_nonblock(s->wakeup_pipe[0]);
-    set_nonblock(s->wakeup_pipe[1]);
+    catta_set_nonblock(s->wakeup_pipe[0]);
+    catta_set_nonblock(s->wakeup_pipe[1]);
 
     s->api.userdata = s;
 
@@ -374,10 +362,10 @@ void catta_simple_poll_free(CattaSimplePoll *s) {
     catta_free(s->pollfds);
 
     if (s->wakeup_pipe[0] >= 0)
-        close(s->wakeup_pipe[0]);
+        closesocket(s->wakeup_pipe[0]);
 
     if (s->wakeup_pipe[1] >= 0)
-        close(s->wakeup_pipe[1]);
+        closesocket(s->wakeup_pipe[1]);
 
     catta_free(s);
 }

@@ -83,6 +83,14 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags);
 int ioctl(int d, unsigned long request, int *p);
 
 
+// Windows lacks poll, but WSAPoll is good enough for us.
+#define poll(fds, nfds, timeout) WSAPoll(fds, nfds, timeout)
+
+// Windows lacks pipe. It has an equivalent CreatePipe but we really need
+// something to give to WSAPoll, so we fake it with a local TCP socket. (ugh)
+int pipe(int pipefd[2]);
+
+
 // Windows logically doesn't have uname, so we supply a replacement.
 
 struct utsname {
