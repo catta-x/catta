@@ -191,6 +191,16 @@ static int bind_with_warn(int fd, const struct sockaddr *sa, socklen_t l) {
     assert(sa);
     assert(l > 0);
 
+#ifdef _WIN32
+    // Windows does not allow address reuse when SO_REUSEADDR was set after
+    // bind() on the first socket, so we must set it before.
+    // Note that this spoils the detection trickery below and the warning will
+    // not be logged.
+
+    if (reuseaddr(fd) < 0)
+        return -1;
+#endif
+
     if (bind(fd, sa, l) < 0) {
 
         if (errno != EADDRINUSE) {
