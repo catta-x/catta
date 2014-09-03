@@ -16,6 +16,11 @@
 #include <mswsock.h>
 
 
+// wrappers around WSAStartup/WSACleanup to avoid clutter
+void winsock_init(void);
+void winsock_exit(void);
+
+
 // Winsock doesn't have recvmsg/sendmsg but offers the same functionality
 // with WSARecvMsg/WSASendMsg, so we implement the former in terms of the
 // latter.

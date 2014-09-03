@@ -309,8 +309,10 @@ CattaSimplePoll *catta_simple_poll_new(void) {
     if (!(s = catta_new(CattaSimplePoll, 1)))
         return NULL;
 
+    winsock_init();  // on Windows, pipe uses sockets; no-op on other platforms
     if (pipe(s->wakeup_pipe) < 0) {
         catta_free(s);
+        winsock_exit();
         return NULL;
     }
 
@@ -368,6 +370,7 @@ void catta_simple_poll_free(CattaSimplePoll *s) {
         closesocket(s->wakeup_pipe[1]);
 
     catta_free(s);
+    winsock_exit();  // match the winsock_init in catta_simple_poll_new
 }
 
 static int rebuild(CattaSimplePoll *s) {

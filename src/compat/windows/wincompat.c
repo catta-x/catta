@@ -4,6 +4,8 @@
 #include <assert.h>
 #include <stdint.h>
 
+#include <catta/log.h>
+
 // helper: convert WSAGetLastError() to an errno constant
 static int wsa_errno(void)
 {
@@ -27,6 +29,21 @@ static int wsa_errno(void)
         default:
             return EINVAL;
     }
+}
+
+void winsock_init(void)
+{
+    WSADATA wsa;
+    int error;
+
+    if((error = WSAStartup(MAKEWORD(2,2), &wsa)) != 0)
+        catta_log_error("WSAStartup() failed: %d", error);
+}
+
+void winsock_exit(void)
+{
+    if(WSACleanup() == SOCKET_ERROR)
+        catta_log_warn("WSACleanup() failed: %d", WSAGetLastError());
 }
 
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)

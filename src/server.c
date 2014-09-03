@@ -1381,12 +1381,14 @@ CattaServer *catta_server_new(const CattaPoll *poll_api, const CattaServerConfig
     else
         catta_server_config_init(&s->config);
 
+    winsock_init();  // on Windows, call WSAStartup; no-op on other platforms
     if ((e = setup_sockets(s)) < 0) {
         if (error)
             *error = e;
 
         catta_server_config_free(&s->config);
         catta_free(s);
+        winsock_exit();
 
         return NULL;
     }
@@ -1533,6 +1535,7 @@ void catta_server_free(CattaServer* s) {
     catta_server_config_free(&s->config);
 
     catta_free(s);
+    winsock_exit();  // on Windows, call WSACleanup(); no-op on other platforms
 }
 
 const char* catta_server_get_domain_name(CattaServer *s) {
