@@ -462,7 +462,7 @@ static int sendmsg_loop(int fd, struct msghdr *msg, int flags) {
         if (errno == EINTR)
             continue;
 
-        if (errno != EAGAIN) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
             char where[64];
             struct sockaddr_in *sin = msg->msg_name;
 
