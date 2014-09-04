@@ -35,16 +35,20 @@ noinst_PROGRAMS = \
 	conformance-test \
 	catta-reflector \
 	dns-test \
-	dns-spin-test \
 	timeeventq-test \
 	hashmap-test \
 	querier-test \
 	update-test
 
 TESTS = \
-	dns-spin-test \
 	dns-test \
 	hashmap-test
+
+# disable the dns-spin-test on Windows (needs setitimer)
+if !WINDOWS
+noinst_PROGRAMS += dns-spin-test
+TESTS += dns-spin-test
+endif
 endif
 
 
