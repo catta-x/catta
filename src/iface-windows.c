@@ -109,8 +109,8 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
     hw->mtu = p->Mtu;
 
     hw->mac_address_size = p->PhysicalAddressLength;
-    if (hw->mac_address_size > CATTA_MAC_ADDRESS_MAX)
-      hw->mac_address_size = CATTA_MAC_ADDRESS_MAX;
+    if(hw->mac_address_size > CATTA_MAC_ADDRESS_MAX)
+        hw->mac_address_size = CATTA_MAC_ADDRESS_MAX;
     memcpy(hw->mac_address, p->PhysicalAddress, hw->mac_address_size);
 
     // XXX process addresses
