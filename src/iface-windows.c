@@ -95,10 +95,10 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
 
     // fill the CattaHwInterface struct with data
     hw->flags_ok =
-        (p->OperStatus & IfOperStatusUp) &&
-        !(p->IfType & IF_TYPE_SOFTWARE_LOOPBACK) &&
+        (p->OperStatus == IfOperStatusUp) &&
+        !(p->IfType == IF_TYPE_SOFTWARE_LOOPBACK) &&
         !(p->Flags & IP_ADAPTER_NO_MULTICAST) &&
-        (m->server->config.allow_point_to_point || !(p->IfType & IF_TYPE_PPP));
+        (m->server->config.allow_point_to_point || !(p->IfType == IF_TYPE_PPP));
             // XXX what about IF_TYPE_TUNNEL?
 
     n = wcstombs(NULL, p->FriendlyName, 0) + 1;
@@ -118,11 +118,15 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
     // XXX debugging, remove
    { 
      char mac[256]; 
-     catta_log_debug("======\n name: %s\n index:%d\n mtu:%d\n mac:%s\n flags_ok:%d\n======",  
+     catta_log_debug("======\n name: %s\n index:%d\n mtu:%d\n mac:%s\n type:%u\n status:%u\n multicast:%d\n flags:0x%.4x\n flags_ok:%d\n======",  
  		    hw->name, hw->index,  
  		    hw->mtu,  
  		    catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size), 
- 		    hw->flags_ok); 
+ 		    (unsigned int)p->IfType,
+ 		    (unsigned int)p->OperStatus,
+ 		    !(p->Flags & IP_ADAPTER_NO_MULTICAST),
+ 		    (unsigned int)p->Flags,
+            hw->flags_ok); 
    } 
 }
 
