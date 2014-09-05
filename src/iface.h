@@ -42,6 +42,8 @@ typedef struct CattaHwInterface CattaHwInterface;
 #include "iface-linux.h"
 #elif defined(HAVE_PF_ROUTE)
 #include "iface-pfroute.h"
+#elif defined(_WIN32)
+#include "iface-windows.h"
 #else
 typedef struct CattaInterfaceMonitorOSDep CattaInterfaceMonitorOSDep;
 struct CattaInterfaceMonitorOSDep {

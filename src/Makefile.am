@@ -75,8 +75,13 @@ if HAVE_PF_ROUTE
 libcatta_la_SOURCES += \
 	iface-pfroute.c iface-pfroute.h
 else
+if WINDOWS
+libcatta_la_SOURCES += \
+	iface-windows.c	iface-windows.h
+else
 libcatta_la_SOURCES += \
 	iface-none.c
+endif
 endif
 endif
 
@@ -88,7 +93,7 @@ if WINDOWS
 libcatta_la_SOURCES += \
 	compat/windows/wincompat.c \
 	compat/windows/wincompat.h
-libcatta_la_LIBADD += -lws2_32
+libcatta_la_LIBADD += -lws2_32 -liphlpapi
 libcatta_la_LDFLAGS += -no-undefined
 endif
 
