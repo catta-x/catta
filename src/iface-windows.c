@@ -116,18 +116,27 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
     // XXX process addresses
 
     // XXX debugging, remove
-   { 
-     char mac[256]; 
-     catta_log_debug("======\n name: %s\n index:%d\n mtu:%d\n mac:%s\n type:%u\n status:%u\n multicast:%d\n flags:0x%.4x\n flags_ok:%d\n======",  
- 		    hw->name, hw->index,  
- 		    hw->mtu,  
- 		    catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size), 
- 		    (unsigned int)p->IfType,
- 		    (unsigned int)p->OperStatus,
- 		    !(p->Flags & IP_ADAPTER_NO_MULTICAST),
- 		    (unsigned int)p->Flags,
-            hw->flags_ok); 
-   } 
+    {
+        char mac[256];
+        catta_log_debug(" name: %s\n"
+                        " index: %d\n"
+                        " mtu: %d\n"
+                        " mac: %s\n"
+                        " flags_ok: %d\n"
+                        "   type: %u\n"
+                        "   status: %u\n"
+                        "   multicast: %d\n"
+                        "   flags: 0x%.4x\n"
+                        "======",
+            hw->name, hw->index,
+            hw->mtu,
+            catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size),
+            hw->flags_ok,
+            (unsigned int)p->IfType,
+            (unsigned int)p->OperStatus,
+            !(p->Flags & IP_ADAPTER_NO_MULTICAST),
+            (unsigned int)p->Flags);
+    }
 }
 
 
