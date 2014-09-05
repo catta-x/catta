@@ -20,6 +20,7 @@
 #include "iface-windows.h"
 #include "iface.h"
 
+#include <stdlib.h> // wcstombs
 #include <catta/malloc.h>
 #include <catta/log.h>
 #include <iphlpapi.h>
@@ -76,6 +77,7 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
 {
     CattaIfIndex idx;
     CattaHwInterface *hw;
+    size_t n;
 
     // look up the interface index by LUID
     if((idx = find_ifindex(m, p->Luid)) < 0) {
@@ -99,8 +101,10 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
         (m->server->config.allow_point_to_point || !(p->IfType & IF_TYPE_PPP));
             // XXX what about IF_TYPE_TUNNEL?
 
+    n = wcstombs(NULL, p->FriendlyName, 0) + 1;
     catta_free(hw->name);
-    hw->name = catta_strdup(p->AdapterName);
+    hw->name = catta_new(char, n);
+    wcstombs(hw->name, p->FriendlyName, n);
 
     hw->mtu = p->Mtu;
 
