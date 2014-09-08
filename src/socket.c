@@ -464,9 +464,12 @@ static int sendmsg_loop(int fd, struct msghdr *msg, int flags) {
 
         if (errno != EAGAIN && errno != EWOULDBLOCK) {
             char where[64];
-            struct sockaddr_in *sin = msg->msg_name;
+            struct sockaddr *sa = msg->msg_name;
 
-            inet_ntop(sin->sin_family, &sin->sin_addr, where, sizeof(where));
+            if(sa->sa_family == AF_INET)
+                inet_ntop(sa->sa_family, &((struct sockaddr_in *)sa)->sin_addr, where, sizeof(where));
+            else
+                inet_ntop(sa->sa_family, &((struct sockaddr_in6 *)sa)->sin6_addr, where, sizeof(where));
             catta_log_debug("sendmsg() to %s failed: %s", where, errnostrsocket());
             return -1;
         }
