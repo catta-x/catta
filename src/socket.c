@@ -544,6 +544,9 @@ int catta_send_dns_packet_ipv4(
 #ifdef HAVE_IPI_SPEC_DST
         if (src_address)
             pkti->ipi_spec_dst.s_addr = src_address->address;
+#else
+        if (src_address)
+            pkti->ipi_addr.s_addr = src_address->address;
 #endif
     }
 #elif defined(IP_MULTICAST_IF)
