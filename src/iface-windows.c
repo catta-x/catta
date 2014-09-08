@@ -28,49 +28,6 @@
 #include "util.h"   // catta_format_mac_address
 
 
-// for the luid-to-idx hashmap
-static unsigned luid_hash(const void *data)
-{
-    return ((NET_LUID *)data)->Info.NetLuidIndex;
-}
-static int luid_equal(const void *a, const void *b)
-{
-    return (((NET_LUID *)a)->Value == ((NET_LUID *)b)->Value);
-}
-
-static CattaIfIndex find_ifindex(CattaInterfaceMonitor *m, NET_LUID luid)
-{
-    CattaIfIndex *pi = NULL;
-    NET_LUID *key = NULL;
-
-    if((pi = catta_hashmap_lookup(m->osdep.idxmap, &luid)) == NULL) {
-        // allocate memory for the hashmap key and value
-        key = catta_malloc(sizeof(luid));
-        pi = catta_malloc(sizeof(CattaIfIndex));
-        if(!key || !pi)
-            goto fail;
-
-        *key = luid;
-            
-        // find an index for this luid
-        *pi = m->osdep.nidx;
-        if(*pi < 0)  // overflow
-            goto fail;
-
-        // register the index
-        if(catta_hashmap_replace(m->osdep.idxmap, key, pi) < 0)
-            goto fail;
-        m->osdep.nidx++;
-    }
-
-    return *pi;
-
-fail:
-    catta_free(key);
-    catta_free(pi);
-    return -1;
-}
-
 // integrate the information from an IP_ADAPTER_UNICAST_ADDRESS structure for
 // given CattaHwInterface into the CattaInterfaceMonitor
 static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
@@ -136,9 +93,22 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
     CattaHwInterface *hw;
     size_t n;
 
-    // look up the interface index by LUID
-    if((idx = find_ifindex(m, p->Luid)) < 0) {
-        catta_log_error("could not allocate index ip_adapter_address");
+    // we want an index specific to the hardware interface, but Windows
+    // has one for IPv4 and one for IPv6. it seems like these are always the
+    // same unless one of the protocols is not available. let's have a bunch of
+    // checks...
+    if(!p->IfIndex && !p->Ipv6IfIndex) {
+        return; // no usable protocols
+    } else if(!p->IfIndex) {
+        idx = p->Ipv6IfIndex;   // IPv6 but no IPv4 (huh!)
+    } else if(!p->Ipv6IfIndex) {
+        idx = p->IfIndex;       // IPv4 but no IPv6
+    } else if(p->IfIndex == p->Ipv6IfIndex) {
+        idx = p->IfIndex;       // same index for both protocols
+    } else {
+        // both indexes valid but not equal
+        catta_log_error("unsupported interface: %ls (IfIndex and Ipv6IfIndex differ: %u/%u)",
+            p->FriendlyName, (unsigned int)p->IfIndex, (unsigned int)p->Ipv6IfIndex);
         return;
     }
 
@@ -175,6 +145,8 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
         char mac[256];
         catta_log_debug(" name: %s\n"
                         " index: %d\n"
+                        "   IfIndex: %u\n"
+                        "   Ipv6IfIndex: %u\n"
                         " mtu: %d\n"
                         " mac: %s\n"
                         " flags_ok: %d\n"
@@ -183,6 +155,7 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
                         "   multicast: %d\n"
                         "   flags: 0x%.4x",
             hw->name, hw->index,
+            (unsigned int)p->IfIndex, (unsigned int)p->Ipv6IfIndex,
             hw->mtu,
             catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size),
             hw->flags_ok,
@@ -202,12 +175,7 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
 
 int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m)
 {
-    m->osdep.nidx = 0;
-    m->osdep.idxmap = catta_hashmap_new(luid_hash, luid_equal, catta_free, catta_free);
-    if(m->osdep.idxmap == NULL) {
-        catta_log_error("out of memory in catta_interface_monitor_init_osdep");
-        return -1;
-    }
+    (void)*m;   // silence "unused paramter" warning
 
     // XXX register callbacks to get notified of interface/address changes
 
@@ -216,7 +184,7 @@ int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m)
 
 void catta_interface_monitor_free_osdep(CattaInterfaceMonitor *m)
 {
-    catta_hashmap_free(m->osdep.idxmap);
+    (void)*m;   // silence "unused paramter" warning
 }
 
 void catta_interface_monitor_sync(CattaInterfaceMonitor *m)

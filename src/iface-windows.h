@@ -4,8 +4,7 @@
 #include "hashmap.h"
 
 typedef struct CattaInterfaceMonitorOSDep {
-    CattaHashmap *idxmap;   // maps adapter LUIDs to stable int indexes
-    int nidx;               // number of assigned indexes (= size of idxmap)
+    int dummy;  // silence "no members" warning
 } CattaInterfaceMonitorOSDep;
 
 #endif
