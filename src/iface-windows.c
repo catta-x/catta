@@ -39,6 +39,12 @@ static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
     CattaInterfaceAddress *ifaddr;
     struct sockaddr *sa = a->Address.lpSockaddr;
 
+    // skip transient addresses; to quote MSDN: "The IP address is a cluster
+    // address and should not be used by most applications."
+    // http://msdn.microsoft.com/en-us/library/windows/desktop/aa366066(v=vs.85).aspx
+    if(a->Flags & IP_ADAPTER_ADDRESS_TRANSIENT)
+        return;
+
     // fill addr struct for address lookup
     switch(sa->sa_family) {
     case AF_INET:
