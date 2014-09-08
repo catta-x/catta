@@ -41,7 +41,7 @@ int catta_send_dns_packet_ipv6(int fd, CattaIfIndex iface, CattaDnsPacket *p, co
 CattaDnsPacket *catta_recv_dns_packet_ipv4(int fd, CattaIPv4Address *ret_src_address, uint16_t *ret_src_port, CattaIPv4Address *ret_dst_address, CattaIfIndex *ret_iface, uint8_t *ret_ttl);
 CattaDnsPacket *catta_recv_dns_packet_ipv6(int fd, CattaIPv6Address *ret_src_address, uint16_t *ret_src_port, CattaIPv6Address *ret_dst_address, CattaIfIndex *ret_iface, uint8_t *ret_ttl);
 
-int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *local_address, int iface, int join);
-int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *local_address, int iface, int join);
+int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *local_address, CattaIfIndex iface, int join);
+int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *local_address, CattaIfIndex iface, int join);
 
 #endif

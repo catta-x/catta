@@ -157,7 +157,7 @@ void catta_hw_interface_free(CattaHwInterface *hw, int send_goodbye);
 void catta_hw_interface_update_rrs(CattaHwInterface *hw, int remove_rrs);
 void catta_hw_interface_check_relevant(CattaHwInterface *hw);
 
-CattaHwInterface* catta_interface_monitor_get_hw_interface(CattaInterfaceMonitor *m, int idx);
+CattaHwInterface* catta_interface_monitor_get_hw_interface(CattaInterfaceMonitor *m, CattaIfIndex idx);
 
 /* CattaInterface */
 

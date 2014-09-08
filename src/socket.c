@@ -105,7 +105,7 @@ static void ipv6_address_to_sockaddr(struct sockaddr_in6 *ret_sa, const CattaIPv
     memcpy(&ret_sa->sin6_addr, a, sizeof(CattaIPv6Address));
 }
 
-int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, int idx, int join) {
+int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, CattaIfIndex idx, int join) {
 #ifdef HAVE_STRUCT_IP_MREQN
     struct ip_mreqn mreq;
 #else
@@ -141,7 +141,7 @@ int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, int idx, int j
     return 0;
 }
 
-int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *a, int idx, int join) {
+int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *a, CattaIfIndex idx, int join) {
     struct ipv6_mreq mreq6;
     struct sockaddr_in6 sa6;
 

@@ -63,7 +63,7 @@ struct CattaLegacyUnicastReflectSlot {
     uint16_t id, original_id;
     CattaAddress address;
     uint16_t port;
-    int iface;
+    CattaIfIndex iface;
     struct timeval elapse_time;
     CattaTimeEvent *time_event;
 };
