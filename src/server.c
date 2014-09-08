@@ -899,9 +899,12 @@ static void dispatch_packet(CattaServer *s, CattaDnsPacket *p, const CattaAddres
     assert(iface > 0);
     assert(src_address->proto == dst_address->proto);
 
-    if (!(i = catta_interface_monitor_get_interface(s->monitor, iface, src_address->proto)) ||
-        !i->announcing) {
-        catta_log_warn("Received packet from invalid interface.");
+    if (!(i = catta_interface_monitor_get_interface(s->monitor, iface, src_address->proto))) {
+        catta_log_warn("Received packet from unrecognized interface (%d).", iface);
+        return;
+    }
+    if (!i->announcing) {
+        catta_log_warn("Received packet from invalid interface %d (not announcing).", iface);
         return;
     }
 
