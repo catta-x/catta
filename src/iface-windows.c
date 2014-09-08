@@ -78,9 +78,11 @@ static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
     {
         char s[CATTA_ADDRESS_STR_MAX];
         catta_log_debug(" address: %s\n"
-                        "   global_scope: %d",
+                        "   global_scope: %d\n"
+                        "   flags: 0x%.4x",
             catta_address_snprint(s, sizeof(s), &addr),
-            ifaddr->global_scope);
+            ifaddr->global_scope,
+            (unsigned int)a->Flags);
     }
 }
 
