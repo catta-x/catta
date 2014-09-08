@@ -74,6 +74,10 @@ static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
     }
 
     // set global scope flag
+    // XXX should we use the IP_ADAPTER_ADDRESS_DNS_ELIGIBLE flag for this?
+    //     it looks like it gets set for IPv4 addresses that are not localhost
+    //     and for IPv6 addresses with global scope. not sure about multicast
+    //     addresses.
     if(addr.proto == CATTA_PROTO_INET6)
         ifaddr->global_scope = !(IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr.data.data)
                                  || IN6_IS_ADDR_MULTICAST((struct in6_addr *)addr.data.data));
