@@ -71,10 +71,67 @@ fail:
     return -1;
 }
 
+// integrate the information from an IP_ADAPTER_UNICAST_ADDRESS structure for
+// given CattaHwInterface into the CattaInterfaceMonitor
+static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
+                                       CattaHwInterface *hw,
+                                       IP_ADAPTER_UNICAST_ADDRESS *a)
+{
+    CattaInterface *iface;
+    CattaAddress addr;
+    CattaInterfaceAddress *ifaddr;
+    struct sockaddr *sa = a->Address.lpSockaddr;
+
+    // fill addr struct for address lookup
+    switch(sa->sa_family) {
+    case AF_INET:
+        memcpy(addr.data.data, &((struct sockaddr_in *)sa)->sin_addr, sizeof(struct in_addr));
+        break;
+    case AF_INET6:
+        memcpy(addr.data.data, &((struct sockaddr_in6 *)sa)->sin6_addr, sizeof(struct in6_addr));
+        break;
+    default:
+        catta_log_debug("unexpected address family on interface %d: %u", hw->index, sa->sa_family);
+        return;
+    }
+    addr.proto = catta_af_to_proto(sa->sa_family);
+
+    // get protocol-specific CattaInterface object
+    if(!(iface = catta_interface_monitor_get_interface(m, hw->index, addr.proto))) {
+        catta_log_error("CattaInterface (index %d, proto %d) not found", hw->index, addr.proto);
+        return;
+    }
+
+    // find or allocate a CattaInterfaceAddress struct for this address
+    if(!(ifaddr = catta_interface_monitor_get_address(m, iface, &addr))) {
+        if(!(ifaddr = catta_interface_address_new(m, iface, &addr, a->OnLinkPrefixLength))) {
+            catta_log_error("out of memory in ip_adapter_unicast_address");
+            return;
+        }
+    }
+
+    // set global scope flag
+    if(addr.proto == CATTA_PROTO_INET6)
+        ifaddr->global_scope = !(IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr.data.data)
+                                 || IN6_IS_ADDR_MULTICAST((struct in6_addr *)addr.data.data));
+    else
+        ifaddr->global_scope = 1;
+
+    // XXX debugging, remove
+    {
+        char s[CATTA_ADDRESS_STR_MAX];
+        catta_log_debug(" address: %s\n"
+                        "   global_scope: %d",
+            catta_address_snprint(s, sizeof(s), &addr),
+            ifaddr->global_scope);
+    }
+}
+
 // integrate the information from an IP_ADAPTER_ADDRESSES structure
 // as returned by GetAdaptersAddresses into the CattaInterfaceMonitor
-static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
+static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
 {
+    IP_ADAPTER_UNICAST_ADDRESS *a;
     CattaIfIndex idx;
     CattaHwInterface *hw;
     size_t n;
@@ -113,8 +170,6 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
         hw->mac_address_size = CATTA_MAC_ADDRESS_MAX;
     memcpy(hw->mac_address, p->PhysicalAddress, hw->mac_address_size);
 
-    // XXX process addresses
-
     // XXX debugging, remove
     {
         char mac[256];
@@ -126,8 +181,7 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
                         "   type: %u\n"
                         "   status: %u\n"
                         "   multicast: %d\n"
-                        "   flags: 0x%.4x\n"
-                        "======",
+                        "   flags: 0x%.4x",
             hw->name, hw->index,
             hw->mtu,
             catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size),
@@ -137,6 +191,12 @@ static void ip_adapter_address(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p
             !(p->Flags & IP_ADAPTER_NO_MULTICAST),
             (unsigned int)p->Flags);
     }
+
+    // process addresses
+    // XXX remove addresses that are no longer in the list
+    for(a=p->FirstUnicastAddress; a; a=a->Next)
+        ip_adapter_unicast_address(m, hw, a);
+    catta_log_debug("=====");
 }
 
 
@@ -187,7 +247,7 @@ void catta_interface_monitor_sync(CattaInterfaceMonitor *m)
 
     // create 'CattaInterface's for every adapter
     for(p=buf; p; p=p->Next)
-        ip_adapter_address(m, p);
+        ip_adapter(m, p);
 
     catta_free(buf);
 
