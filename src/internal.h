@@ -52,6 +52,7 @@ typedef struct CattaEntry CattaEntry;
 #define closesocket close
 #define winsock_init()
 #define winsock_exit()
+#define errnostrsocket() strerror(errno)
 #endif
 
 typedef struct CattaLegacyUnicastReflectSlot CattaLegacyUnicastReflectSlot;

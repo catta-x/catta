@@ -21,6 +21,10 @@ void winsock_init(void);
 void winsock_exit(void);
 
 
+// the equivalent of strerror(errno) for Windows sockets
+char *errnostrsocket(void);
+
+
 // Winsock doesn't have recvmsg/sendmsg but offers the same functionality
 // with WSARecvMsg/WSASendMsg, so we implement the former in terms of the
 // latter.

@@ -849,7 +849,7 @@ static int originates_from_local_legacy_unicast_socket(CattaServer *s, const Cat
         socklen_t l = sizeof(lsa);
 
         if (getsockname(s->fd_legacy_unicast_ipv4, (struct sockaddr*) &lsa, &l) != 0)
-            catta_log_warn("getsockname(): %s", strerror(errno));
+            catta_log_warn("getsockname(): %s", errnostrsocket());
         else
             return catta_port_from_sockaddr((struct sockaddr*) &lsa) == port;
 
@@ -860,7 +860,7 @@ static int originates_from_local_legacy_unicast_socket(CattaServer *s, const Cat
         socklen_t l = sizeof(lsa);
 
         if (getsockname(s->fd_legacy_unicast_ipv6, (struct sockaddr*) &lsa, &l) != 0)
-            catta_log_warn("getsockname(): %s", strerror(errno));
+            catta_log_warn("getsockname(): %s", errnostrsocket());
         else
             return catta_port_from_sockaddr((struct sockaddr*) &lsa) == port;
     }

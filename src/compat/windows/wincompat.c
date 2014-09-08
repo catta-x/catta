@@ -46,6 +46,16 @@ void winsock_exit(void)
         catta_log_warn("WSACleanup() failed: %d", WSAGetLastError());
 }
 
+char *errnostrsocket(void)
+{
+    static char buf[256];
+
+    FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+                  NULL, WSAGetLastError(), 0, buf, sizeof(buf), NULL);
+
+    return buf;
+}
+
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)
 {
     LPFN_WSARECVMSG WSARecvMsg = NULL;
