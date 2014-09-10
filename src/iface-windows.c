@@ -17,15 +17,33 @@
   USA.
 ***/
 
-#include "iface-windows.h"
 #include "iface.h"
+#include "iface-windows.h"
 
 #include <stdlib.h> // wcstombs
 #include <catta/malloc.h>
 #include <catta/log.h>
 #include <iphlpapi.h>
+#include <assert.h>
 #include "hashmap.h"
 #include "util.h"   // catta_format_mac_address
+#include "fdutil.h" // catta_set_nonblock
+
+
+typedef enum {
+    INTERFACE_CHANGE_EVENT,
+    ADDRESS_CHANGE_EVENT
+} ChangeEventType;
+
+struct ChangeEvent {
+    CATTA_LLIST_FIELDS(ChangeEvent, event);
+    ChangeEventType type;
+    MIB_NOTIFICATION_TYPE notification_type;
+    union {
+        MIB_IPINTERFACE_ROW iface;
+        MIB_UNICASTIPADDRESS_ROW addr;
+    } data;
+};
 
 
 // integrate the information from an IP_ADAPTER_UNICAST_ADDRESS structure for
@@ -185,18 +203,215 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
 }
 
 
+// place the event into the queue to be handled (by the main thread)
+// and wake the event handler if necessary
+static void queue_event(CattaInterfaceMonitor *m, ChangeEvent *ev)
+{
+    char c = 'X';
+
+    if(!ev)
+        return;
+
+    if(!pthread_mutex_lock(&m->osdep.mutex)) {
+        // queue the event
+        // XXX event ordering!!
+        CATTA_LLIST_PREPEND(ChangeEvent, event, m->osdep.events, ev);
+
+        // wake the handler
+        writepipe(m->osdep.pipefd[1], &c, sizeof(c));
+
+        pthread_mutex_unlock(&m->osdep.mutex);
+    } else {
+        catta_log_debug(__FILE__": queue_event: could not lock mutex");
+        catta_free(ev);
+    }
+}
+
+// copy the given data row into an appropriate change event struct
+static ChangeEvent *new_event(ChangeEventType type, MIB_NOTIFICATION_TYPE ntype, void *row, size_t n)
+{
+    ChangeEvent *ev;
+
+    if(!row)
+        return NULL;
+
+    if(!(ev = catta_new(ChangeEvent, 1)))
+        return NULL;
+
+    ev->type = type;
+    ev->notification_type = ntype;
+    memcpy(&ev->data, row, n);
+
+    return ev;
+}
+
+static void WINAPI icn_callback(void *m, MIB_IPINTERFACE_ROW *row, MIB_NOTIFICATION_TYPE type)
+{
+    queue_event(m, new_event(INTERFACE_CHANGE_EVENT, type, row, sizeof(*row)));
+}
+
+static void WINAPI acn_callback(void *m, MIB_UNICASTIPADDRESS_ROW *row, MIB_NOTIFICATION_TYPE type)
+{
+    queue_event(m, new_event(ADDRESS_CHANGE_EVENT, type, row, sizeof(*row)));
+}
+
+static void handle_iface_event(CattaInterfaceMonitor *m, MIB_IPINTERFACE_ROW *row, MIB_NOTIFICATION_TYPE type)
+{
+    catta_log_debug("interface change event on iface %u for address family %u",
+                    (unsigned int)row->InterfaceIndex, (unsigned int)row->Family);
+
+    switch(type) {
+    case MibParameterNotification:
+        catta_log_debug(" notification type: ParameterNotification");
+        break;
+    case MibAddInstance:
+        catta_log_debug(" notification type: AddInstance");
+        break;
+    case MibDeleteInstance:
+        catta_log_debug(" notification type: DeleteInstance");
+        break;
+    default:
+        catta_log_debug("unexpected type (%d) of interface change notification received", type);
+    }
+}
+
+static void handle_addr_event(CattaInterfaceMonitor *m, MIB_UNICASTIPADDRESS_ROW *row, MIB_NOTIFICATION_TYPE type)
+{
+    catta_log_debug("address change event on iface %u for address family %u",
+                    (unsigned int)row->InterfaceIndex,
+                    (unsigned int)row->Address.si_family);
+
+    switch(type) {
+    case MibParameterNotification:
+        catta_log_debug(" notification type: ParameterNotification");
+        break;
+    case MibAddInstance:
+        catta_log_debug(" notification type: AddInstance");
+        break;
+    case MibDeleteInstance:
+        catta_log_debug(" notification type: DeleteInstance");
+        break;
+    default:
+        catta_log_debug("unexpected type (%d) of address change notification received", type);
+    }
+}
+
+static void handle_events(CattaInterfaceMonitor *m)
+{
+    char buf[16];
+    ChangeEvent *ev;
+
+    if(!pthread_mutex_lock(&m->osdep.mutex)) {
+        // clear the pipe
+        while(readpipe(m->osdep.pipefd[0], buf, sizeof(buf)) == sizeof(buf)) {}
+
+        while((ev = m->osdep.events) != NULL) {
+            CATTA_LLIST_REMOVE(ChangeEvent, event, m->osdep.events, ev);
+
+            // dispatch to the appropriate handler
+            switch(ev->type) {
+            case INTERFACE_CHANGE_EVENT:
+                handle_iface_event(m, &ev->data.iface, ev->notification_type);
+                break;
+            case ADDRESS_CHANGE_EVENT:
+                handle_addr_event(m, &ev->data.addr, ev->notification_type);
+                break;
+            default:
+                catta_log_debug("unhandled change event type in handle_events");
+            }
+
+            catta_free(ev);
+        }
+
+        pthread_mutex_unlock(&m->osdep.mutex);
+    }
+}
+
+static void pipe_callback(CattaWatch *w, int fd, CattaWatchEvent event, void *m)
+{
+    // silence "unused parameter" warnings
+    (void)w;
+    (void)fd;
+    (void)event;
+
+    handle_events(m);
+}
+
+
 int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m)
 {
-    (void)*m;   // silence "unused paramter" warning
+    DWORD r;
 
-    // XXX register callbacks to get notified of interface/address changes
+    pthread_mutex_init(&m->osdep.mutex, NULL);
+
+    CATTA_LLIST_HEAD_INIT(ChangeEvent, m->osdep.events);
+
+    if(pipe(m->osdep.pipefd) < 0) {
+        catta_log_error("pipe() in catta_interface_monitor_init_osdep failed");
+        return -1;
+    }
+    catta_set_nonblock(m->osdep.pipefd[0]);
+    catta_set_nonblock(m->osdep.pipefd[1]);
+
+    m->osdep.icnhandle = NULL;
+    m->osdep.acnhandle = NULL;
+
+    // register handler for change events
+    m->osdep.watch = m->server->poll_api->watch_new(m->server->poll_api,
+                                                    m->osdep.pipefd[0],
+                                                    CATTA_WATCH_IN,
+                                                    pipe_callback,
+                                                    m);
+    if(!m->osdep.watch) {
+        catta_log_error(__FILE__": Failed to create watch.");
+        return -1;
+    }
+
+    // request async notification on interface changes
+    r = NotifyIpInterfaceChange(AF_UNSPEC,
+                                // icn_callback needs to be WINAPI but
+                                // MingW up to 3.1.0 erroneously defines
+                                // PIPINTERFACE_CHANGE_CALLBACK without it
+                                (PIPINTERFACE_CHANGE_CALLBACK)icn_callback,
+                                m, FALSE, &m->osdep.icnhandle);
+    if(r != NO_ERROR)
+        catta_log_error("NotifyIpInterfaceChange failed: %u", (unsigned int)r);
+
+    // request async notification on address changes
+    r = NotifyUnicastIpAddressChange(AF_UNSPEC, acn_callback, m, FALSE,
+                                     &m->osdep.acnhandle);
+    if(r != NO_ERROR)
+        catta_log_error("NotifyUnicastIpAddressChange failed: %u", (unsigned int)r);
 
     return 0;
 }
 
 void catta_interface_monitor_free_osdep(CattaInterfaceMonitor *m)
 {
-    (void)*m;   // silence "unused paramter" warning
+    ChangeEvent *ev;
+
+    // unregister callbacks
+    if(m->osdep.icnhandle) CancelMibChangeNotify2(m->osdep.icnhandle);
+    if(m->osdep.acnhandle) CancelMibChangeNotify2(m->osdep.acnhandle);
+
+    // unregister event handler
+    m->server->poll_api->watch_free(m->osdep.watch);
+
+    // close pipe
+    closepipe(m->osdep.pipefd[0]);
+    closepipe(m->osdep.pipefd[1]);
+
+    // make sure no stray events can come in during destruction
+    pthread_mutex_lock(&m->osdep.mutex);
+
+    // free all events that are still in the queue
+    while((ev = m->osdep.events) != NULL) {
+        CATTA_LLIST_REMOVE(ChangeEvent, event, m->osdep.events, ev);
+        catta_free(ev);
+    }
+
+    pthread_mutex_unlock(&m->osdep.mutex);
+    pthread_mutex_destroy(&m->osdep.mutex);
 }
 
 void catta_interface_monitor_sync(CattaInterfaceMonitor *m)
