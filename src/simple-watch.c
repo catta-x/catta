@@ -100,7 +100,7 @@ void catta_simple_poll_wakeup(CattaSimplePoll *s) {
     char c = 'W';
     assert(s);
 
-    write(s->wakeup_pipe[1], &c, sizeof(c));
+    writepipe(s->wakeup_pipe[1], &c, sizeof(c));
     s->wakeup_issued = 1;
 }
 
@@ -113,7 +113,7 @@ static void clear_wakeup(CattaSimplePoll *s) {
     s->wakeup_issued = 0;
 
     for(;;)
-        if (read(s->wakeup_pipe[0], &c, sizeof(c)) != sizeof(c))
+        if (readpipe(s->wakeup_pipe[0], c, sizeof(c)) != sizeof(c))
             break;
 }
 
@@ -364,10 +364,10 @@ void catta_simple_poll_free(CattaSimplePoll *s) {
     catta_free(s->pollfds);
 
     if (s->wakeup_pipe[0] >= 0)
-        closesocket(s->wakeup_pipe[0]);
+        closepipe(s->wakeup_pipe[0]);
 
     if (s->wakeup_pipe[1] >= 0)
-        closesocket(s->wakeup_pipe[1]);
+        closepipe(s->wakeup_pipe[1]);
 
     catta_free(s);
     winsock_exit();  // match the winsock_init in catta_simple_poll_new

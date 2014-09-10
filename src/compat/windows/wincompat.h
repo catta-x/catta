@@ -99,6 +99,11 @@ int ioctl(int d, unsigned long request, int *p);
 // something to give to WSAPoll, so we fake it with a local TCP socket. (ugh)
 int pipe(int pipefd[2]);
 
+// pipe(socket)-specific read/write/close equivalents
+#define closepipe closesocket
+#define writepipe(s,buf,len) send(s, buf, len, 0)
+#define readpipe(s,buf,len) recv(s, buf, len, 0)
+
 
 // Windows logically doesn't have uname, so we supply a replacement.
 

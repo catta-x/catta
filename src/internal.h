@@ -50,6 +50,9 @@ typedef struct CattaEntry CattaEntry;
 
 #ifndef _WIN32
 #define closesocket close
+#define closepipe close
+#define writepipe write
+#define readpipe read
 #define winsock_init()
 #define winsock_exit()
 #define errnostrsocket() strerror(errno)
