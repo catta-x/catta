@@ -260,27 +260,6 @@ static void update_hw_interface(CattaHwInterface *hw)
         hw->mac_address_size = CATTA_MAC_ADDRESS_MAX;
     memcpy(hw->mac_address, row.PhysicalAddress, hw->mac_address_size);
 
-    // XXX debugging, remove
-    {
-        char mac[256];
-        catta_log_debug(" name: %s\n"
-                        " mtu: %d\n"
-                        " mac: %s\n"
-                        " flags_ok: %d\n"
-                        "   type: %u\n"
-                        "   status: %u\n"
-                        "   multicast: %d\n"
-                        "   access type: %d",
-            hw->name,
-            hw->mtu,
-            catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size),
-            hw->flags_ok,
-            (unsigned int)row.Type,
-            (unsigned int)row.OperStatus,
-            multicast,
-            (int)row.AccessType);
-    }
-
     catta_hw_interface_check_relevant(hw);
     catta_hw_interface_update_rrs(hw, 0);
 }
@@ -292,20 +271,6 @@ static void handle_iface_event(CattaInterfaceMonitor *m, MIB_IPINTERFACE_ROW *ro
     const char *protostr = catta_proto_to_string(proto);
     CattaInterface *iface;
     CattaHwInterface *hw;
-
-    // XXX debug, remove
-    {
-        const char *typestr = NULL;
-
-        switch(type) {
-            case MibParameterNotification:  typestr = "ParameterNotification"; break;
-            case MibAddInstance:            typestr = "AddInstance"; break;
-            case MibDeleteInstance:         typestr = "DeleteInstance"; break;
-            default:                        typestr = "Unknown";
-        }
-
-        catta_log_debug("interface %s on iface %d for %s", typestr, idx, protostr);
-    }
 
     // see if we know this interface
     iface = catta_interface_monitor_get_interface(m, idx, proto);
@@ -382,24 +347,6 @@ static void handle_addr_event(CattaInterfaceMonitor *m, MIB_UNICASTIPADDRESS_ROW
     addr.proto = catta_af_to_proto(row->Address.si_family);
     protostr = catta_proto_to_string(addr.proto);
 
-    // XXX debug, remove
-    {
-        const char *typestr = NULL;
-        char buf[CATTA_ADDRESS_STR_MAX];
-
-        switch(type) {
-            case MibParameterNotification:  typestr = "ParameterNotification"; break;
-            case MibAddInstance:            typestr = "AddInstance"; break;
-            case MibDeleteInstance:         typestr = "DeleteInstance"; break;
-            default:                        typestr = "Unknown";
-        }
-
-        catta_log_debug("%s for %s address %s on iface %d",
-                        typestr, protostr,
-                        catta_address_snprint(buf, sizeof(buf), &addr),
-                        idx);
-    }
-
     // see if we know this address/interface
     iface = catta_interface_monitor_get_interface(m, idx, addr.proto);
     ifaddr = iface ? catta_interface_monitor_get_address(m, iface, &addr) : NULL;
@@ -455,7 +402,6 @@ static void handle_addr_event(CattaInterfaceMonitor *m, MIB_UNICASTIPADDRESS_ROW
         assert(ifaddr != NULL);
 
         set_global_scope_flag(ifaddr, &addr);
-        catta_log_debug("   global_scope: %d", ifaddr->global_scope); // XXX debugging, remove
         break;
     case MibDeleteInstance:
         if(ifaddr)
