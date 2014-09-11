@@ -151,6 +151,7 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
     }
 
     // fill the CattaHwInterface struct with data
+    // notice: this code is essentially duplicated in update_hw_interface()
     hw->flags_ok =
         (p->OperStatus == IfOperStatusUp) &&
         !(p->IfType == IF_TYPE_SOFTWARE_LOOPBACK) &&
@@ -255,20 +256,136 @@ static void WINAPI acn_callback(void *m, MIB_UNICASTIPADDRESS_ROW *row, MIB_NOTI
     queue_event(m, new_event(ADDRESS_CHANGE_EVENT, type, row, sizeof(*row)));
 }
 
+void update_hw_interface(CattaHwInterface *hw)
+{
+    MIB_IF_ROW2 row;
+    DWORD r;
+    size_t n;
+    int multicast;  // synthetic flag
+
+    row.InterfaceLuid.Value = 0;
+    row.InterfaceIndex = hw->index;
+    if((r = GetIfEntry2(&row)) != NO_ERROR) {
+        catta_log_error("GetIfEntry2 failed for iface %d (error %u)", hw->index, (unsigned int)r);
+        return;
+    }
+
+    // fill the CattaHwInterface struct with data
+    // notice: this code is essentially duplicated from ip_adapter()
+    // notice: not sure where to find the IP_ADAPTER_NO_MULTICAST flag from an
+    //         MIB_IF_ROW2 struct, so try to deduce it otherwise
+    //         cf. http://msdn.microsoft.com/en-us/windows/desktop/ff568739(v=vs.100).aspx
+    multicast = row.AccessType == NET_IF_ACCESS_BROADCAST ||
+                row.AccessType == NET_IF_ACCESS_POINT_TO_POINT;
+    hw->flags_ok =
+        (row.OperStatus == IfOperStatusUp) &&
+        !(row.Type == IF_TYPE_SOFTWARE_LOOPBACK) &&
+        multicast &&
+        (hw->monitor->server->config.allow_point_to_point || !(row.Type == IF_TYPE_PPP));
+            // XXX what about IF_TYPE_TUNNEL?
+
+    n = wcstombs(NULL, row.Alias, 0) + 1;
+    catta_free(hw->name);
+    hw->name = catta_new(char, n);
+    wcstombs(hw->name, row.Alias, n);
+
+    hw->mtu = row.Mtu;
+
+    hw->mac_address_size = row.PhysicalAddressLength;
+    if(hw->mac_address_size > CATTA_MAC_ADDRESS_MAX)
+        hw->mac_address_size = CATTA_MAC_ADDRESS_MAX;
+    memcpy(hw->mac_address, row.PhysicalAddress, hw->mac_address_size);
+
+    // XXX debugging, remove
+    {
+        char mac[256];
+        catta_log_debug(" name: %s\n"
+                        " mtu: %d\n"
+                        " mac: %s\n"
+                        " flags_ok: %d\n"
+                        "   type: %u\n"
+                        "   status: %u\n"
+                        "   multicast: %d\n"
+                        "   access type: %d",
+            hw->name,
+            hw->mtu,
+            catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size),
+            hw->flags_ok,
+            (unsigned int)row.Type,
+            (unsigned int)row.OperStatus,
+            multicast,
+            (int)row.AccessType);
+    }
+}
+
 static void handle_iface_event(CattaInterfaceMonitor *m, MIB_IPINTERFACE_ROW *row, MIB_NOTIFICATION_TYPE type)
 {
-    catta_log_debug("interface change event on iface %u for address family %u",
-                    (unsigned int)row->InterfaceIndex, (unsigned int)row->Family);
+    CattaIfIndex idx = row->InterfaceIndex;
+    CattaProtocol proto = catta_af_to_proto(row->Family);
+    const char *protostr = catta_proto_to_string(proto);
+    CattaInterface *iface;
+    CattaHwInterface *hw;
+
+    // XXX debug, remove
+    {
+        const char *typestr = NULL;
+
+        switch(type) {
+            case MibParameterNotification:  typestr = "ParameterNotification"; break;
+            case MibAddInstance:            typestr = "AddInstance"; break;
+            case MibDeleteInstance:         typestr = "DeleteInstance"; break;
+            default:                        typestr = "Unknown";
+        }
+
+        catta_log_debug("interface %s on iface %d for %s", typestr, idx, protostr);
+    }
+
+    // see if we know this interface
+    iface = catta_interface_monitor_get_interface(m, idx, proto);
+    hw = iface ? iface->hardware : catta_interface_monitor_get_hw_interface(m, idx);
+
+    // print debug messages for some unexpected cases
+    if(type==MibParameterNotification && !iface)
+        catta_log_debug("ParameterNotification received for unknown interface %d (%s)", idx, protostr);
+    if(type==MibDeleteInstance && !iface)
+        catta_log_debug("DeleteInstance received for unknown interface %d (%s)", idx, protostr);
+    if(type==MibAddInstance && iface)
+        catta_log_debug("AddInstance received for existing interface %d (%s)", idx, protostr);
+    if(iface && !hw)
+        catta_log_debug("missing CattaHwInterface for interface %d (%s)", idx, protostr);
 
     switch(type) {
     case MibParameterNotification:
-        catta_log_debug(" notification type: ParameterNotification");
-        break;
     case MibAddInstance:
-        catta_log_debug(" notification type: AddInstance");
+        // create the physical interface if it is missing
+        if(!hw) {
+            if((hw = catta_hw_interface_new(m, idx)) == NULL) {
+                catta_log_error("catta_hw_interface_new failed in handle_iface_event");
+                return;
+            }
+        }
+
+        // create the protocol-specific interface if it is missing
+        if(!iface) {
+            if((iface = catta_interface_new(m, hw, proto)) == NULL) {
+                catta_log_error("catta_interface_new failed in handle_iface_event");
+                return;
+            }
+        }
+
+        assert(iface != NULL);
+        assert(hw != NULL);
+        assert(iface->hardware == hw);
+
+        update_hw_interface(hw);
         break;
     case MibDeleteInstance:
-        catta_log_debug(" notification type: DeleteInstance");
+        if(iface)
+            catta_interface_free(iface, 0);
+
+        // free the hardware interface when there are no more protocol-specific interfaces
+        if(hw && !hw->interfaces)
+            catta_hw_interface_free(hw, 0);
         break;
     default:
         catta_log_debug("unexpected type (%d) of interface change notification received", type);
@@ -277,19 +394,30 @@ static void handle_iface_event(CattaInterfaceMonitor *m, MIB_IPINTERFACE_ROW *ro
 
 static void handle_addr_event(CattaInterfaceMonitor *m, MIB_UNICASTIPADDRESS_ROW *row, MIB_NOTIFICATION_TYPE type)
 {
-    catta_log_debug("address change event on iface %u for address family %u",
-                    (unsigned int)row->InterfaceIndex,
-                    (unsigned int)row->Address.si_family);
+    CattaIfIndex idx = row->InterfaceIndex;
+    CattaProtocol proto = catta_af_to_proto(row->Address.si_family);
+    const char *protostr = catta_proto_to_string(proto);
+
+    // XXX debug, remove
+    {
+        const char *typestr = NULL;
+
+        switch(type) {
+            case MibParameterNotification:  typestr = "ParameterNotification"; break;
+            case MibAddInstance:            typestr = "AddInstance"; break;
+            case MibDeleteInstance:         typestr = "DeleteInstance"; break;
+            default:                        typestr = "Unknown";
+        }
+
+        catta_log_debug("address %s on iface %d for %s", typestr, idx, protostr);
+    }
 
     switch(type) {
     case MibParameterNotification:
-        catta_log_debug(" notification type: ParameterNotification");
         break;
     case MibAddInstance:
-        catta_log_debug(" notification type: AddInstance");
         break;
     case MibDeleteInstance:
-        catta_log_debug(" notification type: DeleteInstance");
         break;
     default:
         catta_log_debug("unexpected type (%d) of address change notification received", type);
