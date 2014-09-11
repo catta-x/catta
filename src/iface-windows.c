@@ -46,6 +46,17 @@ struct ChangeEvent {
 };
 
 
+// helper: determine the global_scope flag for an address
+static void set_global_scope_flag(CattaInterfaceAddress *ifaddr, const CattaAddress *addr)
+{
+    if(addr->proto == CATTA_PROTO_INET6) {
+        const struct in6_addr *ia = (struct in6_addr *)addr->data.ipv6.address;
+        ifaddr->global_scope = !(IN6_IS_ADDR_LINKLOCAL(ia) || IN6_IS_ADDR_MULTICAST(ia));
+    } else {
+        ifaddr->global_scope = 1;
+    }
+}
+
 // integrate the information from an IP_ADAPTER_UNICAST_ADDRESS structure for
 // given CattaHwInterface into the CattaInterfaceMonitor
 static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
@@ -91,16 +102,7 @@ static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
         }
     }
 
-    // set global scope flag
-    // XXX should we use the IP_ADAPTER_ADDRESS_DNS_ELIGIBLE flag for this?
-    //     it looks like it gets set for IPv4 addresses that are not localhost
-    //     and for IPv6 addresses with global scope. not sure about multicast
-    //     addresses.
-    if(addr.proto == CATTA_PROTO_INET6)
-        ifaddr->global_scope = !(IN6_IS_ADDR_LINKLOCAL((struct in6_addr *)addr.data.data)
-                                 || IN6_IS_ADDR_MULTICAST((struct in6_addr *)addr.data.data));
-    else
-        ifaddr->global_scope = 1;
+    set_global_scope_flag(ifaddr, &addr);
 
     // XXX debugging, remove
     {
@@ -256,7 +258,7 @@ static void WINAPI acn_callback(void *m, MIB_UNICASTIPADDRESS_ROW *row, MIB_NOTI
     queue_event(m, new_event(ADDRESS_CHANGE_EVENT, type, row, sizeof(*row)));
 }
 
-void update_hw_interface(CattaHwInterface *hw)
+static void update_hw_interface(CattaHwInterface *hw)
 {
     MIB_IF_ROW2 row;
     DWORD r;
@@ -316,6 +318,9 @@ void update_hw_interface(CattaHwInterface *hw)
             multicast,
             (int)row.AccessType);
     }
+
+    catta_hw_interface_check_relevant(hw);
+    catta_hw_interface_update_rrs(hw, 0);
 }
 
 static void handle_iface_event(CattaInterfaceMonitor *m, MIB_IPINTERFACE_ROW *row, MIB_NOTIFICATION_TYPE type)
@@ -395,12 +400,30 @@ static void handle_iface_event(CattaInterfaceMonitor *m, MIB_IPINTERFACE_ROW *ro
 static void handle_addr_event(CattaInterfaceMonitor *m, MIB_UNICASTIPADDRESS_ROW *row, MIB_NOTIFICATION_TYPE type)
 {
     CattaIfIndex idx = row->InterfaceIndex;
-    CattaProtocol proto = catta_af_to_proto(row->Address.si_family);
-    const char *protostr = catta_proto_to_string(proto);
+    CattaInterfaceAddress *ifaddr;
+    CattaInterface *iface;
+    CattaAddress addr;
+    const char *protostr;
+
+    // fill addr struct for address lookup
+    switch(row->Address.si_family) {
+    case AF_INET:
+        memcpy(addr.data.data, &row->Address.Ipv4.sin_addr, sizeof(struct in_addr));
+        break;
+    case AF_INET6:
+        memcpy(addr.data.data, &row->Address.Ipv6.sin6_addr, sizeof(struct in6_addr));
+        break;
+    default:
+        catta_log_debug("unexpected address family on interface %d: %u", idx, row->Address.si_family);
+        return;
+    }
+    addr.proto = catta_af_to_proto(row->Address.si_family);
+    protostr = catta_proto_to_string(addr.proto);
 
     // XXX debug, remove
     {
         const char *typestr = NULL;
+        char buf[CATTA_ADDRESS_STR_MAX];
 
         switch(type) {
             case MibParameterNotification:  typestr = "ParameterNotification"; break;
@@ -409,18 +432,80 @@ static void handle_addr_event(CattaInterfaceMonitor *m, MIB_UNICASTIPADDRESS_ROW
             default:                        typestr = "Unknown";
         }
 
-        catta_log_debug("address %s on iface %d for %s", typestr, idx, protostr);
+        catta_log_debug("%s for %s address %s on iface %d",
+                        typestr, protostr,
+                        catta_address_snprint(buf, sizeof(buf), &addr),
+                        idx);
     }
+
+    // see if we know this address/interface
+    iface = catta_interface_monitor_get_interface(m, idx, addr.proto);
+    ifaddr = iface ? catta_interface_monitor_get_address(m, iface, &addr) : NULL;
+
+    // print debug messages for some unexpected cases
+    if(type==MibParameterNotification && !ifaddr)
+        catta_log_debug("ParameterNotification received for unknown address on interface %d (%s)", idx, protostr);
+    if(type==MibDeleteInstance && !ifaddr)
+        catta_log_debug("DeleteInstance received for unknown address on interface %d (%s)", idx, protostr);
+    if(type==MibAddInstance && ifaddr)
+        catta_log_debug("AddInstance received for existing address on interface %d (%s)", idx, protostr);
+    if(ifaddr && !iface)
+        catta_log_debug("missing CattaInterface for address on interface %d (%s)", idx, protostr);
 
     switch(type) {
     case MibParameterNotification:
-        break;
     case MibAddInstance:
+        // fetch the full event data
+        if(GetUnicastIpAddressEntry(row) != NO_ERROR) {
+            catta_log_error("GetUnicastIpAddressEntry failed in handle_addr_event");
+            return;
+        }
+
+        // skip addresses that are not suitable as source addresses
+        if(row->SkipAsSource)
+            return;
+
+        // create the interface if it is missing
+        if(!iface) {
+            CattaHwInterface *hw;
+
+            if((hw = catta_interface_monitor_get_hw_interface(m, idx)) == NULL) {
+                catta_log_error("interface %d not found in handle_addr_event", idx);
+                return;
+            }
+
+            if((iface = catta_interface_new(m, hw, addr.proto)) == NULL) {
+                catta_log_error("catta_interface_new failed in handle_addr_event");
+                return;
+            }
+        }
+        assert(iface != NULL);
+
+        // create the interface-associated address if it is missing
+        if(!ifaddr) {
+            unsigned prefixlen = row->OnLinkPrefixLength;
+
+            if((ifaddr = catta_interface_address_new(m, iface, &addr, prefixlen)) == NULL) {
+                catta_log_error("catta_interface_address_new failed in handle_addr_event");
+                return;
+            }
+        }
+        assert(ifaddr != NULL);
+
+        set_global_scope_flag(ifaddr, &addr);
+        catta_log_debug("   global_scope: %d", ifaddr->global_scope); // XXX debugging, remove
         break;
     case MibDeleteInstance:
+        if(ifaddr)
+            catta_interface_address_free(ifaddr);
         break;
     default:
         catta_log_debug("unexpected type (%d) of address change notification received", type);
+    }
+
+    if(iface) {
+        catta_interface_check_relevant(iface);
+        catta_interface_update_rrs(iface, 0);
     }
 }
 
