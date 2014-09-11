@@ -217,8 +217,7 @@ static void queue_event(CattaInterfaceMonitor *m, ChangeEvent *ev)
 
     if(!pthread_mutex_lock(&m->osdep.mutex)) {
         // queue the event
-        // XXX event ordering!!
-        CATTA_LLIST_PREPEND(ChangeEvent, event, m->osdep.events, ev);
+        CATTA_LLIST_APPEND(ChangeEvent, event, m->osdep.events, ev);
 
         // wake the handler
         writepipe(m->osdep.pipefd[1], &c, sizeof(c));
