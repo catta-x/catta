@@ -103,17 +103,6 @@ static void ip_adapter_unicast_address(CattaInterfaceMonitor *m,
     }
 
     set_global_scope_flag(ifaddr, &addr);
-
-    // XXX debugging, remove
-    {
-        char s[CATTA_ADDRESS_STR_MAX];
-        catta_log_debug(" address: %s\n"
-                        "   global_scope: %d\n"
-                        "   flags: 0x%.4x",
-            catta_address_snprint(s, sizeof(s), &addr),
-            ifaddr->global_scope,
-            (unsigned int)a->Flags);
-    }
 }
 
 // integrate the information from an IP_ADAPTER_ADDRESSES structure
@@ -173,36 +162,10 @@ static void ip_adapter(CattaInterfaceMonitor *m, IP_ADAPTER_ADDRESSES *p)
         hw->mac_address_size = CATTA_MAC_ADDRESS_MAX;
     memcpy(hw->mac_address, p->PhysicalAddress, hw->mac_address_size);
 
-    // XXX debugging, remove
-    {
-        char mac[256];
-        catta_log_debug(" name: %s\n"
-                        " index: %d\n"
-                        "   IfIndex: %u\n"
-                        "   Ipv6IfIndex: %u\n"
-                        " mtu: %d\n"
-                        " mac: %s\n"
-                        " flags_ok: %d\n"
-                        "   type: %u\n"
-                        "   status: %u\n"
-                        "   multicast: %d\n"
-                        "   flags: 0x%.4x",
-            hw->name, hw->index,
-            (unsigned int)p->IfIndex, (unsigned int)p->Ipv6IfIndex,
-            hw->mtu,
-            catta_format_mac_address(mac, sizeof(mac), hw->mac_address, hw->mac_address_size),
-            hw->flags_ok,
-            (unsigned int)p->IfType,
-            (unsigned int)p->OperStatus,
-            !(p->Flags & IP_ADAPTER_NO_MULTICAST),
-            (unsigned int)p->Flags);
-    }
-
     // process addresses
     // XXX remove addresses that are no longer in the list
     for(a=p->FirstUnicastAddress; a; a=a->Next)
         ip_adapter_unicast_address(m, hw, a);
-    catta_log_debug("=====");
 }
 
 
