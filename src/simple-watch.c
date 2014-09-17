@@ -100,7 +100,7 @@ void catta_simple_poll_wakeup(CattaSimplePoll *s) {
     char c = 'W';
     assert(s);
 
-    writepipe(s->wakeup_pipe[1], &c, sizeof(c));
+    (void)writepipe(s->wakeup_pipe[1], &c, sizeof(c));
     s->wakeup_issued = 1;
 }
 
