@@ -138,6 +138,12 @@ ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags)
     msg->msg_flags = (int)wsamsg.dwFlags;
         // all flags that fit into dwFlags also fit into msg_flags (see above)
 
+    // XXX debug, remove
+    {
+        char where[64];
+        getnameinfo(msg->msg_name, msg->msg_namelen, where, sizeof(where), NULL, 0, NI_NUMERICHOST);
+        catta_log_debug("recvmsg: %u bytes from %s", (unsigned int)bytesrcvd, where);
+    }
     return bytesrcvd;
 }
 
@@ -214,6 +220,12 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
         return -1;
     }
 
+    // XXX debug, remove
+    {
+        char where[64];
+        getnameinfo(msg->msg_name, msg->msg_namelen, where, sizeof(where), NULL, 0, NI_NUMERICHOST);
+        catta_log_debug("sendmsg: %u bytes to %s", (unsigned int)bytessent, where);
+    }
     return bytessent;
 }
 
