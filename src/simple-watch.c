@@ -113,15 +113,10 @@ static void clear_wakeup(CattaSimplePoll *s) {
 
     s->wakeup_issued = 0;
 
-    printf("(clear wake-up"); fflush(stdout); // XXX
     for(;;) {
-        int n;
-        ioctl(s->wakeup_pipe[0], FIONREAD, &n);
-        printf(" %d", n); fflush(stdout); // XXX
         if (readpipe(s->wakeup_pipe[0], c, sizeof(c)) != sizeof(c))
             break;
     }
-    printf(")\n"); // XXX
 }
 
 static CattaWatch* watch_new(const CattaPoll *api, int fd, CattaWatchEvent event, CattaWatchCallback callback, void *userdata) {
@@ -530,20 +525,12 @@ int catta_simple_poll_run(CattaSimplePoll *s) {
     for (;;) {
         errno = 0;
 
-        // XXX debug
-        {
-            printf("(poll %d...", s->n_pollfds);
-            fflush(stdout);
-        }
         if (s->poll_func(s->pollfds, s->n_pollfds, s->prepared_timeout, s->poll_func_userdata) < 0) {
 
-            if (errno == EINTR) {
-                printf(" interrupted)\n"); // XXX
+            if (errno == EINTR)
                 continue;
-            }
 
             s->state = STATE_FAILURE;
-            printf(" FAIL)\n"); // XXX
             return -1;
         }
 
@@ -565,19 +552,6 @@ int catta_simple_poll_dispatch(CattaSimplePoll *s) {
     assert(s);
     assert(s->state == STATE_RAN);
     s->state = STATE_DISPATCHING;
-
-    // XXX debug
-    {
-        int i, nready=0, nwatches=0;
-        for(w=s->watches; w; w=w->watches_next)
-            nwatches++;
-        for(i=0; i<s->n_pollfds; i++)
-            if(s->pollfds[i].revents)
-                nready++;
-        if(nready > 0 && s->pollfds[i].revents)
-            printf(" wake-up,");
-        printf(" %d ready, %d watches)\n", nready, nwatches);
-    }
 
     /* We execute only one callback in every iteration */
 
