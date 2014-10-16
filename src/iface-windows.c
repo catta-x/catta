@@ -471,8 +471,12 @@ int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m)
         catta_log_error("pipe() in catta_interface_monitor_init_osdep failed");
         return -1;
     }
-    catta_set_nonblock(m->osdep.pipefd[0]);
-    catta_set_nonblock(m->osdep.pipefd[1]);
+    if(catta_set_nonblock(m->osdep.pipefd[0]) < 0 ||
+       catta_set_nonblock(m->osdep.pipefd[1]) < 0)
+    {
+        catta_log_error(__FILE__": catta_set_nonblock failed: %s", errnostrsocket());
+        goto fail;
+    }
 
     m->osdep.icnhandle = NULL;
     m->osdep.acnhandle = NULL;
@@ -485,7 +489,7 @@ int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m)
                                                     m);
     if(!m->osdep.watch) {
         catta_log_error(__FILE__": Failed to create watch.");
-        return -1;
+        goto fail;
     }
 
     // request async notification on interface changes
@@ -505,6 +509,11 @@ int catta_interface_monitor_init_osdep(CattaInterfaceMonitor *m)
         catta_log_error("NotifyUnicastIpAddressChange failed: %u", (unsigned int)r);
 
     return 0;
+
+fail:
+    closesocket(m->osdep.pipefd[0]);
+    closesocket(m->osdep.pipefd[1]);
+    return -1;
 }
 
 void catta_interface_monitor_free_osdep(CattaInterfaceMonitor *m)
