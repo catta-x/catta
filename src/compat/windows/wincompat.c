@@ -231,7 +231,7 @@ ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags)
 
 int ioctl(int d, unsigned long request, int *p)
 {
-    u_long arg = 0;
+    u_long arg = *p;
 
     if(ioctlsocket(d, request, &arg) == SOCKET_ERROR) {
         errno = wsa_errno();
