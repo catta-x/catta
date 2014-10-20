@@ -23,8 +23,13 @@
 
 #include <sys/select.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <assert.h>
+
+#ifdef HAVE_FCNTL
+#include <fcntl.h>
+#else
+#include <sys/ioctl.h>
+#endif
 
 #include "fdutil.h"
 
@@ -33,6 +38,7 @@ int catta_set_cloexec(int fd) {
 
     assert(fd >= 0);
 
+#if defined(HAVE_FCNTL)
     if ((n = fcntl(fd, F_GETFD)) < 0)
         return -1;
 
@@ -40,6 +46,15 @@ int catta_set_cloexec(int fd) {
         return 0;
 
     return fcntl(fd, F_SETFD, n|FD_CLOEXEC);
+#elif defined(_WIN32)
+    (void)n;
+    if(!SetHandleInformation((HANDLE)fd, HANDLE_FLAG_INHERIT, 0))
+        return -1;
+    return 0;
+#else
+    (void)n;
+    return -1;
+#endif
 }
 
 int catta_set_nonblock(int fd) {
@@ -47,6 +62,7 @@ int catta_set_nonblock(int fd) {
 
     assert(fd >= 0);
 
+#ifdef HAVE_FCNTL
     if ((n = fcntl(fd, F_GETFL)) < 0)
         return -1;
 
@@ -54,6 +70,10 @@ int catta_set_nonblock(int fd) {
         return 0;
 
     return fcntl(fd, F_SETFL, n|O_NONBLOCK);
+#else
+    n = 1;
+    return ioctl(fd, FIONBIO, &n);
+#endif
 }
 
 int catta_wait_for_write(int fd) {

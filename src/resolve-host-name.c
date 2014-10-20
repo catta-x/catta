@@ -44,7 +44,7 @@ struct CattaSHostNameResolver {
     void* userdata;
 
     CattaRecord *address_record;
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
     CattaLookupResultFlags flags;
 
@@ -82,14 +82,14 @@ static void finish(CattaSHostNameResolver *r, CattaResolverEvent event) {
                     abort();
             }
 
-            r->callback(r, r->interface, r->protocol, CATTA_RESOLVER_FOUND, r->address_record->key->name, &a, r->flags, r->userdata);
+            r->callback(r, r->iface, r->protocol, CATTA_RESOLVER_FOUND, r->address_record->key->name, &a, r->flags, r->userdata);
             break;
 
         }
 
         case CATTA_RESOLVER_FAILURE:
 
-            r->callback(r, r->interface, r->protocol, event, r->host_name, NULL, r->flags, r->userdata);
+            r->callback(r, r->iface, r->protocol, event, r->host_name, NULL, r->flags, r->userdata);
             break;
     }
 }
@@ -118,7 +118,7 @@ static void start_timeout(CattaSHostNameResolver *r) {
 
 static void record_browser_callback(
     CattaSRecordBrowser*rr,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -136,14 +136,14 @@ static void record_browser_callback(
             assert(record);
             assert(record->key->type == CATTA_DNS_TYPE_A || record->key->type == CATTA_DNS_TYPE_AAAA);
 
-            if (r->interface > 0 && interface != r->interface)
+            if (r->iface > 0 && iface != r->iface)
                 return;
 
             if (r->protocol != CATTA_PROTO_UNSPEC && protocol != r->protocol)
                 return;
 
-            if (r->interface <= 0)
-                r->interface = interface;
+            if (r->iface <= 0)
+                r->iface = iface;
 
             if (r->protocol == CATTA_PROTO_UNSPEC)
                 r->protocol = protocol;
@@ -203,7 +203,7 @@ static void record_browser_callback(
 
 CattaSHostNameResolver *catta_s_host_name_resolver_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *host_name,
     CattaProtocol aprotocol,
@@ -218,7 +218,7 @@ CattaSHostNameResolver *catta_s_host_name_resolver_new(
     assert(host_name);
     assert(callback);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, catta_is_valid_fqdn(host_name), CATTA_ERR_INVALID_HOST_NAME);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(aprotocol), CATTA_ERR_INVALID_PROTOCOL);
@@ -234,7 +234,7 @@ CattaSHostNameResolver *catta_s_host_name_resolver_new(
     r->callback = callback;
     r->userdata = userdata;
     r->address_record = NULL;
-    r->interface = interface;
+    r->iface = iface;
     r->protocol = protocol;
     r->flags = 0;
 
@@ -248,7 +248,7 @@ CattaSHostNameResolver *catta_s_host_name_resolver_new(
 
     if (aprotocol == CATTA_PROTO_INET || aprotocol == CATTA_PROTO_UNSPEC) {
         k = catta_key_new(host_name, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_A);
-        r->record_browser_a = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
+        r->record_browser_a = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, r);
         catta_key_unref(k);
 
         if (!r->record_browser_a)
@@ -257,7 +257,7 @@ CattaSHostNameResolver *catta_s_host_name_resolver_new(
 
     if (aprotocol == CATTA_PROTO_INET6 || aprotocol == CATTA_PROTO_UNSPEC) {
         k = catta_key_new(host_name, CATTA_DNS_CLASS_IN, CATTA_DNS_TYPE_AAAA);
-        r->record_browser_aaaa = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
+        r->record_browser_aaaa = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, r);
         catta_key_unref(k);
 
         if (!r->record_browser_aaaa)

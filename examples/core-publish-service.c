@@ -24,6 +24,8 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
+#include <errno.h>
 #include <assert.h>
 
 #include <catta/core.h>
@@ -189,6 +191,14 @@ static void server_callback(CattaServer *s, CattaServerState state, CATTA_GCC_UN
     }
 }
 
+static void signal_exit(int signum) {
+    int errnosave = errno;
+    catta_simple_poll_quit(simple_poll);
+    errno = errnosave;
+
+    (void)signum; // ignore
+}
+
 int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char*argv[]) {
     CattaServerConfig config;
     CattaServer *server = NULL;
@@ -223,6 +233,10 @@ int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char*argv[]) {
         fprintf(stderr, "Failed to create server: %s\n", catta_strerror(error));
         goto fail;
     }
+
+    /* exit cleanly on signals */
+    signal(SIGINT, signal_exit);
+    signal(SIGTERM, signal_exit);
 
     /* Run the main loop */
     catta_simple_poll_loop(simple_poll);

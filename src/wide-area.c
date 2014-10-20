@@ -581,13 +581,13 @@ CattaWideAreaLookupEngine *catta_wide_area_engine_new(CattaServer *s) {
     e->fd_ipv6 = s->config.use_ipv6 ? catta_open_unicast_socket_ipv6() : -1;
 
     if (e->fd_ipv4 < 0 && e->fd_ipv6 < 0) {
-        catta_log_error(__FILE__": Failed to create wide area sockets: %s", strerror(errno));
+        catta_log_error(__FILE__": Failed to create wide area sockets: %s", errnostrsocket());
 
         if (e->fd_ipv6 >= 0)
-            close(e->fd_ipv6);
+            closesocket(e->fd_ipv6);
 
         if (e->fd_ipv4 >= 0)
-            close(e->fd_ipv4);
+            closesocket(e->fd_ipv4);
 
         catta_free(e);
         return NULL;
@@ -637,10 +637,10 @@ void catta_wide_area_engine_free(CattaWideAreaLookupEngine *e) {
         e->server->poll_api->watch_free(e->watch_ipv6);
 
     if (e->fd_ipv6 >= 0)
-        close(e->fd_ipv6);
+        closesocket(e->fd_ipv6);
 
     if (e->fd_ipv4 >= 0)
-        close(e->fd_ipv4);
+        closesocket(e->fd_ipv4);
 
     catta_free(e);
 }

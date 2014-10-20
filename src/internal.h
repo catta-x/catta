@@ -48,6 +48,16 @@ typedef struct CattaEntry CattaEntry;
 #define CATTA_RR_HOLDOFF_MSEC_RATE_LIMIT 20000
 #define CATTA_RR_RATE_LIMIT_COUNT 15
 
+#ifndef _WIN32
+#define closesocket close
+#define closepipe close
+#define writepipe write
+#define readpipe read
+#define winsock_init()
+#define winsock_exit()
+#define errnostrsocket() strerror(errno)
+#endif
+
 typedef struct CattaLegacyUnicastReflectSlot CattaLegacyUnicastReflectSlot;
 
 struct CattaLegacyUnicastReflectSlot {
@@ -56,7 +66,7 @@ struct CattaLegacyUnicastReflectSlot {
     uint16_t id, original_id;
     CattaAddress address;
     uint16_t port;
-    int interface;
+    CattaIfIndex iface;
     struct timeval elapse_time;
     CattaTimeEvent *time_event;
 };
@@ -69,7 +79,7 @@ struct CattaEntry {
 
     CattaPublishFlags flags;
     CattaRecord *record;
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
 
     CATTA_LLIST_FIELDS(CattaEntry, entries);
@@ -182,13 +192,13 @@ void catta_server_decrease_host_rr_pending(CattaServer *s);
 
 int catta_server_set_errno(CattaServer *s, int error);
 
-int catta_server_is_service_local(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, const char *name);
-int catta_server_is_record_local(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, CattaRecord *record);
+int catta_server_is_service_local(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, const char *name);
+int catta_server_is_record_local(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, CattaRecord *record);
 
 int catta_server_add_ptr(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     uint32_t ttl,

@@ -77,7 +77,7 @@ void* catta_s_entry_group_get_data(CattaSEntryGroup *g);
 int catta_server_add(
     CattaServer *s,           /**< The server object to add this record to */
     CattaSEntryGroup *g,       /**< An entry group object if this new record shall be attached to one, or NULL. If you plan to remove the record sometime later you a required to pass an entry group object here. */
-    CattaIfIndex interface,   /**< A numeric index of a network interface to attach this record to, or CATTA_IF_UNSPEC to attach this record to all interfaces */
+    CattaIfIndex iface,   /**< A numeric index of a network interface to attach this record to, or CATTA_IF_UNSPEC to attach this record to all interfaces */
     CattaProtocol protocol,   /**< A protocol family to attach this record to. One of the CATTA_PROTO_xxx constants. Use CATTA_PROTO_UNSPEC to make this record available on all protocols (wich means on both IPv4 and IPv6). */
     CattaPublishFlags flags,    /**< Special flags for this record */
     CattaRecord *r            /**< The record to add. This function increases the reference counter of this object. */);
@@ -92,7 +92,7 @@ int catta_server_add(
 int catta_server_add_address(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -107,7 +107,7 @@ int catta_server_add_address(
 int catta_server_add_service(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,         /**< Service name, e.g. "Lennart's Files" */
@@ -121,7 +121,7 @@ int catta_server_add_service(
 int catta_server_add_service_strlst(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -135,7 +135,7 @@ int catta_server_add_service_strlst(
 int catta_server_add_service_subtype(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,         /**< Specify the name of main service you already added here */
@@ -147,7 +147,7 @@ int catta_server_add_service_subtype(
 int catta_server_update_service_txt_strlst(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -159,7 +159,7 @@ int catta_server_update_service_txt_strlst(
 int catta_server_update_service_txt(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *name,
@@ -168,7 +168,7 @@ int catta_server_update_service_txt(
     ...) CATTA_GCC_SENTINEL;
 
 /** Check if there is a service locally defined and return the entry group it is attached to. Returns NULL if the service isn't local*/
-int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex interface, CattaProtocol protocol, const char *name, const char *type, const char *domain, CattaSEntryGroup** ret_group);
+int catta_server_get_group_of_service(CattaServer *s, CattaIfIndex iface, CattaProtocol protocol, const char *name, const char *type, const char *domain, CattaSEntryGroup** ret_group);
 
 CATTA_C_DECL_END
 

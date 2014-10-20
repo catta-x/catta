@@ -59,7 +59,7 @@ int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
     size = catta_string_list_serialize(a, data, sizeof(data));
     assert(size == n);
 
-    printf("%zu\n", size);
+    printf("%lu\n", (unsigned long)size);
 
     for (t = (char*) data, n = 0; n < size; n++, t++) {
         if (*t <= 32)

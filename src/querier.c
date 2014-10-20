@@ -32,7 +32,7 @@
 #include <catta/log.h>
 
 struct CattaQuerier {
-    CattaInterface *interface;
+    CattaInterface *iface;
 
     CattaKey *key;
     int n_used;
@@ -52,8 +52,8 @@ struct CattaQuerier {
 void catta_querier_free(CattaQuerier *q) {
     assert(q);
 
-    CATTA_LLIST_REMOVE(CattaQuerier, queriers, q->interface->queriers, q);
-    catta_hashmap_remove(q->interface->queriers_by_key, q->key);
+    CATTA_LLIST_REMOVE(CattaQuerier, queriers, q->iface->queriers, q);
+    catta_hashmap_remove(q->iface->queriers_by_key, q->key);
 
     catta_key_unref(q->key);
     catta_time_event_free(q->time_event);
@@ -77,7 +77,7 @@ static void querier_elapse_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void *us
         return;
     }
 
-    if (catta_interface_post_query(q->interface, q->key, 0, &q->post_id)) {
+    if (catta_interface_post_query(q->iface, q->key, 0, &q->post_id)) {
 
         /* The queue accepted our query. We store the query id here,
          * that allows us to drop the query at a later point if the
@@ -120,7 +120,7 @@ void catta_querier_add(CattaInterface *i, CattaKey *key, struct timeval *ret_cti
         return; /* OOM */
 
     q->key = catta_key_ref(key);
-    q->interface = i;
+    q->iface = i;
     q->n_used = 1;
     q->sec_delay = 1;
     q->post_id_valid = 0;

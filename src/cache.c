@@ -54,7 +54,7 @@ static void remove_entry(CattaCache *c, CattaCacheEntry *e) {
     if (e->time_event)
         catta_time_event_free(e->time_event);
 
-    catta_multicast_lookup_engine_notify(c->server->multicast_lookup_engine, c->interface, e->record, CATTA_BROWSER_REMOVE);
+    catta_multicast_lookup_engine_notify(c->server->multicast_lookup_engine, c->iface, e->record, CATTA_BROWSER_REMOVE);
 
     catta_record_unref(e->record);
 
@@ -74,7 +74,7 @@ CattaCache *catta_cache_new(CattaServer *server, CattaInterface *iface) {
     }
 
     c->server = server;
-    c->interface = iface;
+    c->iface = iface;
 
     if (!(c->hashmap = catta_hashmap_new((CattaHashFunc) catta_key_hash, (CattaEqualFunc) catta_key_equal, NULL, NULL))) {
         catta_log_error(__FILE__": Out of memory.");
@@ -212,8 +212,8 @@ static void elapse_func(CattaTimeEvent *t, void *userdata) {
         assert(percent > 0);
 
         /* Request a cache update if we are subscribed to this entry */
-        if (catta_querier_shall_refresh_cache(e->cache->interface, e->record->key))
-            catta_interface_post_query(e->cache->interface, e->record->key, 0, NULL);
+        if (catta_querier_shall_refresh_cache(e->cache->iface, e->record->key))
+            catta_interface_post_query(e->cache->iface, e->record->key, 0, NULL);
 
         /* Check again later */
         next_expiry(e->cache, e, percent);
@@ -360,7 +360,7 @@ void catta_cache_update(CattaCache *c, CattaRecord *r, int cache_flush, const Ca
             c->n_entries++;
 
             /* Notify subscribers */
-            catta_multicast_lookup_engine_notify(c->server->multicast_lookup_engine, c->interface, e->record, CATTA_BROWSER_NEW);
+            catta_multicast_lookup_engine_notify(c->server->multicast_lookup_engine, c->iface, e->record, CATTA_BROWSER_NEW);
         }
 
         e->origin = *a;

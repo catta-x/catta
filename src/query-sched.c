@@ -66,7 +66,7 @@ struct CattaKnownAnswer {
 };
 
 struct CattaQueryScheduler {
-    CattaInterface *interface;
+    CattaInterface *iface;
     CattaTimeEventQueue *time_event_queue;
 
     unsigned next_id;
@@ -157,7 +157,7 @@ CattaQueryScheduler *catta_query_scheduler_new(CattaInterface *i) {
         return NULL; /* OOM */
     }
 
-    s->interface = i;
+    s->iface = i;
     s->time_event_queue = i->monitor->server->time_event_queue;
     s->next_id = 0;
 
@@ -218,7 +218,7 @@ static int packet_add_query_job(CattaQueryScheduler *s, CattaDnsPacket *p, Catta
         return 0;
 
     /* Add all matching known answers to the list */
-    catta_cache_walk(s->interface->cache, qj->key, known_answer_walk_callback, s);
+    catta_cache_walk(s->iface->cache, qj->key, known_answer_walk_callback, s);
 
     job_mark_done(s, qj);
 
@@ -250,10 +250,10 @@ static void append_known_answers_and_send(CattaQueryScheduler *s, CattaDnsPacket
 
             catta_dns_packet_set_field(p, CATTA_DNS_FIELD_FLAGS, catta_dns_packet_get_field(p, CATTA_DNS_FIELD_FLAGS) | CATTA_DNS_FLAG_TC);
             catta_dns_packet_set_field(p, CATTA_DNS_FIELD_ANCOUNT, n);
-            catta_interface_send_packet(s->interface, p);
+            catta_interface_send_packet(s->iface, p);
             catta_dns_packet_free(p);
 
-            p = catta_dns_packet_new_query(s->interface->hardware->mtu);
+            p = catta_dns_packet_new_query(s->iface->hardware->mtu);
             n = 0;
         }
 
@@ -266,7 +266,7 @@ static void append_known_answers_and_send(CattaQueryScheduler *s, CattaDnsPacket
     }
 
     catta_dns_packet_set_field(p, CATTA_DNS_FIELD_ANCOUNT, n);
-    catta_interface_send_packet(s->interface, p);
+    catta_interface_send_packet(s->iface, p);
     catta_dns_packet_free(p);
 }
 
@@ -288,7 +288,7 @@ static void elapse_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void* data) {
 
     assert(!s->known_answers);
 
-    if (!(p = catta_dns_packet_new_query(s->interface->hardware->mtu)))
+    if (!(p = catta_dns_packet_new_query(s->iface->hardware->mtu)))
         return; /* OOM */
 
     b = packet_add_query_job(s, p, qj);

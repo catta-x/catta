@@ -47,7 +47,7 @@ typedef enum {
 int catta_server_add_dns_server_address(
     CattaServer *s,
     CattaSEntryGroup *g,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaPublishFlags flags,
     const char *domain,
@@ -58,7 +58,7 @@ int catta_server_add_dns_server_address(
 /** Callback prototype for CattaSDNSServerBrowser events */
 typedef void (*CattaSDNSServerBrowserCallback)(
     CattaSDNSServerBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     const char *host_name,       /**< Host name of the DNS server, probably useless */
@@ -70,7 +70,7 @@ typedef void (*CattaSDNSServerBrowserCallback)(
 /** Create a new CattaSDNSServerBrowser object */
 CattaSDNSServerBrowser *catta_s_dns_server_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const char *domain,
     CattaDNSServerType type,

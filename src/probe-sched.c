@@ -50,7 +50,7 @@ struct CattaProbeJob {
 };
 
 struct CattaProbeScheduler {
-    CattaInterface *interface;
+    CattaInterface *iface;
     CattaTimeEventQueue *time_event_queue;
 
     CATTA_LLIST_HEAD(CattaProbeJob, jobs);
@@ -137,7 +137,7 @@ CattaProbeScheduler *catta_probe_scheduler_new(CattaInterface *i) {
         return NULL;
     }
 
-    s->interface = i;
+    s->iface = i;
     s->time_event_queue = i->monitor->server->time_event_queue;
 
     CATTA_LLIST_HEAD_INIT(CattaProbeJob, s->jobs);
@@ -229,7 +229,7 @@ static void elapse_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void* data) {
         return;
     }
 
-    if (!(p = catta_dns_packet_new_query(s->interface->hardware->mtu)))
+    if (!(p = catta_dns_packet_new_query(s->iface->hardware->mtu)))
         return; /* OOM */
     n = 1;
 
@@ -262,7 +262,7 @@ static void elapse_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void* data) {
         if (b) {
             catta_dns_packet_set_field(p, CATTA_DNS_FIELD_NSCOUNT, 1);
             catta_dns_packet_set_field(p, CATTA_DNS_FIELD_QDCOUNT, 1);
-            catta_interface_send_packet(s->interface, p);
+            catta_interface_send_packet(s->iface, p);
         } else
             catta_log_warn("Probe record too large, cannot send");
 
@@ -314,7 +314,7 @@ static void elapse_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void* data) {
     catta_dns_packet_set_field(p, CATTA_DNS_FIELD_NSCOUNT, n);
 
     /* Send it now */
-    catta_interface_send_packet(s->interface, p);
+    catta_interface_send_packet(s->iface, p);
     catta_dns_packet_free(p);
 }
 

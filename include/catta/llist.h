@@ -55,6 +55,17 @@ CATTA_C_DECL_BEGIN
                                         *_head = _item; \
                                         } while (0)
 
+/** Append an item to the list */
+#define CATTA_LLIST_APPEND(t,name,head,item) do { \
+        t **_cur = &(head), *_prev, *_item = (item); \
+        assert(_item); \
+        while ((_prev = *_cur)) \
+            _cur = &_prev->name##_next; \
+        _item->name##_prev = _prev; \
+        _item->name##_next = NULL; \
+        *_cur = _item; \
+    } while (0)
+
 /** Remove an item from the list */
 #define CATTA_LLIST_REMOVE(t,name,head,item) do { \
                                     t **_head = &(head), *_item = (item); \

@@ -42,6 +42,8 @@ typedef struct CattaHwInterface CattaHwInterface;
 #include "iface-linux.h"
 #elif defined(HAVE_PF_ROUTE)
 #include "iface-pfroute.h"
+#elif defined(_WIN32)
+#include "iface-windows.h"
 #else
 typedef struct CattaInterfaceMonitorOSDep CattaInterfaceMonitorOSDep;
 struct CattaInterfaceMonitorOSDep {
@@ -96,7 +98,7 @@ struct CattaInterface {
     CattaInterfaceMonitor *monitor;
     CattaHwInterface *hardware;
 
-    CATTA_LLIST_FIELDS(CattaInterface, interface);
+    CATTA_LLIST_FIELDS(CattaInterface, iface);
     CATTA_LLIST_FIELDS(CattaInterface, by_hardware);
 
     CattaProtocol protocol;
@@ -119,7 +121,7 @@ struct CattaInterface {
 
 struct CattaInterfaceAddress {
     CattaInterfaceMonitor *monitor;
-    CattaInterface *interface;
+    CattaInterface *iface;
 
     CATTA_LLIST_FIELDS(CattaInterfaceAddress, address);
 
@@ -155,7 +157,7 @@ void catta_hw_interface_free(CattaHwInterface *hw, int send_goodbye);
 void catta_hw_interface_update_rrs(CattaHwInterface *hw, int remove_rrs);
 void catta_hw_interface_check_relevant(CattaHwInterface *hw);
 
-CattaHwInterface* catta_interface_monitor_get_hw_interface(CattaInterfaceMonitor *m, int idx);
+CattaHwInterface* catta_interface_monitor_get_hw_interface(CattaInterfaceMonitor *m, CattaIfIndex idx);
 
 /* CattaInterface */
 

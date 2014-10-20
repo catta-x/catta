@@ -43,7 +43,7 @@ struct CattaSRBLookup {
 
     unsigned ref;
 
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
     CattaLookupFlags flags;
 
@@ -57,8 +57,8 @@ struct CattaSRBLookup {
     CATTA_LLIST_FIELDS(CattaSRBLookup, lookups);
 };
 
-static void lookup_handle_cname(CattaSRBLookup *l, CattaIfIndex interface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r);
-static void lookup_drop_cname(CattaSRBLookup *l, CattaIfIndex interface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r);
+static void lookup_handle_cname(CattaSRBLookup *l, CattaIfIndex iface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r);
+static void lookup_drop_cname(CattaSRBLookup *l, CattaIfIndex iface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r);
 
 static void transport_flags_from_domain(CattaServer *s, CattaLookupFlags *flags, const char *domain) {
     assert(flags);
@@ -81,7 +81,7 @@ static void transport_flags_from_domain(CattaServer *s, CattaLookupFlags *flags,
 
 static CattaSRBLookup* lookup_new(
     CattaSRecordBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaLookupFlags flags,
     CattaKey *key) {
@@ -89,7 +89,7 @@ static CattaSRBLookup* lookup_new(
     CattaSRBLookup *l;
 
     assert(b);
-    assert(CATTA_IF_VALID(interface));
+    assert(CATTA_IF_VALID(iface));
     assert(CATTA_PROTO_VALID(protocol));
 
     if (b->n_lookups >= CATTA_LOOKUPS_PER_BROWSER_MAX)
@@ -101,7 +101,7 @@ static CattaSRBLookup* lookup_new(
 
     l->ref = 1;
     l->record_browser = b;
-    l->interface = interface;
+    l->iface = iface;
     l->protocol = protocol;
     l->key = catta_key_ref(key);
     l->wide_area = NULL;
@@ -157,7 +157,7 @@ static CattaSRBLookup* lookup_ref(CattaSRBLookup *l) {
 
 static CattaSRBLookup *lookup_find(
     CattaSRecordBrowser *b,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaLookupFlags flags,
     CattaKey *key) {
@@ -168,8 +168,8 @@ static CattaSRBLookup *lookup_find(
 
     for (l = b->lookups; l; l = l->lookups_next) {
 
-        if ((l->interface == CATTA_IF_UNSPEC || l->interface == interface) &&
-            (l->interface == CATTA_PROTO_UNSPEC || l->protocol == protocol) &&
+        if ((l->iface == CATTA_IF_UNSPEC || l->iface == iface) &&
+            (l->iface == CATTA_PROTO_UNSPEC || l->protocol == protocol) &&
             l->flags == flags &&
             catta_key_equal(l->key, key))
 
@@ -248,7 +248,7 @@ static void lookup_wide_area_callback(
 
 static void lookup_multicast_callback(
     CattaMulticastLookupEngine *e,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaLookupResultFlags flags,
@@ -275,14 +275,14 @@ static void lookup_multicast_callback(
             if (r->key->clazz == CATTA_DNS_CLASS_IN &&
                 r->key->type == CATTA_DNS_TYPE_CNAME)
                 /* It's a CNAME record, so let's follow it. We allow browsing on both multicast and wide area. */
-                lookup_handle_cname(l, interface, protocol, b->flags, r);
+                lookup_handle_cname(l, iface, protocol, b->flags, r);
             else {
                 /* It's a normal record, so let's call the user callback */
 
-                if (catta_server_is_record_local(b->server, interface, protocol, r))
+                if (catta_server_is_record_local(b->server, iface, protocol, r))
                     flags |= CATTA_LOOKUP_RESULT_LOCAL;
 
-                b->callback(b, interface, protocol, event, r, flags, b->userdata);
+                b->callback(b, iface, protocol, event, r, flags, b->userdata);
             }
             break;
 
@@ -292,12 +292,12 @@ static void lookup_multicast_callback(
             if (r->key->clazz == CATTA_DNS_CLASS_IN &&
                 r->key->type == CATTA_DNS_TYPE_CNAME)
                 /* It's a CNAME record, so let's drop that query! */
-                lookup_drop_cname(l, interface, protocol, 0, r);
+                lookup_drop_cname(l, iface, protocol, 0, r);
             else {
                 /* It's a normal record, so let's call the user callback */
                 assert(catta_key_equal(b->key, l->key));
 
-                b->callback(b, interface, protocol, event, r, flags, b->userdata);
+                b->callback(b, iface, protocol, event, r, flags, b->userdata);
             }
             break;
 
@@ -330,7 +330,7 @@ static int lookup_start(CattaSRBLookup *l) {
     } else {
         assert(l->flags & CATTA_LOOKUP_USE_MULTICAST);
 
-        if (!(l->multicast = catta_multicast_lookup_new(l->record_browser->server->multicast_lookup_engine, l->interface, l->protocol, l->key, lookup_multicast_callback, l)))
+        if (!(l->multicast = catta_multicast_lookup_new(l->record_browser->server->multicast_lookup_engine, l->iface, l->protocol, l->key, lookup_multicast_callback, l)))
             return -1;
     }
 
@@ -350,22 +350,22 @@ static int lookup_scan_cache(CattaSRBLookup *l) {
 
     } else {
         assert(l->flags & CATTA_LOOKUP_USE_MULTICAST);
-        n = (int) catta_multicast_lookup_engine_scan_cache(l->record_browser->server->multicast_lookup_engine, l->interface, l->protocol, l->key, lookup_multicast_callback, l);
+        n = (int) catta_multicast_lookup_engine_scan_cache(l->record_browser->server->multicast_lookup_engine, l->iface, l->protocol, l->key, lookup_multicast_callback, l);
     }
 
     return n;
 }
 
-static CattaSRBLookup* lookup_add(CattaSRecordBrowser *b, CattaIfIndex interface, CattaProtocol protocol, CattaLookupFlags flags, CattaKey *key) {
+static CattaSRBLookup* lookup_add(CattaSRecordBrowser *b, CattaIfIndex iface, CattaProtocol protocol, CattaLookupFlags flags, CattaKey *key) {
     CattaSRBLookup *l;
 
     assert(b);
     assert(!b->dead);
 
-    if ((l = lookup_find(b, interface, protocol, flags, key)))
+    if ((l = lookup_find(b, iface, protocol, flags, key)))
         return lookup_ref(l);
 
-    if (!(l = lookup_new(b, interface, protocol, flags, key)))
+    if (!(l = lookup_new(b, iface, protocol, flags, key)))
         return NULL;
 
     return l;
@@ -398,7 +398,7 @@ static int lookup_go(CattaSRBLookup *l) {
     return n;
 }
 
-static void lookup_handle_cname(CattaSRBLookup *l, CattaIfIndex interface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r) {
+static void lookup_handle_cname(CattaSRBLookup *l, CattaIfIndex iface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r) {
     CattaKey *k;
     CattaSRBLookup *n;
 
@@ -409,7 +409,7 @@ static void lookup_handle_cname(CattaSRBLookup *l, CattaIfIndex interface, Catta
     assert(r->key->type == CATTA_DNS_TYPE_CNAME);
 
     k = catta_key_new(r->data.ptr.name, l->record_browser->key->clazz, l->record_browser->key->type);
-    n = lookup_add(l->record_browser, interface, protocol, flags, k);
+    n = lookup_add(l->record_browser, iface, protocol, flags, k);
     catta_key_unref(k);
 
     if (!n) {
@@ -423,7 +423,7 @@ static void lookup_handle_cname(CattaSRBLookup *l, CattaIfIndex interface, Catta
     lookup_unref(n);
 }
 
-static void lookup_drop_cname(CattaSRBLookup *l, CattaIfIndex interface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r) {
+static void lookup_drop_cname(CattaSRBLookup *l, CattaIfIndex iface, CattaProtocol protocol, CattaLookupFlags flags, CattaRecord *r) {
     CattaKey *k;
     CattaSRBLookup *n = NULL;
     CattaRList *rl;
@@ -438,8 +438,8 @@ static void lookup_drop_cname(CattaSRBLookup *l, CattaIfIndex interface, CattaPr
 
         assert(n);
 
-        if ((n->interface == CATTA_IF_UNSPEC || n->interface == interface) &&
-            (n->interface == CATTA_PROTO_UNSPEC || n->protocol == protocol) &&
+        if ((n->iface == CATTA_IF_UNSPEC || n->iface == iface) &&
+            (n->iface == CATTA_PROTO_UNSPEC || n->protocol == protocol) &&
             n->flags == flags &&
             catta_key_equal(n->key, k))
             break;
@@ -468,7 +468,7 @@ static void defer_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void *userdata) {
 
     /* Create initial query */
     assert(!b->root_lookup);
-    b->root_lookup = lookup_add(b, b->interface, b->protocol, b->flags, b->key);
+    b->root_lookup = lookup_add(b, b->iface, b->protocol, b->flags, b->key);
     assert(b->root_lookup);
 
     n = lookup_go(b->root_lookup);
@@ -482,7 +482,7 @@ static void defer_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void *userdata) {
         catta_server_set_errno(b->server, CATTA_ERR_FAILURE);
 
         b->callback(
-            b, b->interface, b->protocol, CATTA_BROWSER_FAILURE, NULL,
+            b, b->iface, b->protocol, CATTA_BROWSER_FAILURE, NULL,
             b->flags & CATTA_LOOKUP_USE_WIDE_AREA ? CATTA_LOOKUP_RESULT_WIDE_AREA : CATTA_LOOKUP_RESULT_MULTICAST,
             b->userdata);
 
@@ -492,7 +492,7 @@ static void defer_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void *userdata) {
 
     /* Tell the client that we're done with the cache */
     b->callback(
-        b, b->interface, b->protocol, CATTA_BROWSER_CACHE_EXHAUSTED, NULL,
+        b, b->iface, b->protocol, CATTA_BROWSER_CACHE_EXHAUSTED, NULL,
         b->flags & CATTA_LOOKUP_USE_WIDE_AREA ? CATTA_LOOKUP_RESULT_WIDE_AREA : CATTA_LOOKUP_RESULT_MULTICAST,
         b->userdata);
 
@@ -502,7 +502,7 @@ static void defer_callback(CATTA_GCC_UNUSED CattaTimeEvent *e, void *userdata) {
          * entries, we assume that it is complete, and tell the user
          * so by firing ALL_FOR_NOW. */
 
-        b->callback(b, b->interface, b->protocol, CATTA_BROWSER_ALL_FOR_NOW, NULL, CATTA_LOOKUP_RESULT_WIDE_AREA, b->userdata);
+        b->callback(b, b->iface, b->protocol, CATTA_BROWSER_ALL_FOR_NOW, NULL, CATTA_LOOKUP_RESULT_WIDE_AREA, b->userdata);
     }
 }
 
@@ -521,7 +521,7 @@ void catta_s_record_browser_restart(CattaSRecordBrowser *b) {
 
 CattaSRecordBrowser *catta_s_record_browser_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaKey *key,
     CattaLookupFlags flags,
@@ -534,7 +534,7 @@ CattaSRecordBrowser *catta_s_record_browser_new(
     assert(key);
     assert(callback);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, !catta_key_is_pattern(key), CATTA_ERR_IS_PATTERN);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, catta_key_is_valid(key), CATTA_ERR_INVALID_KEY);
@@ -548,7 +548,7 @@ CattaSRecordBrowser *catta_s_record_browser_new(
 
     b->dead = 0;
     b->server = server;
-    b->interface = interface;
+    b->iface = iface;
     b->protocol = protocol;
     b->key = catta_key_ref(key);
     b->flags = flags;

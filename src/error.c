@@ -55,7 +55,7 @@ const char *catta_strerror(int error) {
         "Memory exhausted",
         "The object passed in was not valid",
         "Daemon not running",
-        "Invalid interface index",
+        "Invalid iface index",
         "Invalid protocol specification",
         "Invalid flags",
 

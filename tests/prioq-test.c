@@ -90,7 +90,7 @@ int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
     srand(time(NULL));
 
     for (i = 0; i < 10000; i++)
-        catta_prio_queue_put(q2, catta_prio_queue_put(q, INT_TO_POINTER(random() & 0xFFFF)));
+        catta_prio_queue_put(q2, catta_prio_queue_put(q, INT_TO_POINTER(rand() & 0xFFFF)));
 
     while (q2->root) {
         rec(q->root);

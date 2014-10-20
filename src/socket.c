@@ -50,6 +50,7 @@
 #include "fdutil.h"
 #include "socket.h"
 #include "addr-util.h"
+#include "internal.h"
 
 /* this is a portability hack */
 #ifndef IPV6_ADD_MEMBERSHIP
@@ -104,7 +105,7 @@ static void ipv6_address_to_sockaddr(struct sockaddr_in6 *ret_sa, const CattaIPv
     memcpy(&ret_sa->sin6_addr, a, sizeof(CattaIPv6Address));
 }
 
-int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, int idx, int join) {
+int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, CattaIfIndex idx, int join) {
 #ifdef HAVE_STRUCT_IP_MREQN
     struct ip_mreqn mreq;
 #else
@@ -130,17 +131,17 @@ int catta_mdns_mcast_join_ipv4(int fd, const CattaIPv4Address *a, int idx, int j
      * mcast groups when the iface is down, but don't allow rejoining
      * when it comes back up. This is an ugly workaround */
     if (join)
-        setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq));
+        setsockopt(fd, IPPROTO_IP, IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq));
 
-    if (setsockopt(fd, IPPROTO_IP, join ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
-        catta_log_warn("%s failed: %s", join ? "IP_ADD_MEMBERSHIP" : "IP_DROP_MEMBERSHIP", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IP, join ? IP_ADD_MEMBERSHIP : IP_DROP_MEMBERSHIP, (void *)&mreq, sizeof(mreq)) < 0) {
+        catta_log_warn("%s failed: %s", join ? "IP_ADD_MEMBERSHIP" : "IP_DROP_MEMBERSHIP", errnostrsocket());
         return -1;
     }
 
     return 0;
 }
 
-int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *a, int idx, int join) {
+int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *a, CattaIfIndex idx, int join) {
     struct ipv6_mreq mreq6;
     struct sockaddr_in6 sa6;
 
@@ -154,10 +155,10 @@ int catta_mdns_mcast_join_ipv6(int fd, const CattaIPv6Address *a, int idx, int j
     mreq6.ipv6mr_interface = idx;
 
     if (join)
-        setsockopt(fd, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, &mreq6, sizeof(mreq6));
+        setsockopt(fd, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, (void *)&mreq6, sizeof(mreq6));
 
-    if (setsockopt(fd, IPPROTO_IPV6, join ? IPV6_ADD_MEMBERSHIP : IPV6_DROP_MEMBERSHIP, &mreq6, sizeof(mreq6)) < 0) {
-        catta_log_warn("%s failed: %s", join ? "IPV6_ADD_MEMBERSHIP" : "IPV6_DROP_MEMBERSHIP", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, join ? IPV6_ADD_MEMBERSHIP : IPV6_DROP_MEMBERSHIP, (void *)&mreq6, sizeof(mreq6)) < 0) {
+        catta_log_warn("%s failed: %s", join ? "IPV6_ADD_MEMBERSHIP" : "IPV6_DROP_MEMBERSHIP", errnostrsocket());
         return -1;
     }
 
@@ -168,15 +169,15 @@ static int reuseaddr(int fd) {
     int yes;
 
     yes = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("SO_REUSEADDR failed: %s", strerror(errno));
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("SO_REUSEADDR failed: %s", errnostrsocket());
         return -1;
     }
 
 #ifdef SO_REUSEPORT
     yes = 1;
-    if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("SO_REUSEPORT failed: %s", strerror(errno));
+    if (setsockopt(fd, SOL_SOCKET, SO_REUSEPORT, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("SO_REUSEPORT failed: %s", errnostrsocket());
         return -1;
     }
 #endif
@@ -190,10 +191,20 @@ static int bind_with_warn(int fd, const struct sockaddr *sa, socklen_t l) {
     assert(sa);
     assert(l > 0);
 
+#ifdef _WIN32
+    // Windows does not allow address reuse when SO_REUSEADDR was set after
+    // bind() on the first socket, so we must set it before.
+    // Note that this spoils the detection trickery below and the warning will
+    // not be logged.
+
+    if (reuseaddr(fd) < 0)
+        return -1;
+#endif
+
     if (bind(fd, sa, l) < 0) {
 
         if (errno != EADDRINUSE) {
-            catta_log_warn("bind() failed: %s", strerror(errno));
+            catta_log_warn("bind() failed: %s", errnostrsocket());
             return -1;
         }
 
@@ -205,7 +216,7 @@ static int bind_with_warn(int fd, const struct sockaddr *sa, socklen_t l) {
             return -1;
 
         if (bind(fd, sa, l) < 0) {
-            catta_log_warn("bind() failed: %s", strerror(errno));
+            catta_log_warn("bind() failed: %s", errnostrsocket());
             return -1;
         }
     } else {
@@ -226,30 +237,30 @@ static int ipv4_pktinfo(int fd) {
 
 #ifdef IP_PKTINFO
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IP_PKTINFO failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IP, IP_PKTINFO, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IP_PKTINFO failed: %s", errnostrsocket());
         return -1;
     }
 #else
 
 #ifdef IP_RECVINTERFACE
     yes = 1;
-    if (setsockopt (fd, IPPROTO_IP, IP_RECVINTERFACE, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IP_RECVINTERFACE failed: %s", strerror(errno));
+    if (setsockopt (fd, IPPROTO_IP, IP_RECVINTERFACE, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IP_RECVINTERFACE failed: %s", errnostrsocket());
         return -1;
     }
 #elif defined(IP_RECVIF)
     yes = 1;
-    if (setsockopt (fd, IPPROTO_IP, IP_RECVIF, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IP_RECVIF failed: %s", strerror(errno));
+    if (setsockopt (fd, IPPROTO_IP, IP_RECVIF, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IP_RECVIF failed: %s", errnostrsocket());
         return -1;
     }
 #endif
 
 #ifdef IP_RECVDSTADDR
     yes = 1;
-    if (setsockopt (fd, IPPROTO_IP, IP_RECVDSTADDR, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IP_RECVDSTADDR failed: %s", strerror(errno));
+    if (setsockopt (fd, IPPROTO_IP, IP_RECVDSTADDR, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IP_RECVDSTADDR failed: %s", errnostrsocket());
         return -1;
     }
 #endif
@@ -258,8 +269,8 @@ static int ipv4_pktinfo(int fd) {
 
 #ifdef IP_RECVTTL
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IP, IP_RECVTTL, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IP_RECVTTL failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IP, IP_RECVTTL, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IP_RECVTTL failed: %s", errnostrsocket());
         return -1;
     }
 #endif
@@ -272,34 +283,34 @@ static int ipv6_pktinfo(int fd) {
 
 #ifdef IPV6_RECVPKTINFO
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_RECVPKTINFO failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_RECVPKTINFO failed: %s", errnostrsocket());
         return -1;
     }
 #elif defined(IPV6_PKTINFO)
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_PKTINFO failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_PKTINFO, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_PKTINFO failed: %s", errnostrsocket());
         return -1;
     }
 #endif
 
 #ifdef IPV6_RECVHOPS
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPS, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_RECVHOPS failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPS, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_RECVHOPS failed: %s", errnostrsocket());
         return -1;
     }
 #elif defined(IPV6_RECVHOPLIMIT)
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_RECVHOPLIMIT failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_RECVHOPLIMIT failed: %s", errnostrsocket());
         return -1;
     }
 #elif defined(IPV6_HOPLIMIT)
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_HOPLIMIT, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_HOPLIMIT failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_HOPLIMIT, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_HOPLIMIT failed: %s", errnostrsocket());
         return -1;
     }
 #endif
@@ -313,25 +324,25 @@ int catta_open_socket_ipv4(int no_reuse) {
     uint8_t ttl, cyes;
 
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        catta_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", errnostrsocket());
         goto fail;
     }
 
     ttl = 255;
-    if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, &ttl, sizeof(ttl)) < 0) {
-        catta_log_warn("IP_MULTICAST_TTL failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_TTL, (void *)&ttl, sizeof(ttl)) < 0) {
+        catta_log_warn("IP_MULTICAST_TTL failed: %s", errnostrsocket());
         goto fail;
     }
 
     ittl = 255;
-    if (setsockopt(fd, IPPROTO_IP, IP_TTL, &ittl, sizeof(ittl)) < 0) {
-        catta_log_warn("IP_TTL failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IP, IP_TTL, (void *)&ittl, sizeof(ittl)) < 0) {
+        catta_log_warn("IP_TTL failed: %s", errnostrsocket());
         goto fail;
     }
 
     cyes = 1;
-    if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, &cyes, sizeof(cyes)) < 0) {
-        catta_log_warn("IP_MULTICAST_LOOP failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_LOOP, (void *)&cyes, sizeof(cyes)) < 0) {
+        catta_log_warn("IP_MULTICAST_LOOP failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -351,12 +362,12 @@ int catta_open_socket_ipv4(int no_reuse) {
          goto fail;
 
     if (catta_set_cloexec(fd) < 0) {
-        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+        catta_log_warn("FD_CLOEXEC failed: %s", errnostrsocket());
         goto fail;
     }
 
     if (catta_set_nonblock(fd) < 0) {
-        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+        catta_log_warn("O_NONBLOCK failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -364,7 +375,7 @@ int catta_open_socket_ipv4(int no_reuse) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }
@@ -377,31 +388,31 @@ int catta_open_socket_ipv6(int no_reuse) {
     mdns_mcast_group_ipv6(&sa);
 
     if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-        catta_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", errnostrsocket());
         goto fail;
     }
 
     ttl = 255;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &ttl, sizeof(ttl)) < 0) {
-        catta_log_warn("IPV6_MULTICAST_HOPS failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, (void *)&ttl, sizeof(ttl)) < 0) {
+        catta_log_warn("IPV6_MULTICAST_HOPS failed: %s", errnostrsocket());
         goto fail;
     }
 
     ttl = 255;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, &ttl, sizeof(ttl)) < 0) {
-        catta_log_warn("IPV6_UNICAST_HOPS failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_UNICAST_HOPS, (void *)&ttl, sizeof(ttl)) < 0) {
+        catta_log_warn("IPV6_UNICAST_HOPS failed: %s", errnostrsocket());
         goto fail;
     }
 
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_V6ONLY failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_V6ONLY failed: %s", errnostrsocket());
         goto fail;
     }
 
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_MULTICAST_LOOP failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_MULTICAST_LOOP, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_MULTICAST_LOOP failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -421,12 +432,12 @@ int catta_open_socket_ipv6(int no_reuse) {
         goto fail;
 
     if (catta_set_cloexec(fd) < 0) {
-        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+        catta_log_warn("FD_CLOEXEC failed: %s", errnostrsocket());
         goto fail;
     }
 
     if (catta_set_nonblock(fd) < 0) {
-        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+        catta_log_warn("O_NONBLOCK failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -434,7 +445,7 @@ int catta_open_socket_ipv6(int no_reuse) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }
@@ -451,12 +462,15 @@ static int sendmsg_loop(int fd, struct msghdr *msg, int flags) {
         if (errno == EINTR)
             continue;
 
-        if (errno != EAGAIN) {
+        if (errno != EAGAIN && errno != EWOULDBLOCK) {
             char where[64];
-            struct sockaddr_in *sin = msg->msg_name;
+            struct sockaddr *sa = msg->msg_name;
 
-            inet_ntop(sin->sin_family, &sin->sin_addr, where, sizeof(where));
-            catta_log_debug("sendmsg() to %s failed: %s", where, strerror(errno));
+            if(sa->sa_family == AF_INET)
+                inet_ntop(sa->sa_family, &((struct sockaddr_in *)sa)->sin_addr, where, sizeof(where));
+            else
+                inet_ntop(sa->sa_family, &((struct sockaddr_in6 *)sa)->sin6_addr, where, sizeof(where));
+            catta_log_debug("sendmsg() to %s failed: %s", where, errnostrsocket());
             return -1;
         }
 
@@ -469,7 +483,7 @@ static int sendmsg_loop(int fd, struct msghdr *msg, int flags) {
 
 int catta_send_dns_packet_ipv4(
         int fd,
-        CattaIfIndex interface,
+        CattaIfIndex iface,
         CattaDnsPacket *p,
         const CattaIPv4Address *src_address,
         const CattaIPv4Address *dst_address,
@@ -510,7 +524,7 @@ int catta_send_dns_packet_ipv4(
     msg.msg_controllen = 0;
 
 #ifdef IP_PKTINFO
-    if (interface > 0 || src_address) {
+    if (iface > 0 || src_address) {
         struct in_pktinfo *pkti;
 
         memset(cmsg_data, 0, sizeof(cmsg_data));
@@ -524,17 +538,22 @@ int catta_send_dns_packet_ipv4(
 
         pkti = (struct in_pktinfo*) CMSG_DATA(cmsg);
 
-        if (interface > 0)
-            pkti->ipi_ifindex = interface;
+        if (iface > 0)
+            pkti->ipi_ifindex = iface;
 
+#ifdef HAVE_IPI_SPEC_DST
         if (src_address)
             pkti->ipi_spec_dst.s_addr = src_address->address;
+#else
+        if (src_address)
+            pkti->ipi_addr.s_addr = src_address->address;
+#endif
     }
 #elif defined(IP_MULTICAST_IF)
     if (src_address) {
         struct in_addr any = { INADDR_ANY };
-        if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, src_address ? &src_address->address : &any, sizeof(struct in_addr)) < 0) {
-            catta_log_warn("IP_MULTICAST_IF failed: %s", strerror(errno));
+        if (setsockopt(fd, IPPROTO_IP, IP_MULTICAST_IF, (void *)(src_address ? &src_address->address : &any), sizeof(struct in_addr)) < 0) {
+            catta_log_warn("IP_MULTICAST_IF failed: %s", errnostrsocket());
             return -1;
         }
     }
@@ -563,7 +582,7 @@ int catta_send_dns_packet_ipv4(
 
 int catta_send_dns_packet_ipv6(
         int fd,
-        CattaIfIndex interface,
+        CattaIfIndex iface,
         CattaDnsPacket *p,
         const CattaIPv6Address *src_address,
         const CattaIPv6Address *dst_address,
@@ -596,7 +615,7 @@ int catta_send_dns_packet_ipv6(
     msg.msg_iovlen = 1;
     msg.msg_flags = 0;
 
-    if (interface > 0 || src_address) {
+    if (iface > 0 || src_address) {
         struct in6_pktinfo *pkti;
 
         memset(cmsg_data, 0, sizeof(cmsg_data));
@@ -610,8 +629,8 @@ int catta_send_dns_packet_ipv6(
 
         pkti = (struct in6_pktinfo*) CMSG_DATA(cmsg);
 
-        if (interface > 0)
-            pkti->ipi6_ifindex = interface;
+        if (iface > 0)
+            pkti->ipi6_ifindex = iface;
 
         if (src_address)
             memcpy(&pkti->ipi6_addr, src_address->address, sizeof(src_address->address));
@@ -644,7 +663,7 @@ CattaDnsPacket *catta_recv_dns_packet_ipv4(
     assert(fd >= 0);
 
     if (ioctl(fd, FIONREAD, &ms) < 0) {
-        catta_log_warn("ioctl(): %s", strerror(errno));
+        catta_log_warn("ioctl(): %s", errnostrsocket());
         goto fail;
     }
 
@@ -674,7 +693,7 @@ CattaDnsPacket *catta_recv_dns_packet_ipv4(
         links. (See #60) */
 
         if (errno != EAGAIN)
-            catta_log_warn("recvmsg(): %s", strerror(errno));
+            catta_log_warn("recvmsg(): %s", errnostrsocket());
 
         goto fail;
     }
@@ -805,7 +824,7 @@ CattaDnsPacket *catta_recv_dns_packet_ipv6(
     assert(fd >= 0);
 
     if (ioctl(fd, FIONREAD, &ms) < 0) {
-        catta_log_warn("ioctl(): %s", strerror(errno));
+        catta_log_warn("ioctl(): %s", errnostrsocket());
         goto fail;
     }
 
@@ -836,7 +855,7 @@ CattaDnsPacket *catta_recv_dns_packet_ipv6(
         links. (See #60) */
 
         if (errno != EAGAIN)
-            catta_log_warn("recvmsg(): %s", strerror(errno));
+            catta_log_warn("recvmsg(): %s", errnostrsocket());
 
         goto fail;
     }
@@ -912,7 +931,7 @@ int catta_open_unicast_socket_ipv4(void) {
     int fd = -1;
 
     if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
-        catta_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -920,7 +939,7 @@ int catta_open_unicast_socket_ipv4(void) {
     local.sin_family = AF_INET;
 
     if (bind(fd, (struct sockaddr*) &local, sizeof(local)) < 0) {
-        catta_log_warn("bind() failed: %s", strerror(errno));
+        catta_log_warn("bind() failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -929,12 +948,12 @@ int catta_open_unicast_socket_ipv4(void) {
     }
 
     if (catta_set_cloexec(fd) < 0) {
-        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+        catta_log_warn("FD_CLOEXEC failed: %s", errnostrsocket());
         goto fail;
     }
 
     if (catta_set_nonblock(fd) < 0) {
-        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+        catta_log_warn("O_NONBLOCK failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -942,7 +961,7 @@ int catta_open_unicast_socket_ipv4(void) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }
@@ -952,13 +971,13 @@ int catta_open_unicast_socket_ipv6(void) {
     int fd = -1, yes;
 
     if ((fd = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-        catta_log_warn("socket() failed: %s", strerror(errno));
+        catta_log_warn("socket() failed: %s", errnostrsocket());
         goto fail;
     }
 
     yes = 1;
-    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, &yes, sizeof(yes)) < 0) {
-        catta_log_warn("IPV6_V6ONLY failed: %s", strerror(errno));
+    if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&yes, sizeof(yes)) < 0) {
+        catta_log_warn("IPV6_V6ONLY failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -966,7 +985,7 @@ int catta_open_unicast_socket_ipv6(void) {
     local.sin6_family = AF_INET6;
 
     if (bind(fd, (struct sockaddr*) &local, sizeof(local)) < 0) {
-        catta_log_warn("bind() failed: %s", strerror(errno));
+        catta_log_warn("bind() failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -974,12 +993,12 @@ int catta_open_unicast_socket_ipv6(void) {
         goto fail;
 
     if (catta_set_cloexec(fd) < 0) {
-        catta_log_warn("FD_CLOEXEC failed: %s", strerror(errno));
+        catta_log_warn("FD_CLOEXEC failed: %s", errnostrsocket());
         goto fail;
     }
 
     if (catta_set_nonblock(fd) < 0) {
-        catta_log_warn("O_NONBLOCK failed: %s", strerror(errno));
+        catta_log_warn("O_NONBLOCK failed: %s", errnostrsocket());
         goto fail;
     }
 
@@ -987,7 +1006,7 @@ int catta_open_unicast_socket_ipv6(void) {
 
 fail:
     if (fd >= 0)
-        close(fd);
+        closesocket(fd);
 
     return -1;
 }

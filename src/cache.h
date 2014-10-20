@@ -65,7 +65,7 @@ struct CattaCacheEntry {
 struct CattaCache {
     CattaServer *server;
 
-    CattaInterface *interface;
+    CattaInterface *iface;
 
     CattaHashmap *hashmap;
 
@@ -77,7 +77,7 @@ struct CattaCache {
     time_t last_rand_timestamp;
 };
 
-CattaCache *catta_cache_new(CattaServer *server, CattaInterface *interface);
+CattaCache *catta_cache_new(CattaServer *server, CattaInterface *iface);
 void catta_cache_free(CattaCache *c);
 
 void catta_cache_update(CattaCache *c, CattaRecord *r, int cache_flush, const CattaAddress *a);

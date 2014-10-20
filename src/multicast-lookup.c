@@ -43,7 +43,7 @@ struct CattaMulticastLookup {
     CattaMulticastLookupCallback callback;
     void *userdata;
 
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
 
     int queriers_added;
@@ -73,12 +73,12 @@ static void all_for_now_callback(CattaTimeEvent *e, void* userdata) {
     catta_time_event_free(l->all_for_now_event);
     l->all_for_now_event = NULL;
 
-    l->callback(l->engine, l->interface, l->protocol, CATTA_BROWSER_ALL_FOR_NOW, CATTA_LOOKUP_RESULT_MULTICAST, NULL, l->userdata);
+    l->callback(l->engine, l->iface, l->protocol, CATTA_BROWSER_ALL_FOR_NOW, CATTA_LOOKUP_RESULT_MULTICAST, NULL, l->userdata);
 }
 
 CattaMulticastLookup *catta_multicast_lookup_new(
     CattaMulticastLookupEngine *e,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaKey *key,
     CattaMulticastLookupCallback callback,
@@ -88,7 +88,7 @@ CattaMulticastLookup *catta_multicast_lookup_new(
     struct timeval tv;
 
     assert(e);
-    assert(CATTA_IF_VALID(interface));
+    assert(CATTA_IF_VALID(iface));
     assert(CATTA_PROTO_VALID(protocol));
     assert(key);
     assert(callback);
@@ -100,7 +100,7 @@ CattaMulticastLookup *catta_multicast_lookup_new(
     l->cname_key = catta_key_new_cname(l->key);
     l->callback = callback;
     l->userdata = userdata;
-    l->interface = interface;
+    l->iface = iface;
     l->protocol = protocol;
     l->all_for_now_event = NULL;
     l->queriers_added = 0;
@@ -111,7 +111,7 @@ CattaMulticastLookup *catta_multicast_lookup_new(
 
     CATTA_LLIST_PREPEND(CattaMulticastLookup, lookups, e->lookups, l);
 
-    catta_querier_add_for_all(e->server, interface, protocol, l->key, &tv);
+    catta_querier_add_for_all(e->server, iface, protocol, l->key, &tv);
     l->queriers_added = 1;
 
     /* Add a second */
@@ -129,7 +129,7 @@ static void lookup_stop(CattaMulticastLookup *l) {
     l->callback = NULL;
 
     if (l->queriers_added) {
-        catta_querier_remove_for_all(l->engine->server, l->interface, l->protocol, l->key);
+        catta_querier_remove_for_all(l->engine->server, l->iface, l->protocol, l->key);
         l->queriers_added = 0;
     }
 
@@ -195,7 +195,7 @@ struct cbdata {
     CattaMulticastLookupCallback callback;
     void *userdata;
     CattaKey *key, *cname_key;
-    CattaInterface *interface;
+    CattaInterface *iface;
     unsigned n_found;
 };
 
@@ -209,8 +209,8 @@ static void* scan_cache_callback(CattaCache *c, CattaKey *pattern, CattaCacheEnt
 
     cbdata->callback(
         cbdata->engine,
-        cbdata->interface->hardware->index,
-        cbdata->interface->protocol,
+        cbdata->iface->hardware->index,
+        cbdata->iface->protocol,
         CATTA_BROWSER_NEW,
         CATTA_LOOKUP_RESULT_CACHED|CATTA_LOOKUP_RESULT_MULTICAST,
         e->record,
@@ -228,19 +228,19 @@ static void scan_interface_callback(CattaInterfaceMonitor *m, CattaInterface *i,
     assert(i);
     assert(cbdata);
 
-    cbdata->interface = i;
+    cbdata->iface = i;
 
     catta_cache_walk(i->cache, cbdata->key, scan_cache_callback, cbdata);
 
     if (cbdata->cname_key)
         catta_cache_walk(i->cache, cbdata->cname_key, scan_cache_callback, cbdata);
 
-    cbdata->interface = NULL;
+    cbdata->iface = NULL;
 }
 
 unsigned catta_multicast_lookup_engine_scan_cache(
     CattaMulticastLookupEngine *e,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaKey *key,
     CattaMulticastLookupCallback callback,
@@ -252,7 +252,7 @@ unsigned catta_multicast_lookup_engine_scan_cache(
     assert(key);
     assert(callback);
 
-    assert(CATTA_IF_VALID(interface));
+    assert(CATTA_IF_VALID(iface));
     assert(CATTA_PROTO_VALID(protocol));
 
     cbdata.engine = e;
@@ -260,10 +260,10 @@ unsigned catta_multicast_lookup_engine_scan_cache(
     cbdata.cname_key = catta_key_new_cname(key);
     cbdata.callback = callback;
     cbdata.userdata = userdata;
-    cbdata.interface = NULL;
+    cbdata.iface = NULL;
     cbdata.n_found = 0;
 
-    catta_interface_monitor_walk(e->server->monitor, interface, protocol, scan_interface_callback, &cbdata);
+    catta_interface_monitor_walk(e->server->monitor, iface, protocol, scan_interface_callback, &cbdata);
 
     if (cbdata.cname_key)
         catta_key_unref(cbdata.cname_key);
@@ -282,7 +282,7 @@ void catta_multicast_lookup_engine_new_interface(CattaMulticastLookupEngine *e, 
         if (l->dead || !l->callback)
             continue;
 
-        if (l->queriers_added && catta_interface_match(i, l->interface, l->protocol))
+        if (l->queriers_added && catta_interface_match(i, l->iface, l->protocol))
             catta_querier_add(i, l->key, NULL);
     }
 }
@@ -298,7 +298,7 @@ void catta_multicast_lookup_engine_notify(CattaMulticastLookupEngine *e, CattaIn
         if (l->dead || !l->callback)
             continue;
 
-        if (catta_interface_match(i, l->interface, l->protocol))
+        if (catta_interface_match(i, l->iface, l->protocol))
             l->callback(e, i->hardware->index, i->protocol, event, CATTA_LOOKUP_RESULT_MULTICAST, record, l->userdata);
     }
 

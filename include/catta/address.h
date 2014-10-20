@@ -51,7 +51,7 @@ enum {
 #define CATTA_ADDRESS_STR_MAX 40 /* IPv6 Max = 4*8 + 7 + 1 for NUL */
 
 /** Return TRUE if the specified interface index is valid */
-#define CATTA_IF_VALID(ifindex) (((ifindex) >= 0) || ((ifindex) == CATTA_IF_UNSPEC))
+#define CATTA_IF_VALID(iface) (((iface) >= 0) || ((iface) == CATTA_IF_UNSPEC))
 
 /** Return TRUE if the specified protocol is valid */
 #define CATTA_PROTO_VALID(protocol) (((protocol) == CATTA_PROTO_INET) || ((protocol) == CATTA_PROTO_INET6) || ((protocol) == CATTA_PROTO_UNSPEC))

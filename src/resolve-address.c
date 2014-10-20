@@ -42,7 +42,7 @@ struct CattaSAddressResolver {
     void* userdata;
 
     CattaRecord *ptr_record;
-    CattaIfIndex interface;
+    CattaIfIndex iface;
     CattaProtocol protocol;
     CattaLookupResultFlags flags;
 
@@ -64,12 +64,12 @@ static void finish(CattaSAddressResolver *r, CattaResolverEvent event) {
 
     switch (event) {
         case CATTA_RESOLVER_FAILURE:
-            r->callback(r, r->interface, r->protocol, event, &r->address, NULL, r->flags, r->userdata);
+            r->callback(r, r->iface, r->protocol, event, &r->address, NULL, r->flags, r->userdata);
             break;
 
         case CATTA_RESOLVER_FOUND:
             assert(r->ptr_record);
-            r->callback(r, r->interface, r->protocol, event, &r->address, r->ptr_record->data.ptr.name, r->flags, r->userdata);
+            r->callback(r, r->iface, r->protocol, event, &r->address, r->ptr_record->data.ptr.name, r->flags, r->userdata);
             break;
     }
 }
@@ -97,7 +97,7 @@ static void start_timeout(CattaSAddressResolver *r) {
 
 static void record_browser_callback(
     CattaSRecordBrowser*rr,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -114,14 +114,14 @@ static void record_browser_callback(
             assert(record);
             assert(record->key->type == CATTA_DNS_TYPE_PTR);
 
-            if (r->interface > 0 && interface != r->interface)
+            if (r->iface > 0 && iface != r->iface)
                 return;
 
             if (r->protocol != CATTA_PROTO_UNSPEC && protocol != r->protocol)
                 return;
 
-            if (r->interface <= 0)
-                r->interface = interface;
+            if (r->iface <= 0)
+                r->iface = iface;
 
             if (r->protocol == CATTA_PROTO_UNSPEC)
                 r->protocol = protocol;
@@ -160,7 +160,7 @@ static void record_browser_callback(
                 r->retry_with_multicast = 0;
 
                 catta_s_record_browser_free(r->record_browser);
-                r->record_browser = catta_s_record_browser_new(r->server, r->interface, r->protocol, r->key, CATTA_LOOKUP_USE_MULTICAST, record_browser_callback, r);
+                r->record_browser = catta_s_record_browser_new(r->server, r->iface, r->protocol, r->key, CATTA_LOOKUP_USE_MULTICAST, record_browser_callback, r);
 
                 if (r->record_browser) {
                     start_timeout(r);
@@ -176,7 +176,7 @@ static void record_browser_callback(
 
 CattaSAddressResolver *catta_s_address_resolver_new(
     CattaServer *server,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     const CattaAddress *address,
     CattaLookupFlags flags,
@@ -191,7 +191,7 @@ CattaSAddressResolver *catta_s_address_resolver_new(
     assert(address);
     assert(callback);
 
-    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(interface), CATTA_ERR_INVALID_INTERFACE);
+    CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_IF_VALID(iface), CATTA_ERR_INVALID_INTERFACE);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_PROTO_VALID(protocol), CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, address->proto == CATTA_PROTO_INET || address->proto == CATTA_PROTO_INET6, CATTA_ERR_INVALID_PROTOCOL);
     CATTA_CHECK_VALIDITY_RETURN_NULL(server, CATTA_FLAGS_VALID(flags, CATTA_LOOKUP_USE_WIDE_AREA|CATTA_LOOKUP_USE_MULTICAST), CATTA_ERR_INVALID_FLAGS);
@@ -214,7 +214,7 @@ CattaSAddressResolver *catta_s_address_resolver_new(
     r->callback = callback;
     r->userdata = userdata;
     r->ptr_record = NULL;
-    r->interface = interface;
+    r->iface = iface;
     r->protocol = protocol;
     r->flags = 0;
     r->retry_with_multicast = 0;
@@ -235,7 +235,7 @@ CattaSAddressResolver *catta_s_address_resolver_new(
         }
     }
 
-    r->record_browser = catta_s_record_browser_new(server, interface, protocol, k, flags, record_browser_callback, r);
+    r->record_browser = catta_s_record_browser_new(server, iface, protocol, k, flags, record_browser_callback, r);
 
     if (!r->record_browser) {
         catta_s_address_resolver_free(r);

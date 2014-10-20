@@ -89,7 +89,7 @@ static const char *resolver_event_to_string(CattaResolverEvent event) {
 
 static void record_browser_callback(
     CattaSRecordBrowser *r,
-    CattaIfIndex interface,
+    CattaIfIndex iface,
     CattaProtocol protocol,
     CattaBrowserEvent event,
     CattaRecord *record,
@@ -100,7 +100,7 @@ static void record_browser_callback(
     assert(r);
 
     if (record) {
-        catta_log_debug("RB: record [%s] on %i.%i is %s", t = catta_record_to_string(record), interface, protocol, browser_event_to_string(event));
+        catta_log_debug("RB: record [%s] on %i.%i is %s", t = catta_record_to_string(record), iface, protocol, browser_event_to_string(event));
         catta_free(t);
     } else
         catta_log_debug("RB: [%s]", browser_event_to_string(event));

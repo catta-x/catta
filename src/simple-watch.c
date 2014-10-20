@@ -33,6 +33,9 @@
 #include <catta/malloc.h>
 #include <catta/timeval.h>
 #include <catta/simple-watch.h>
+#include <catta/log.h>
+#include "fdutil.h"                 // catta_set_nonblock
+#include "internal.h"               // closesocket
 
 struct CattaWatch {
     CattaSimplePoll *simple_poll;
@@ -98,7 +101,7 @@ void catta_simple_poll_wakeup(CattaSimplePoll *s) {
     char c = 'W';
     assert(s);
 
-    write(s->wakeup_pipe[1], &c, sizeof(c));
+    (void)writepipe(s->wakeup_pipe[1], &c, sizeof(c));
     s->wakeup_issued = 1;
 }
 
@@ -110,23 +113,10 @@ static void clear_wakeup(CattaSimplePoll *s) {
 
     s->wakeup_issued = 0;
 
-    for(;;)
-        if (read(s->wakeup_pipe[0], &c, sizeof(c)) != sizeof(c))
+    for(;;) {
+        if (readpipe(s->wakeup_pipe[0], c, sizeof(c)) != sizeof(c))
             break;
-}
-
-static int set_nonblock(int fd) {
-    int n;
-
-    assert(fd >= 0);
-
-    if ((n = fcntl(fd, F_GETFL)) < 0)
-        return -1;
-
-    if (n & O_NONBLOCK)
-        return 0;
-
-    return fcntl(fd, F_SETFL, n|O_NONBLOCK);
+    }
 }
 
 static CattaWatch* watch_new(const CattaPoll *api, int fd, CattaWatchEvent event, CattaWatchCallback callback, void *userdata) {
@@ -321,13 +311,18 @@ CattaSimplePoll *catta_simple_poll_new(void) {
     if (!(s = catta_new(CattaSimplePoll, 1)))
         return NULL;
 
+    winsock_init();  // on Windows, pipe uses sockets; no-op on other platforms
     if (pipe(s->wakeup_pipe) < 0) {
-        catta_free(s);
-        return NULL;
+        catta_log_error(__FILE__": pipe() failed: %s", errnostrsocket());
+        goto fail;
     }
 
-    set_nonblock(s->wakeup_pipe[0]);
-    set_nonblock(s->wakeup_pipe[1]);
+    if (catta_set_nonblock(s->wakeup_pipe[0]) < 0 ||
+        catta_set_nonblock(s->wakeup_pipe[1]) < 0)
+    {
+        catta_log_error(__FILE__": O_NONBLOCK failed: %s", errnostrsocket());
+        goto fail;
+    }
 
     s->api.userdata = s;
 
@@ -362,6 +357,11 @@ CattaSimplePoll *catta_simple_poll_new(void) {
     CATTA_LLIST_HEAD_INIT(CattaTimeout, s->timeouts);
 
     return s;
+
+fail:
+    catta_free(s);
+    winsock_exit();
+    return NULL;
 }
 
 void catta_simple_poll_free(CattaSimplePoll *s) {
@@ -374,12 +374,13 @@ void catta_simple_poll_free(CattaSimplePoll *s) {
     catta_free(s->pollfds);
 
     if (s->wakeup_pipe[0] >= 0)
-        close(s->wakeup_pipe[0]);
+        closepipe(s->wakeup_pipe[0]);
 
     if (s->wakeup_pipe[1] >= 0)
-        close(s->wakeup_pipe[1]);
+        closepipe(s->wakeup_pipe[1]);
 
     catta_free(s);
+    winsock_exit();  // match the winsock_init in catta_simple_poll_new
 }
 
 static int rebuild(CattaSimplePoll *s) {
@@ -552,7 +553,7 @@ int catta_simple_poll_dispatch(CattaSimplePoll *s) {
     assert(s->state == STATE_RAN);
     s->state = STATE_DISPATCHING;
 
-    /* We execute only on callback in every iteration */
+    /* We execute only one callback in every iteration */
 
     /* Check whether the wakeup time has been reached now */
     if ((next_timeout = find_next_timeout(s))) {

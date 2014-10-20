@@ -37,7 +37,7 @@ int main(CATTA_GCC_UNUSED int argc, CATTA_GCC_UNUSED char *argv[]) {
 
     printf("%li.%li\n", a.tv_sec, a.tv_usec);
 
-    printf("%lli\n", (long long) catta_timeval_diff(&a, &b));
+    printf("%li\n", (long) catta_timeval_diff(&a, &b));
 
     return 0;
 }
