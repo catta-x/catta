@@ -1,34 +1,24 @@
-AVAHI SERVICE DISCOVERY SUITE
+A stripped-down version of the Avahi service discovery suite
+containing only the common and core components
 
-WEB SITE:
-	http://avahi.org/
 
-GIT:
-	git://git.0pointer.de/avahi.git
+TO BUILD FROM GIT:
 
-GITWEB:
-	http://git.0pointer.de/?p=avahi.git;a=summary
+autoreconf          # first time
+./configure
+make
 
-MAILING LIST:
-	http://lists.freedesktop.org/mailman/listinfo/avahi
+requires: libtool, pkgconfig, autoconf, automake
 
-GIT COMMITS MAILING LIST:
-	https://tango.0pointer.de/mailman/listinfo/avahi-commits
 
-TRAC TICKET CHANGES MAILING LIST:
-	https://tango.0pointer.de/mailman/listinfo/avahi-tickets
+TO BUILD THE API DOCUMENTATION:
 
-IRC:
-	#avahi on irc.freenode.org
+make doxygen-doc
 
-CIA:
-	http://cia.navi.cx/stats/project/avahi
+requires: doxygen
 
-FRESHMEAT:
-	http://freshmeat.net/projects/avahi/
 
-OHLOH:
-	http://www.ohloh.net/projects/avahi/
+CONFIGURE SWITCHES:
 
-AUTHORS:
-	Several
+--enable-tests
+build some test programs, including those for 'make check'.

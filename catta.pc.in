@@ -1,0 +1,10 @@
+prefix=@prefix@
+exec_prefix=${prefix}
+libdir=@libdir@
+includedir=${prefix}/include
+
+Name: catta
+Description: Catta Embeddable mDNS Stack
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lcatta
+Cflags: -D_REENTRANT -I${includedir}
