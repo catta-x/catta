@@ -21,6 +21,8 @@
 #include <config.h>
 #endif
 
+#define __APPLE_USE_RFC_2292
+
 #include <inttypes.h>
 #include <errno.h>
 #include <string.h>
