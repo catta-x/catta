@@ -56,14 +56,14 @@ struct msghdr {
 static inline struct cmsghdr *CMSG_FIRSTHDR(struct msghdr *m) {
     WSAMSG wm;
     wm.Control.len = m->msg_controllen;
-    wm.Control.buf = m->msg_control;
+    wm.Control.buf = reinterpret_cast<char*>(m->msg_control);
     return WSA_CMSG_FIRSTHDR(&wm);
 }
 
 static inline struct cmsghdr *CMSG_NXTHDR(struct msghdr *m, struct cmsghdr *c) {
     WSAMSG wm;
     wm.Control.len = m->msg_controllen;
-    wm.Control.buf = m->msg_control;
+    wm.Control.buf = reinterpret_cast<char*>(m->msg_control);
     return WSA_CMSG_NXTHDR(&wm, c);
 }
 
