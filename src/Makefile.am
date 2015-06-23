@@ -94,6 +94,6 @@ libcatta_la_SOURCES += \
 	compat/windows/wincompat.c \
 	compat/windows/wincompat.h
 libcatta_la_LIBADD += -lws2_32 -liphlpapi
-libcatta_la_LDFLAGS += -no-undefined
+libcatta_la_LDFLAGS += -no-undefined -Wl,--kill-at,--output-def=.libs/libcatta-0.def
 endif
 
