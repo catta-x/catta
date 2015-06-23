@@ -23,7 +23,9 @@
 /** \file watch.h Simplistic main loop abstraction */
 
 #include <sys/poll.h>
+#ifndef _MSC_VER
 #include <sys/time.h>
+#endif
 
 #include <catta/cdecl.h>
 

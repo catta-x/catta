@@ -23,7 +23,9 @@
 /** \file timeval.h Functions to facilitate timeval handling */
 
 #include <inttypes.h>
+#ifndef _MSC_VER
 #include <sys/time.h>
+#endif
 
 #include <catta/cdecl.h>
 
