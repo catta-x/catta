@@ -103,10 +103,12 @@ static inline struct cmsghdr *CMSG_NXTHDR(struct msghdr *m, struct cmsghdr *c) {
 #undef CMSG_DATA
 #define CMSG_DATA(c) WSA_CMSG_DATA(c)
 
-// VS2012 and up has no ssize_t defined, before it was defined as unsigned int
-#ifndef _SSIZE_T
-#define _SSIZE_T
-typedef signed int        ssize_t;
+#ifdef _MSC_VER
+   // VS2012 and up has no ssize_t defined, before it was defined as unsigned int
+   #ifndef _SSIZE_T
+   #define _SSIZE_T
+   typedef signed int        ssize_t;
+   #endif
 #endif
 
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags);

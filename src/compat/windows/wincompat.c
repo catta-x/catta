@@ -237,11 +237,11 @@ int ioctl(int d, unsigned long request, int *p)
 
 int pipe(int pipefd[2])
 {
-    int lsock = INVALID_SOCKET;
+    int lsock = (int)INVALID_SOCKET;
     struct sockaddr_in laddr;
     socklen_t laddrlen = sizeof(laddr);
 
-    pipefd[0] = pipefd[1] = INVALID_SOCKET;
+    pipefd[0] = pipefd[1] = (int)INVALID_SOCKET;
 
     // bind a listening socket to a TCP port on localhost
     laddr.sin_family = AF_INET;
@@ -294,7 +294,8 @@ int uname(struct utsname *buf)
     strncpy(buf->version, "unknown", sizeof(buf->sysname)-1);   // we don't need it
 
     // computer (node) name
-    if(GetComputerName(buf->nodename, sizeof(buf->nodename)-1) == 0) {
+    DWORD nodename_size = sizeof(buf->nodename)-1;
+    if(GetComputerName(buf->nodename, &nodename_size) == 0) {
         errno = EFAULT;
         return -1;
     }
