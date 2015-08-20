@@ -35,4 +35,14 @@ nobase_include_HEADERS = \
 	catta/log.h \
 	catta/rr.h \
 	catta/publish.h \
-	catta/lookup.h
+	catta/lookup.h \
+	catta/compat/wincompat.h \
+	catta/compat/windows/arpa/inet.h \
+	catta/compat/windows/net/if.h \
+	catta/compat/windows/netinet/in.h \
+	catta/compat/windows/sys/ioctl.h \
+	catta/compat/windows/sys/poll.h \
+	catta/compat/windows/sys/select.h \
+	catta/compat/windows/sys/socket.h \
+	catta/compat/windows/sys/uio.h \
+	catta/compat/windows/sys/utsname.h

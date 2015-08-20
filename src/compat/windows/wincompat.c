@@ -1,4 +1,4 @@
-#include "wincompat.h"
+#include "catta/compat/wincompat.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <assert.h>
