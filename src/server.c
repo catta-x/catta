@@ -1220,7 +1220,7 @@ static void register_stuff(CattaServer *s) {
     assert(s);
 
     server_set_state(s, CATTA_SERVER_REGISTERING);
-    s->n_host_rr_pending ++; /** Make sure that the state isn't changed tp CATTA_SERVER_RUNNING too early */
+    s->n_host_rr_pending ++; /** Make sure that the state isn't changed to CATTA_SERVER_RUNNING too early */
 
     register_hinfo(s);
     register_browse_domain(s);
@@ -1228,9 +1228,6 @@ static void register_stuff(CattaServer *s) {
 
     assert(s->n_host_rr_pending > 0);
     s->n_host_rr_pending --;
-
-    if (s->n_host_rr_pending == 0)
-        server_set_state(s, CATTA_SERVER_RUNNING);
 }
 
 static void update_fqdn(CattaServer *s) {
