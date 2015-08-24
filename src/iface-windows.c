@@ -23,8 +23,10 @@
 #include <stdlib.h> // wcstombs
 #include <catta/malloc.h>
 #include <catta/log.h>
+#include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <assert.h>
+#include "compat/windows/wincompat.h"
 #include "hashmap.h"
 #include "util.h"   // catta_format_mac_address
 #include "fdutil.h" // catta_set_nonblock

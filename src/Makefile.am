@@ -85,15 +85,19 @@ endif
 endif
 endif
 
+if WINDOWS
+# require Windows Vista or above (for winsock2)
+AM_CFLAGS+=-DWINVER=0x0600 -D_WIN32_WINNT=0x0600
+endif
+
 libcatta_la_CFLAGS = $(AM_CFLAGS) $(PTHREAD_CFLAGS)
 libcatta_la_LIBADD = $(AM_LDADD) $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)
 libcatta_la_LDFLAGS = $(AM_LDFLAGS) -version-info $(LIBCATTA_VERSION_INFO)
 
 if WINDOWS
-libcatta_la_CFLAGS += -I$(top_srcdir)/include/catta/compat/windows
 libcatta_la_SOURCES += \
-	compat/windows/wincompat.c
+	compat/windows/wincompat.c \
+	compat/windows/wincompat.h
 libcatta_la_LIBADD += -lws2_32 -liphlpapi
 libcatta_la_LDFLAGS += -no-undefined -Wl,--kill-at,--output-def=.libs/libcatta-0.def
 endif
-

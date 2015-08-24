@@ -22,9 +22,11 @@
 
 /** \file watch.h Simplistic main loop abstraction */
 
-#include <sys/poll.h>
-#ifndef _MSC_VER
-#include <sys/time.h>
+#ifdef _WIN32
+    #include <winsock2.h> // POLLIN
+#else
+    #include <sys/poll.h>
+    #include <sys/time.h>
 #endif
 
 #include <catta/cdecl.h>

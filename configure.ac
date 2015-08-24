@@ -59,7 +59,7 @@ fi
 AC_CHECK_DECL(_WIN32)
 AM_CONDITIONAL([WINDOWS], [ test "x$ac_cv_have_decl__WIN32" = "xyes" ])
 if test "x$ac_cv_have_decl__WIN32" = "xyes" ; then
-    CPPFLAGS="$CPPFLAGS -I`pwd`/include/compat/windows"
+    CPPFLAGS="$CPPFLAGS -I`pwd`/src/compat/windows/include"
 fi
 AC_CHECK_MEMBER([struct in_pktinfo.ipi_spec_dst],
     AC_DEFINE([HAVE_IPI_SPEC_DST], [], [struct in_pktinfo has ipi_spec_dst member]),

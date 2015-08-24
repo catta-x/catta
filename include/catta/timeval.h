@@ -23,8 +23,10 @@
 /** \file timeval.h Functions to facilitate timeval handling */
 
 #include <inttypes.h>
-#ifndef _MSC_VER
-#include <sys/time.h>
+#ifdef _WIN32
+    #include <winsock2.h> // timeval
+#else
+    #include <sys/time.h>
 #endif
 
 #include <catta/cdecl.h>

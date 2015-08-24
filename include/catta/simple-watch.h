@@ -22,7 +22,6 @@
 
 /** \file simple-watch.h Simple poll() based main loop implementation */
 
-#include <sys/poll.h>
 #include <catta/cdecl.h>
 #include <catta/watch.h>
 

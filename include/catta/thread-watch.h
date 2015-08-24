@@ -22,7 +22,6 @@
 
 /** \file thread-watch.h Threaded poll() based main loop implementation */
 
-#include <sys/poll.h>
 #include <catta/cdecl.h>
 #include <catta/watch.h>
 
