@@ -66,6 +66,13 @@ AC_CHECK_MEMBER([struct in_pktinfo.ipi_spec_dst],
     [],
     [[#include <netinet/in.h>]])
 
+# iOS stuff
+AC_CHECK_DECL(__APPLE__)
+AM_CONDITIONAL([APPLE], [ test "x$ac_cv_have_decl___APPLE__" = "xyes" ])
+if test "x$ac_cv_have_decl___APPLE__" = "xyes" ; then
+    CPPFLAGS="$CPPFLAGS -I`pwd`/src/compat/ios/include"
+fi
+
 # -fstack-protector
 AC_ARG_ENABLE([stack-protector],
     [AS_HELP_STRING([--disable-stack-protector],
