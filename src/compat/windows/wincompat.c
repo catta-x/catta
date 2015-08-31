@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 
 #include <catta/log.h>
 
@@ -50,8 +51,10 @@ char *errnostrsocket(void)
 {
     static char buf[256];
 
+    int err = WSAGetLastError();
+    int len = snprintf(buf, sizeof(buf), "[%i] ", err);
     FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-                  NULL, WSAGetLastError(), 0, buf, sizeof(buf), NULL);
+                  NULL, err, 0, buf + len, sizeof(buf) - len, NULL);
 
     return buf;
 }
