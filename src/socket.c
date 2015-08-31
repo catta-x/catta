@@ -617,6 +617,11 @@ int catta_send_dns_packet_ipv6(
     msg.msg_iovlen = 1;
     msg.msg_flags = 0;
 
+// TODO: don't ask me why, but Win8.1 64bit WSASendMsg() fails with an InvalidArgument error 10022 when IPv6 source address is specified ( everHannes / hannes.ahrens@everbase.net )
+#ifdef _WIN32
+    msg.msg_control = NULL;
+    msg.msg_controllen = 0;
+#else    
     if (iface > 0 || src_address) {
         struct in6_pktinfo *pkti;
 
@@ -640,6 +645,7 @@ int catta_send_dns_packet_ipv6(
         msg.msg_control = NULL;
         msg.msg_controllen = 0;
     }
+#endif
 
     return sendmsg_loop(fd, &msg, 0);
 }
